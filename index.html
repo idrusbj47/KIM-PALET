@@ -636,13 +636,15 @@ function buildData(text){
     c.trx.sort((a,b) => (a.date - b.date) || (a._idx - b._idx));
     let running = c.saldoAwal;
     c.trx.forEach(t => {
+      // OUT = pallet dikirim ke customer (menambah saldo di customer)
+      // IN  = pallet dikembalikan dari customer (mengurangi saldo di customer)
       // RESET & OPNAM adalah titik penyesuaian: saldo tidak diakumulasi dari transaksi
       // sebelumnya, melainkan dipatok ulang berdasarkan nilai pada baris itu sendiri.
-      if (t.marker === 'reset' || t.marker === 'opnam') running = (t.inVal - t.outVal);
-      else running += (t.inVal - t.outVal);
+      if (t.marker === 'reset' || t.marker === 'opnam') running = (t.outVal - t.inVal);
+      else running += (t.outVal - t.inVal);
       t.saldo = running;
     });
-    c.saldoAkhir = c.saldoAwal + c.sumIn - c.sumOut;
+    c.saldoAkhir = c.saldoAwal + c.sumOut - c.sumIn;
     c.lastTrx = c.trx.length ? c.trx[c.trx.length - 1] : null;
     c.daysSinceLast = c.lastTrx ? Math.round((reportDate - c.lastTrx.date) / 86400000) : Infinity;
     c.mh = periodDays > 0 ? (c.sumOut / periodDays) : 0;
@@ -654,7 +656,7 @@ function buildData(text){
 
     c.monthCount = c.trx.filter(t => t.date.getMonth() === reportDate.getMonth() && t.date.getFullYear() === reportDate.getFullYear()).length;
     return c;
-  });
+  }).filter(c => c.name && c.name.trim() !== ''); // sembunyikan customer yang tidak punya nama
 
   const maxAkhir = Math.max(1, ...customers.map(c => c.saldoAkhir));
   customers.forEach(c => { c.gaugePct = Math.max(0, Math.min(100, Math.round((c.saldoAkhir / maxAkhir) * 100))); });
