@@ -13,20 +13,28 @@
 :root{
   --ink:#1b1a17;--ink2:#5f5b52;--ink3:#9a9488;
   --bg:#f6f3ec;--surface:#ffffff;--border:#e7e1d3;--border2:#d9d1bd;
+  --surface-glass:rgba(255,255,255,.62);--border-glass:rgba(231,225,211,.7);
   --brass:#96741f;--brass-mid:#b8912f;--brass-bg:#f6ecd2;--brass-line:#d9b96b;
   --green:#1f6e50;--green-bg:#e5f1e9;--green-mid:#2c8a63;
   --amber:#a06a08;--amber-bg:#faf0d7;
   --red:#a13a29;--red-bg:#f9e9e4;
+  --reset-y:#a17f00;--reset-y-bg:#fff2b0;--reset-y-line:#e6c235;
+  --opnam-r:#ffffff;--opnam-r-bg:#c0392b;--opnam-r-line:#a13a29;
+  --saldo-navy:#ffffff;--saldo-navy-bg:#1f3864;
   --radius:10px;--radius-lg:16px;
   --shadow:0 2px 18px rgba(30,26,16,.06);
 }
 [data-theme="dark"]{
   --ink:#ece7db;--ink2:#b6afa0;--ink3:#726b5c;
   --bg:#14130f;--surface:#1d1b16;--border:#332f25;--border2:#453f30;
+  --surface-glass:rgba(29,27,22,.55);--border-glass:rgba(51,47,37,.7);
   --brass:#d9b563;--brass-mid:#e0c27c;--brass-bg:#2c260f;--brass-line:#6b551f;
   --green:#4cbd8e;--green-bg:#123024;--green-mid:#4cbd8e;
   --amber:#e0b64c;--amber-bg:#332608;
   --red:#e28068;--red-bg:#341c15;
+  --reset-y:#f2d675;--reset-y-bg:#3a3210;--reset-y-line:#6b551f;
+  --opnam-r:#ffffff;--opnam-r-bg:#7a2a20;--opnam-r-line:#a13a29;
+  --saldo-navy:#dbe6ff;--saldo-navy-bg:#1c2b47;
   --shadow:0 4px 28px rgba(0,0,0,.45);
 }
 html{scroll-behavior:smooth}
@@ -35,8 +43,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .serif{font-family:'Fraunces',serif}
 
 /* ===== HEADER ===== */
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:1.1rem 1.6rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;position:sticky;top:0;z-index:100;transition:background .3s,border-color .3s,box-shadow .3s}
-.header.scrolled{box-shadow:var(--shadow);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4)}
+.header{background:var(--surface-glass);border-bottom:1px solid var(--border-glass);padding:1.1rem 1.6rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;position:sticky;top:0;z-index:100;transition:background .3s,border-color .3s,box-shadow .3s;backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6)}
+.header.scrolled{box-shadow:var(--shadow)}
 .brand{display:flex;align-items:center;gap:13px}
 .logo-circle{width:46px;height:46px;border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1.5px solid var(--brass-line);padding:4px;overflow:hidden;box-shadow:0 0 0 3px var(--brass-bg)}
 .logo-circle img{width:100%;height:100%;object-fit:contain;border-radius:6px}
@@ -116,6 +124,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 table{width:100%;border-collapse:collapse;font-size:12.8px;min-width:900px}
 thead th{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 14px;text-align:left;font-size:10.2px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
 tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--ink)}
+@media(max-width:760px){
+  table{min-width:0;font-size:11.5px}
+  thead th{padding:8px 6px;font-size:9px}
+  tbody td{padding:8px 6px}
+  .gauge{display:none}
+  .code-tag{padding:1px 5px;font-size:9.8px}
+  .trx-date .meta{max-width:110px;overflow:hidden;text-overflow:ellipsis}
+  table.list-table th:nth-child(8),table.list-table td:nth-child(8){display:none}
+}
+@media(max-width:420px){
+  thead th{padding:7px 4px;font-size:8.5px}
+  tbody td{padding:7px 4px}
+  .cust-cell{font-size:11.5px}
+  table.list-table th:nth-child(4),table.list-table td:nth-child(4){display:none}
+}
 tbody tr:last-child td{border-bottom:none}
 tbody tr.data-row{cursor:pointer;transition:background .12s}
 tbody tr.data-row:hover td{background:var(--brass-bg)}
@@ -136,6 +159,31 @@ tbody tr.data-row:hover td{background:var(--brass-bg)}
 .gauge-fill.red{background:var(--red)}
 .mh-cell{font-family:'JetBrains Mono',monospace;font-size:11.8px;color:var(--ink2);display:flex;align-items:center;gap:4px;white-space:nowrap}
 .mh-cell svg{color:var(--red);opacity:.75}
+
+/* ===== TAG RESET / OPNAM ===== */
+.tag-reset,.tag-opnam{display:inline-block;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;letter-spacing:.03em;padding:3px 9px;border-radius:6px;white-space:nowrap}
+.tag-reset{background:var(--reset-y-bg);color:var(--reset-y);border:1px solid var(--reset-y-line)}
+.tag-opnam{background:var(--opnam-r-bg);color:var(--opnam-r);border:1px solid var(--opnam-r-line)}
+tr.row-reset td{background:var(--reset-y-bg)!important}
+tr.row-opnam td{background:var(--opnam-r-bg)!important;color:var(--opnam-r)!important}
+tr.row-opnam td .num-cell,tr.row-opnam .num-cell{color:var(--opnam-r)!important}
+[data-theme="dark"] tr.row-reset td{background:var(--reset-y-bg)!important}
+
+/* ===== LEGEND / KODE & WARNA ===== */
+.legend-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:1.2rem;overflow:hidden}
+.legend-box summary{list-style:none;cursor:pointer;padding:10px 16px;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink2);user-select:none}
+.legend-box summary::-webkit-details-marker{display:none}
+.legend-box summary .chev-sm{transition:transform .2s;margin-left:auto;color:var(--ink3)}
+.legend-box[open] summary .chev-sm{transform:rotate(90deg)}
+.legend-body{padding:2px 16px 14px;display:flex;flex-direction:column;gap:10px}
+.legend-item{display:flex;gap:10px;align-items:flex-start}
+.legend-chip{flex-shrink:0;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;padding:3px 10px;border-radius:6px;white-space:nowrap;margin-top:1px}
+.legend-chip.reset{background:var(--reset-y-bg);color:var(--reset-y);border:1px solid var(--reset-y-line)}
+.legend-chip.opnam{background:var(--opnam-r-bg);color:var(--opnam-r);border:1px solid var(--opnam-r-line)}
+.legend-chip.in,.legend-chip.out{background:var(--green-bg);color:var(--green);border:1px solid var(--green-mid)}
+.legend-chip.saldo{background:var(--saldo-navy-bg);color:var(--saldo-navy)}
+.legend-item p{font-size:12px;color:var(--ink2);line-height:1.5}
+.legend-item p b{color:var(--ink)}
 .trx-date{font-size:11.5px;color:var(--ink2);display:flex;flex-direction:column;gap:1px}
 .trx-date .meta{font-size:10px;color:var(--ink3);font-family:'JetBrains Mono',monospace}
 .trx-date.warn{color:var(--amber)}
@@ -286,8 +334,37 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       </select>
     </div>
 
+    <div class="legend-box" id="legend-box">
+      <summary>
+        <span>🎨 Kode &amp; Warna Transaksi</span>
+        <svg class="chev-sm" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </summary>
+      <div class="legend-body">
+        <div class="legend-item">
+          <span class="legend-chip reset">RESET</span>
+          <p><b>RESET</b> dilakukan ketika saldo akhir menjadi negatif atau muncul tanda kurung, misal (20) dibaca min 20. Saldo dikembalikan ke 0 agar perhitungan transaksi berikutnya tetap akurat dan tidak membawa error dari data sebelumnya.</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip opnam">OPNAM</span>
+          <p><b>OPNAM</b> dilakukan ketika KIM dan customer menyamakan data saldo pallet berdasarkan hasil pengecekan lapangan / informasi valid. Data hasil opname dicatat sebagai dasar penyesuaian saldo (adjustment).</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip in">IN</span>
+          <p><b>IN</b> adalah pallet yang diterima kembali dari customer (balikan). Setiap transaksi IN akan mengurangi saldo akhir customer.</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip out">OUT</span>
+          <p><b>OUT</b> adalah pallet yang dikirim dari KIM ke customer. Setiap transaksi OUT akan menambah saldo akhir customer.</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip saldo">SALDO</span>
+          <p><b>Saldo</b> adalah jumlah pallet milik KIM yang tercatat berada di customer pada periode berjalan. Saldo berubah mengikuti transaksi IN, OUT, serta penyesuaian melalui OPNAM atau RESET bila diperlukan.</p>
+        </div>
+      </div>
+    </div>
+
     <div class="table-wrap">
-      <table>
+      <table class="list-table">
         <thead>
           <tr>
             <th style="width:36px">No</th>
@@ -334,6 +411,31 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       <div class="sum-card in"><div class="l">Jumlah In</div><div class="v" id="d-in">—</div></div>
       <div class="sum-card out"><div class="l">Jumlah Out</div><div class="v" id="d-out">—</div></div>
       <div class="sum-card akhir"><div class="l">Saldo Akhir</div><div class="v" id="d-akhir">—</div></div>
+    </div>
+
+    <div class="legend-box" id="legend-box-detail">
+      <summary>
+        <span>🎨 Kode &amp; Warna Transaksi</span>
+        <svg class="chev-sm" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </summary>
+      <div class="legend-body">
+        <div class="legend-item">
+          <span class="legend-chip reset">RESET</span>
+          <p><b>RESET</b> dilakukan ketika saldo akhir menjadi negatif atau muncul tanda kurung, misal (20) dibaca min 20. Saldo dikembalikan ke 0 agar perhitungan transaksi berikutnya tetap akurat.</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip opnam">OPNAM</span>
+          <p><b>OPNAM</b> dilakukan ketika KIM dan customer menyamakan data saldo pallet berdasarkan hasil pengecekan lapangan / informasi valid, sebagai dasar penyesuaian saldo (adjustment).</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip in">IN</span>
+          <p><b>IN</b> adalah pallet yang diterima kembali dari customer (balikan), mengurangi saldo akhir customer.</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip out">OUT</span>
+          <p><b>OUT</b> adalah pallet yang dikirim dari KIM ke customer, menambah saldo akhir customer.</p>
+        </div>
+      </div>
     </div>
 
     <div class="filter-row">
@@ -446,6 +548,17 @@ function fmtDateLong(d){
 function fmtNum(n){
   return (n || 0).toLocaleString('id-ID');
 }
+// format saldo: nilai negatif ditampilkan dalam tanda kurung, mis. (20) = min 20, sesuai konvensi pada spreadsheet
+function fmtSaldo(n){
+  n = n || 0;
+  const plain = Math.abs(n).toLocaleString('id-ID');
+  return n < 0 ? `(${plain})` : plain;
+}
+function fmtSaldoHTML(n){
+  n = n || 0;
+  const plain = Math.abs(n).toLocaleString('id-ID');
+  return n < 0 ? `<span style="color:var(--red)">(${plain})</span>` : plain;
+}
 
 /* ============================================================
    PARSING DATA UTAMA
@@ -493,15 +606,22 @@ function buildData(text){
     const norm = normCode(codeRaw);
     if (!custByCode[norm]){
       custByCode[norm] = {
-        code: norm, name: nameRaw || norm, saldoAwal: 0,
+        code: norm, name: nameRaw || '', saldoAwal: 0,
         sumIn: 0, sumOut: 0, trx: []
       };
     }
     const cust = custByCode[norm];
-    if (nameRaw && (!cust.name || cust.name === cust.code)) cust.name = nameRaw;
+    if (nameRaw) cust.name = nameRaw; // nama customer selalu mengikuti kolom G bila tersedia; kosong bila tidak ada
     cust.sumIn += inVal;
     cust.sumOut += outVal;
-    cust.trx.push({ date, noPol, inVal, outVal, _idx: i });
+
+    // deteksi kode khusus RESET / OPNAM pada kolom "No Mobil"
+    const noPolUp = noPol.trim().toUpperCase();
+    let marker = null;
+    if (noPolUp === 'RESET') marker = 'reset';
+    else if (noPolUp === 'OPNAM') marker = 'opnam';
+
+    cust.trx.push({ date, noPol, inVal, outVal, marker, _idx: i });
 
     if (!firstDate || date < firstDate) firstDate = date;
     if (!lastDate || date > lastDate) lastDate = date;
@@ -515,7 +635,13 @@ function buildData(text){
     const c = custByCode[norm];
     c.trx.sort((a,b) => (a.date - b.date) || (a._idx - b._idx));
     let running = c.saldoAwal;
-    c.trx.forEach(t => { running += (t.inVal - t.outVal); t.saldo = running; });
+    c.trx.forEach(t => {
+      // RESET & OPNAM adalah titik penyesuaian: saldo tidak diakumulasi dari transaksi
+      // sebelumnya, melainkan dipatok ulang berdasarkan nilai pada baris itu sendiri.
+      if (t.marker === 'reset' || t.marker === 'opnam') running = (t.inVal - t.outVal);
+      else running += (t.inVal - t.outVal);
+      t.saldo = running;
+    });
     c.saldoAkhir = c.saldoAwal + c.sumIn - c.sumOut;
     c.lastTrx = c.trx.length ? c.trx[c.trx.length - 1] : null;
     c.daysSinceLast = c.lastTrx ? Math.round((reportDate - c.lastTrx.date) / 86400000) : Infinity;
@@ -559,10 +685,10 @@ function statusLabel(status, days){
 
 function render(){
   document.getElementById('s-cust').textContent = fmtNum(globalStats.totalCust);
-  document.getElementById('s-awal').textContent = fmtNum(globalStats.totalAwal);
+  document.getElementById('s-awal').textContent = fmtSaldo(globalStats.totalAwal);
   document.getElementById('s-in').textContent = fmtNum(globalStats.totalIn);
   document.getElementById('s-out').textContent = fmtNum(globalStats.totalOut);
-  document.getElementById('s-akhir').textContent = fmtNum(globalStats.totalAkhir);
+  document.getElementById('s-akhir').textContent = fmtSaldo(globalStats.totalAkhir);
   document.getElementById('report-date-value').textContent = fmtDateShort(reportDate);
 
   const q = document.getElementById('search').value.trim().toLowerCase();
@@ -584,20 +710,25 @@ function render(){
     tbody.innerHTML = list.map((c, idx) => {
       const warn = c.daysSinceLast > 60 ? 'severe' : (c.daysSinceLast > 7 ? 'warn' : '');
       const warnIcon = warn ? ' ⚠' : '';
-      const lastPolInfo = c.lastTrx
-        ? `${c.lastTrx.noPol}${c.lastTrx.outVal ? ' [Out:'+c.lastTrx.outVal+']' : (c.lastTrx.inVal ? ' [In:'+c.lastTrx.inVal+']' : '')}`
-        : 'Belum ada transaksi';
+      let lastPolInfo = 'Belum ada transaksi';
+      if (c.lastTrx){
+        const lt = c.lastTrx;
+        const suffix = lt.outVal ? ' [Out:'+lt.outVal+']' : (lt.inVal ? ' [In:'+lt.inVal+']' : '');
+        if (lt.marker === 'reset') lastPolInfo = `<span class="tag-reset">RESET</span>${suffix}`;
+        else if (lt.marker === 'opnam') lastPolInfo = `<span class="tag-opnam">OPNAM</span>${suffix}`;
+        else lastPolInfo = `${lt.noPol}${suffix}`;
+      }
       return `<tr class="data-row" onclick="showDetail('${c.code.replace(/'/g,"\\'")}')">
         <td class="no-cell">${idx+1}</td>
         <td><span class="code-tag">${c.code}</span></td>
         <td class="cust-cell">${c.name}</td>
-        <td class="num-cell">${fmtNum(c.saldoAwal)}</td>
+        <td class="num-cell">${fmtSaldoHTML(c.saldoAwal)}</td>
         <td class="num-cell">${c.sumIn ? fmtNum(c.sumIn) : '–'}</td>
         <td class="num-cell">${c.sumOut ? fmtNum(c.sumOut) : '–'}</td>
         <td class="num-cell">
           <span class="saldo-cell">
             <span class="status-dot ${c.status}" title="${statusLabel(c.status)}"></span>
-            ${fmtNum(c.saldoAkhir)}
+            ${fmtSaldoHTML(c.saldoAkhir)}
             <span class="gauge" title="Level saldo relatif terhadap customer terbesar"><span class="gauge-fill ${c.status}" style="width:${c.gaugePct}%"></span></span>
           </span>
         </td>
@@ -647,30 +778,37 @@ function renderDetail(){
   const c = custByCode[currentDetailCode];
   if (!c){ goList(); return; }
 
-  document.getElementById('d-name').textContent = c.name;
+  document.getElementById('d-name').textContent = c.name || '(Tanpa Nama)';
   document.getElementById('d-code').textContent = 'C.Code ' + c.code;
   document.getElementById('d-reportdate').textContent = fmtDateLong(reportDate);
   document.getElementById('d-cust-count').textContent = fmtNum(globalStats.totalCust);
   document.getElementById('d-trx-count').textContent = fmtNum(c.trx.length);
   document.getElementById('d-month-count').textContent = fmtNum(c.monthCount);
-  document.getElementById('d-awal').textContent = fmtNum(c.saldoAwal);
+  document.getElementById('d-awal').textContent = fmtSaldo(c.saldoAwal);
   document.getElementById('d-in').textContent = fmtNum(c.sumIn);
   document.getElementById('d-out').textContent = fmtNum(c.sumOut);
-  document.getElementById('d-akhir').textContent = fmtNum(c.saldoAkhir);
+  document.getElementById('d-akhir').textContent = fmtSaldo(c.saldoAkhir);
 
   const q = document.getElementById('d-search').value.trim().toLowerCase();
   let trxList = c.trx;
   if (q) trxList = trxList.filter(t => t.noPol.toLowerCase().includes(q) || fmtDateShort(t.date).toLowerCase().includes(q));
 
-  let rows = `<tr class="awal-row"><td class="no-cell">—</td><td>Saldo Awal →</td><td>—</td><td class="num-cell">–</td><td class="num-cell">–</td><td class="num-cell">${fmtNum(c.saldoAwal)}</td></tr>`;
-  rows += trxList.map((t, idx) => `<tr>
+  let rows = `<tr class="awal-row"><td class="no-cell">—</td><td>Saldo Awal →</td><td>—</td><td class="num-cell">–</td><td class="num-cell">–</td><td class="num-cell">${fmtSaldoHTML(c.saldoAwal)}</td></tr>`;
+  rows += trxList.map((t, idx) => {
+    const rowClass = t.marker === 'reset' ? 'row-reset' : (t.marker === 'opnam' ? 'row-opnam' : '');
+    let noPolCell;
+    if (t.marker === 'reset') noPolCell = `<span class="tag-reset">RESET</span>`;
+    else if (t.marker === 'opnam') noPolCell = `<span class="tag-opnam">OPNAM</span>`;
+    else noPolCell = `<span class="code-tag" style="display:inline-block">${t.noPol || '—'}</span>`;
+    return `<tr class="${rowClass}">
       <td class="no-cell">${idx+1}</td>
       <td>${fmtDateShort(t.date)}</td>
-      <td class="code-tag" style="display:inline-block">${t.noPol || '—'}</td>
+      <td>${noPolCell}</td>
       <td class="num-cell">${t.inVal ? fmtNum(t.inVal) : '–'}</td>
       <td class="num-cell">${t.outVal ? fmtNum(t.outVal) : '–'}</td>
-      <td class="num-cell">${fmtNum(t.saldo)}</td>
-    </tr>`).join('');
+      <td class="num-cell">${fmtSaldoHTML(t.saldo)}</td>
+    </tr>`;
+  }).join('');
 
   if (c.trx.length === 0){
     rows += `<tr class="empty-row"><td colspan="6">Belum ada transaksi tercatat untuk customer ini.</td></tr>`;
