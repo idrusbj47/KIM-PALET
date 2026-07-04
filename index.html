@@ -443,6 +443,9 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="d-search" placeholder="Cari nomor polisi atau tanggal..." oninput="renderDetail()"/>
       </div>
+      <select class="sort-select" id="d-month-filter" onchange="renderDetail()">
+        <option value="all">Semua Bulan</option>
+      </select>
     </div>
 
     <div class="table-wrap">
@@ -764,8 +767,25 @@ function showDetail(code){
   document.getElementById('view-list').style.display = 'none';
   document.getElementById('view-detail').style.display = 'block';
   document.getElementById('d-search').value = '';
+  populateMonthFilter(custByCode[currentDetailCode]);
   renderDetail();
   window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function populateMonthFilter(c){
+  const sel = document.getElementById('d-month-filter');
+  if (!c){ sel.innerHTML = '<option value="all">Semua Bulan</option>'; return; }
+  const seen = new Set();
+  const months = [];
+  c.trx.forEach(t => {
+    const key = `${t.date.getFullYear()}-${String(t.date.getMonth()+1).padStart(2,'0')}`;
+    if (!seen.has(key)){ seen.add(key); months.push({ key, y: t.date.getFullYear(), m: t.date.getMonth() }); }
+  });
+  months.sort((a,b) => (a.y - b.y) || (a.m - b.m));
+  let opts = '<option value="all">Semua Bulan</option>';
+  opts += months.map(mo => `<option value="${mo.key}">${MONTH_ID_LONG[mo.m]} ${mo.y}</option>`).join('');
+  sel.innerHTML = opts;
+  sel.value = 'all';
 }
 
 function goList(){
@@ -786,16 +806,43 @@ function renderDetail(){
   document.getElementById('d-cust-count').textContent = fmtNum(globalStats.totalCust);
   document.getElementById('d-trx-count').textContent = fmtNum(c.trx.length);
   document.getElementById('d-month-count').textContent = fmtNum(c.monthCount);
-  document.getElementById('d-awal').textContent = fmtSaldo(c.saldoAwal);
-  document.getElementById('d-in').textContent = fmtNum(c.sumIn);
-  document.getElementById('d-out').textContent = fmtNum(c.sumOut);
-  document.getElementById('d-akhir').textContent = fmtSaldo(c.saldoAkhir);
+
+  const monthFilter = document.getElementById('d-month-filter').value;
+  let trxList = c.trx;
+  let periodAwal = c.saldoAwal, periodIn = c.sumIn, periodOut = c.sumOut, periodAkhir = c.saldoAkhir;
+  let awalLabel = 'Saldo Awal →';
+
+  if (monthFilter && monthFilter !== 'all'){
+    const [fy, fm] = monthFilter.split('-').map(Number);
+    const startOfMonth = new Date(fy, fm - 1, 1);
+    const endOfMonth = new Date(fy, fm, 0, 23, 59, 59, 999);
+
+    // saldo awal periode = saldo berjalan terakhir sebelum bulan terpilih (carry-over dari input bulan sebelumnya)
+    const before = c.trx.filter(t => t.date < startOfMonth);
+    periodAwal = before.length ? before[before.length - 1].saldo : c.saldoAwal;
+    if (before.length){
+      const lastBefore = before[before.length - 1].date;
+      awalLabel = `Saldo Awal (carry-over per ${fmtDateShort(lastBefore)}) →`;
+    } else {
+      awalLabel = 'Saldo Awal →';
+    }
+
+    const inMonth = c.trx.filter(t => t.date >= startOfMonth && t.date <= endOfMonth);
+    periodIn = inMonth.reduce((s,t) => s + t.inVal, 0);
+    periodOut = inMonth.reduce((s,t) => s + t.outVal, 0);
+    periodAkhir = inMonth.length ? inMonth[inMonth.length - 1].saldo : periodAwal;
+    trxList = inMonth;
+  }
+
+  document.getElementById('d-awal').textContent = fmtSaldo(periodAwal);
+  document.getElementById('d-in').textContent = fmtNum(periodIn);
+  document.getElementById('d-out').textContent = fmtNum(periodOut);
+  document.getElementById('d-akhir').textContent = fmtSaldo(periodAkhir);
 
   const q = document.getElementById('d-search').value.trim().toLowerCase();
-  let trxList = c.trx;
   if (q) trxList = trxList.filter(t => t.noPol.toLowerCase().includes(q) || fmtDateShort(t.date).toLowerCase().includes(q));
 
-  let rows = `<tr class="awal-row"><td class="no-cell">—</td><td>Saldo Awal →</td><td>—</td><td class="num-cell">–</td><td class="num-cell">–</td><td class="num-cell">${fmtSaldoHTML(c.saldoAwal)}</td></tr>`;
+  let rows = `<tr class="awal-row"><td class="no-cell">—</td><td>${awalLabel}</td><td>—</td><td class="num-cell">–</td><td class="num-cell">–</td><td class="num-cell">${fmtSaldoHTML(periodAwal)}</td></tr>`;
   rows += trxList.map((t, idx) => {
     const rowClass = t.marker === 'reset' ? 'row-reset' : (t.marker === 'opnam' ? 'row-opnam' : '');
     let noPolCell;
@@ -812,8 +859,8 @@ function renderDetail(){
     </tr>`;
   }).join('');
 
-  if (c.trx.length === 0){
-    rows += `<tr class="empty-row"><td colspan="6">Belum ada transaksi tercatat untuk customer ini.</td></tr>`;
+  if (trxList.length === 0){
+    rows += `<tr class="empty-row"><td colspan="6">Tidak ada transaksi pada periode ini.</td></tr>`;
   }
   document.getElementById('tbody-detail').innerHTML = rows;
 }
