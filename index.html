@@ -167,6 +167,7 @@ tbody tr.data-row:hover td{background:var(--brass-bg)}
 tr.row-reset td{background:var(--reset-y-bg)!important}
 tr.row-opnam td{background:var(--opnam-r-bg)!important;color:var(--opnam-r)!important}
 tr.row-opnam td .num-cell,tr.row-opnam .num-cell{color:var(--opnam-r)!important}
+tr.row-opnam td span{color:var(--opnam-r)!important}
 [data-theme="dark"] tr.row-reset td{background:var(--reset-y-bg)!important}
 
 /* ===== LEGEND / KODE & WARNA ===== */
@@ -641,10 +642,11 @@ function buildData(text){
     c.trx.forEach(t => {
       // OUT = pallet dikirim ke customer (menambah saldo di customer)
       // IN  = pallet dikembalikan dari customer (mengurangi saldo di customer)
-      // RESET & OPNAM adalah titik penyesuaian: saldo tidak diakumulasi dari transaksi
-      // sebelumnya, melainkan dipatok ulang berdasarkan nilai pada baris itu sendiri.
-      if (t.marker === 'reset' || t.marker === 'opnam') running = (t.outVal - t.inVal);
-      else running += (t.outVal - t.inVal);
+      // RESET & OPNAM tetap memakai rumus akumulasi biasa (saldo sebelumnya + out - in).
+      // Nilai yang ditulis di kolom IN/OUT pada baris RESET/OPNAM adalah angka penyesuaian
+      // yang sengaja diisi agar hasil akumulasi ini match dengan hasil fisik opname,
+      // bukan nilai mutlak pengganti saldo.
+      running += (t.outVal - t.inVal);
       t.saldo = running;
     });
     c.saldoAkhir = c.saldoAwal + c.sumOut - c.sumIn;
