@@ -259,6 +259,25 @@ tr.row-opnam td span{color:var(--opnam-r)!important}
 .trx-table tbody tr.awal-row td{background:var(--brass-bg);font-weight:600;color:var(--brass)}
 .trx-table tbody tr.awal-row:hover td{background:var(--brass-bg)!important}
 
+/* ===== MODAL: ANALISA AI ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(20,18,12,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);max-width:720px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border)}
+.modal-head h3{font-family:'Fraunces',serif;font-size:16.5px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px}
+.modal-head h3 svg{color:var(--brass);flex-shrink:0}
+.modal-close{background:none;border:none;font-size:22px;line-height:1;color:var(--ink3);cursor:pointer;padding:2px 6px;border-radius:6px;flex-shrink:0}
+.modal-close:hover{color:var(--ink);background:var(--bg)}
+.modal-desc{padding:14px 20px 0;font-size:12.5px;color:var(--ink2);line-height:1.65}
+.analysis-textarea{margin:14px 20px 6px;flex:1;min-height:280px;resize:vertical;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.55;padding:12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--ink);white-space:pre;overflow:auto}
+.modal-actions{display:flex;align-items:center;gap:12px;padding:4px 20px 18px}
+.copy-feedback{font-size:12px;color:var(--green);font-weight:600;opacity:0;transition:opacity .2s}
+.copy-feedback.show{opacity:1}
+@media(max-width:600px){
+  .modal-box{max-height:92vh}
+  .analysis-textarea{min-height:200px;font-size:10.3px}
+  .modal-head h3{font-size:15px}
+}
+
 /* ===== STATE BOXES ===== */
 .state-box{text-align:center;padding:4rem 1rem;color:var(--ink3)}
 .spinner{display:inline-block;width:26px;height:26px;border:2.5px solid var(--border2);border-top-color:var(--brass-mid);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:14px}
@@ -297,6 +316,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
   <div class="header-right">
     <button class="icon-btn icon-only" id="btn-refresh" onclick="refreshData()" title="Perbarui data" aria-label="Perbarui data">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
+    </button>
+    <button class="icon-btn" id="btn-analisa" onclick="openAnalysisModal()" title="Salin data untuk dianalisa AI">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M19 15l.7 1.6L21.3 17.3l-1.6.7L19 19.6l-.7-1.6L16.7 17.3l1.6-.7L19 15z"/></svg>
+      <span class="lbl">Analisa AI</span>
     </button>
     <button class="icon-btn primary" onclick="window.print()" title="Cetak laporan">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="0.5"/></svg>
@@ -552,6 +575,28 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
   </div>
 
   <footer class="credit">Data ditarik langsung dari Google Sheets · PT. Karya Indah Multiguna</footer>
+</div>
+
+<!-- ===== MODAL: ANALISA AI ===== -->
+<div id="analysis-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this) closeAnalysisModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M19 15l.7 1.6L21.3 17.3l-1.6.7L19 19.6l-.7-1.6L16.7 17.3l1.6-.7L19 15z"/></svg>
+        Analisa Kondisi Pallet dengan AI
+      </h3>
+      <button class="modal-close" onclick="closeAnalysisModal()" aria-label="Tutup">&times;</button>
+    </div>
+    <p class="modal-desc">Data di bawah ini sudah dirangkum khusus agar mudah dibaca oleh AI. Tekan <b>Salin Data</b>, lalu tempel (paste) ke AI yang Anda gunakan (ChatGPT, Claude, Gemini, dll.) dan biarkan AI tersebut menganalisa kondisi saldo pallet saat ini beserta kemungkinan risiko dan rekomendasinya.</p>
+    <textarea id="analysis-text" class="analysis-textarea" readonly onclick="this.select()"></textarea>
+    <div class="modal-actions">
+      <button class="icon-btn primary" onclick="copyAnalysisText()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Salin Data</span>
+      </button>
+      <span id="copy-feedback" class="copy-feedback">✓ Tersalin ke clipboard!</span>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1128,6 +1173,94 @@ async function silentRefresh(){
 
 window.addEventListener('hashchange', () => {
   if (!location.hash && currentDetailCode) goList();
+});
+
+/* ============================================================
+   ANALISA AI: rangkum data jadi teks siap tempel ke AI
+   ============================================================ */
+function buildAnalysisText(){
+  const lines = [];
+  lines.push('=== LAPORAN KONDISI SALDO PALLET — PT. KARYA INDAH MULTIGUNA ===');
+  lines.push(`Tanggal data terakhir: ${fmtDateLong(reportDate)}`);
+  lines.push('');
+  lines.push('RINGKASAN GLOBAL (seluruh customer, seluruh periode)');
+  lines.push(`- Jumlah customer terdaftar: ${globalStats.totalCust}`);
+  lines.push(`- Total Saldo Awal: ${fmtSaldo(globalStats.totalAwal)} pallet`);
+  lines.push(`- Total Pallet Masuk (IN): ${fmtNum(globalStats.totalIn)} pallet`);
+  lines.push(`- Total Pallet Keluar (OUT): ${fmtNum(globalStats.totalOut)} pallet`);
+  lines.push(`- Total Saldo Akhir saat ini: ${fmtSaldo(globalStats.totalAkhir)} pallet`);
+  lines.push('');
+  lines.push('PENJELASAN ISTILAH UNTUK KONTEKS ANALISA');
+  lines.push('- IN = pallet yang diterima kembali dari customer (mengurangi saldo di customer tsb).');
+  lines.push('- OUT = pallet yang dikirim dari perusahaan ke customer (menambah saldo di customer tsb).');
+  lines.push('- Saldo Akhir = jumlah pallet milik perusahaan yang saat ini tercatat berada di customer tsb.');
+  lines.push('- Saldo Max = rata-rata pergerakan pallet (IN+OUT) 3 bulan kalender terakhir × 50%; jadi ambang batas kewajaran saldo akhir.');
+  lines.push('- Status SEHAT = saldo akhir ≤ 100% Saldo Max. PANTAU = 100–200% Saldo Max. PERLU PERHATIAN = > 200% Saldo Max (indikasi pallet mengendap/berlebih).');
+  lines.push('- MH (Moving Health) = rata-rata pergerakan 3 bulan terakhir ÷ saldo akhir saat ini. Semakin tinggi = semakin cepat pallet berputar. > 4 sangat sehat, 2–4 cukup sehat, 1–2 kurang sehat, < 1 tidak sehat / berisiko pallet mengendap atau hilang.');
+  lines.push('- RESET = penyesuaian saat saldo akhir hasil perhitungan menjadi negatif/minus, dikembalikan ke 0 agar perhitungan berikutnya tetap akurat.');
+  lines.push('- OPNAM = penyesuaian saldo berdasarkan hasil pengecekan fisik lapangan bersama customer (adjustment).');
+  lines.push('');
+
+  const sorted = customers.slice().sort((a,b) => {
+    const order = { red:0, amber:1, green:2 };
+    return (order[a.status]-order[b.status]) || (b.saldoAkhir - a.saldoAkhir);
+  });
+
+  lines.push(`DATA PER CUSTOMER (${sorted.length} customer, diurutkan dari yang paling berisiko/tinggi saldonya)`);
+  lines.push('Format: Kode | Nama | Saldo Awal | In | Out | Saldo Akhir | Status | MH | Transaksi Terakhir | Hari Sejak Transaksi Terakhir');
+  sorted.forEach(c => {
+    const statusLbl = c.status === 'red' ? 'PERLU PERHATIAN' : (c.status === 'amber' ? 'PANTAU' : 'SEHAT');
+    const mhVal = isFinite(c.mh) ? c.mh.toFixed(2) : 'tak terhingga';
+    const lastDate = c.lastTrx ? fmtDateShort(c.lastTrx.date) : 'belum ada transaksi';
+    const days = c.daysSinceLast === Infinity ? '-' : c.daysSinceLast;
+    lines.push(`${c.code} | ${c.name} | ${fmtSaldo(c.saldoAwal)} | ${fmtNum(c.sumIn)} | ${fmtNum(c.sumOut)} | ${fmtSaldo(c.saldoAkhir)} | ${statusLbl} | ${mhVal} | ${lastDate} | ${days} hari`);
+  });
+
+  lines.push('');
+  lines.push('PERMINTAAN ANALISA UNTUK AI:');
+  lines.push('Berdasarkan data di atas, tolong analisa kondisi saldo pallet perusahaan saat ini secara keseluruhan. Sebutkan:');
+  lines.push('1. Customer mana saja yang paling berisiko (saldo mengendap/berlebih atau lama tidak ada transaksi) dan kenapa.');
+  lines.push('2. Pola atau kejanggalan yang terlihat dari data (mis. saldo naik terus tanpa pengembalian, transaksi berhenti tiba-tiba, dsb).');
+  lines.push('3. Kemungkinan penyebab atau risiko yang perlu diwaspadai (pallet hilang, tertahan lama, dsb).');
+  lines.push('4. Rekomendasi tindak lanjut yang bisa dilakukan tim untuk masing-masing kondisi tsb.');
+
+  return lines.join('\n');
+}
+
+function openAnalysisModal(){
+  document.getElementById('analysis-text').value = buildAnalysisText();
+  document.getElementById('analysis-modal').style.display = 'flex';
+  document.getElementById('copy-feedback').classList.remove('show');
+}
+
+function closeAnalysisModal(){
+  document.getElementById('analysis-modal').style.display = 'none';
+}
+
+function copyAnalysisText(){
+  const ta = document.getElementById('analysis-text');
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0, 999999);
+  const showFeedback = () => {
+    const fb = document.getElementById('copy-feedback');
+    fb.classList.add('show');
+    setTimeout(() => fb.classList.remove('show'), 2500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(showFeedback).catch(() => {
+      try { document.execCommand('copy'); showFeedback(); } catch(e){}
+    });
+  } else {
+    try { document.execCommand('copy'); showFeedback(); } catch(e){}
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape'){
+    const modal = document.getElementById('analysis-modal');
+    if (modal && modal.style.display === 'flex') closeAnalysisModal();
+  }
 });
 
 init();
