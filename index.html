@@ -142,20 +142,18 @@ thead th{background:var(--bg);border-bottom:1px solid var(--border);padding:11px
 tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--ink)}
 @media(max-width:760px){
   table{min-width:0;font-size:11.5px}
+  table.list-table{min-width:780px}
   thead th{padding:8px 6px;font-size:9px}
   tbody td{padding:8px 6px}
   .gauge{display:none}
   .code-tag{padding:1px 5px;font-size:9.8px}
   .trx-date .meta{max-width:110px;overflow:hidden;text-overflow:ellipsis}
-  table.list-table th:nth-child(1),table.list-table td:nth-child(1){display:none}
   .mh-cell{gap:3px;font-size:10.8px}
 }
 @media(max-width:420px){
   thead th{padding:7px 4px;font-size:8.5px}
   tbody td{padding:7px 4px}
   .cust-cell{font-size:11.5px}
-  table.list-table th:nth-child(5),table.list-table td:nth-child(5),
-  table.list-table th:nth-child(6),table.list-table td:nth-child(6){display:none}
 }
 tbody tr:last-child td{border-bottom:none}
 tbody tr.data-row{cursor:pointer;transition:background .12s}
@@ -354,7 +352,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <div class="sub">customer terdaftar</div>
       </div>
       <div class="stat-card neutral">
-        <div class="label">Saldo Awal</div>
+        <div class="label" id="s-awal-label">Saldo Awal</div>
         <div class="value" id="s-awal">—</div>
         <div class="sub">pallet</div>
       </div>
@@ -384,6 +382,9 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       <button class="chip" id="f-red" onclick="setFilter('red')"><span class="dot-sm" style="background:var(--red)"></span>Perlu Perhatian</button>
       <button class="chip" id="f-amber" onclick="setFilter('amber')"><span class="dot-sm" style="background:var(--amber)"></span>Pantau</button>
       <button class="chip" id="f-green" onclick="setFilter('green')"><span class="dot-sm" style="background:var(--green-mid)"></span>Sehat</button>
+      <select class="sort-select" id="list-month-filter" onchange="render()">
+        <option value="all">Semua Bulan</option>
+      </select>
       <select class="sort-select" id="sort-select" onchange="render()">
         <option value="name">Urutkan: Nama A-Z</option>
         <option value="akhir-desc">Saldo Akhir Terbesar</option>
@@ -812,13 +813,80 @@ function mhArrowSvg(category){
   return `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(${deg}deg)"><polyline points="19 12 12 5 5 12"/><line x1="12" y1="5" x2="12" y2="19"/></svg>`;
 }
 
+/* Kumpulkan semua bulan yang punya transaksi, gabungan dari seluruh customer */
+function getAllMonthsAcrossCustomers(){
+  const seen = new Set();
+  const months = [];
+  customers.forEach(c => {
+    c.trx.forEach(t => {
+      const key = `${t.date.getFullYear()}-${String(t.date.getMonth()+1).padStart(2,'0')}`;
+      if (!seen.has(key)){ seen.add(key); months.push({ key, y: t.date.getFullYear(), m: t.date.getMonth() }); }
+    });
+  });
+  months.sort((a,b) => (a.y - b.y) || (a.m - b.m));
+  return months;
+}
+
+function populateListMonthFilter(){
+  const sel = document.getElementById('list-month-filter');
+  const prevValue = sel.value || 'all';
+  const months = getAllMonthsAcrossCustomers();
+  let opts = '<option value="all">Semua Bulan</option>';
+  opts += months.map(mo => `<option value="${mo.key}">${MONTH_ID_LONG[mo.m]} ${mo.y}</option>`).join('');
+  sel.innerHTML = opts;
+  // pertahankan pilihan bulan sebelumnya bila masih tersedia (mis. setelah refresh)
+  const stillExists = Array.from(sel.options).some(o => o.value === prevValue);
+  sel.value = stillExists ? prevValue : 'all';
+}
+
+/* Hitung saldo awal/in/out/akhir customer untuk bulan tertentu (carry-over dari saldo berjalan
+   sebelum bulan tsb — sama seperti logika di tampilan detail per customer), tanpa menambahkan
+   baris carry-over di tabel — hanya dipakai untuk angka ringkasan. */
+function customerPeriodData(c, monthFilter){
+  if (!monthFilter || monthFilter === 'all'){
+    return { awal: c.saldoAwal, in: c.sumIn, out: c.sumOut, akhir: c.saldoAkhir };
+  }
+  const [fy, fm] = monthFilter.split('-').map(Number);
+  const startOfMonth = new Date(fy, fm - 1, 1);
+  const endOfMonth = new Date(fy, fm, 0, 23, 59, 59, 999);
+
+  const before = c.trx.filter(t => t.date < startOfMonth);
+  const awal = before.length ? before[before.length - 1].saldo : c.saldoAwal;
+
+  const inMonth = c.trx.filter(t => t.date >= startOfMonth && t.date <= endOfMonth);
+  const inSum = inMonth.reduce((s,t) => s + t.inVal, 0);
+  const outSum = inMonth.reduce((s,t) => s + t.outVal, 0);
+  const akhir = inMonth.length ? inMonth[inMonth.length - 1].saldo : awal;
+
+  return { awal, in: inSum, out: outSum, akhir };
+}
+
 function render(){
+  const monthFilter = document.getElementById('list-month-filter') ? document.getElementById('list-month-filter').value : 'all';
+
+  // hitung ulang saldo awal/in/out/akhir tiap customer sesuai bulan terpilih
+  let totalAwal = 0, totalIn = 0, totalOut = 0, totalAkhir = 0;
+  customers.forEach(c => {
+    const pd = customerPeriodData(c, monthFilter);
+    c._pAwal = pd.awal; c._pIn = pd.in; c._pOut = pd.out; c._pAkhir = pd.akhir;
+    totalAwal += pd.awal; totalIn += pd.in; totalOut += pd.out; totalAkhir += pd.akhir;
+  });
+
   document.getElementById('s-cust').textContent = fmtNum(globalStats.totalCust);
-  document.getElementById('s-awal').textContent = fmtSaldo(globalStats.totalAwal);
-  document.getElementById('s-in').textContent = fmtNum(globalStats.totalIn);
-  document.getElementById('s-out').textContent = fmtNum(globalStats.totalOut);
-  document.getElementById('s-akhir').textContent = fmtSaldo(globalStats.totalAkhir);
+  document.getElementById('s-awal').textContent = fmtSaldo(totalAwal);
+  document.getElementById('s-in').textContent = fmtNum(totalIn);
+  document.getElementById('s-out').textContent = fmtNum(totalOut);
+  document.getElementById('s-akhir').textContent = fmtSaldo(totalAkhir);
   document.getElementById('report-date-value').textContent = fmtDateShort(reportDate);
+
+  // label "Saldo Awal" berubah jadi "Saldo Awal <Bulan>" saat filter bulan aktif
+  const awalLabelEl = document.getElementById('s-awal-label');
+  if (monthFilter && monthFilter !== 'all'){
+    const fm = Number(monthFilter.split('-')[1]);
+    awalLabelEl.textContent = 'Saldo Awal ' + MONTH_ID_LONG[fm - 1];
+  } else {
+    awalLabelEl.textContent = 'Saldo Awal';
+  }
 
   const q = document.getElementById('search').value.trim().toLowerCase();
   const sortMode = document.getElementById('sort-select').value;
@@ -828,8 +896,8 @@ function render(){
   if (q) list = list.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
 
   if (sortMode === 'name') list.sort((a,b) => a.name.localeCompare(b.name));
-  else if (sortMode === 'akhir-desc') list.sort((a,b) => b.saldoAkhir - a.saldoAkhir);
-  else if (sortMode === 'akhir-asc') list.sort((a,b) => a.saldoAkhir - b.saldoAkhir);
+  else if (sortMode === 'akhir-desc') list.sort((a,b) => b._pAkhir - a._pAkhir);
+  else if (sortMode === 'akhir-asc') list.sort((a,b) => a._pAkhir - b._pAkhir);
   else if (sortMode === 'stale') list.sort((a,b) => (b.daysSinceLast===Infinity?99999:b.daysSinceLast) - (a.daysSinceLast===Infinity?99999:a.daysSinceLast));
 
   const tbody = document.getElementById('tbody-list');
@@ -851,14 +919,14 @@ function render(){
         <td class="no-cell">${idx+1}</td>
         <td><span class="code-tag">${c.code}</span></td>
         <td class="cust-cell">${c.name}</td>
-        <td class="num-cell">${fmtSaldoHTML(c.saldoAwal)}</td>
-        <td class="num-cell">${c.sumIn ? fmtNum(c.sumIn) : '–'}</td>
-        <td class="num-cell">${c.sumOut ? fmtNum(c.sumOut) : '–'}</td>
+        <td class="num-cell">${fmtSaldoHTML(c._pAwal)}</td>
+        <td class="num-cell">${c._pIn ? fmtNum(c._pIn) : '–'}</td>
+        <td class="num-cell">${c._pOut ? fmtNum(c._pOut) : '–'}</td>
         <td class="num-cell">
           <span class="saldo-cell">
             <span class="gauge" title="Level saldo relatif terhadap customer terbesar"><span class="gauge-fill ${c.status}" style="width:${c.gaugePct}%"></span></span>
             <span class="status-dot ${c.status}" title="${saldoDotTitle(c)}"></span>
-            ${fmtSaldoHTML(c.saldoAkhir)}
+            ${fmtSaldoHTML(c._pAkhir)}
           </span>
         </td>
         <td>
@@ -1009,6 +1077,7 @@ async function init(){
 
     document.getElementById('period-badge').style.display = 'inline-flex';
     document.getElementById('loading').style.display = 'none';
+    populateListMonthFilter();
 
     const hash = location.hash;
     if (hash.startsWith('#c/')){
@@ -1044,6 +1113,7 @@ async function silentRefresh(){
     buildData(text);
     if (customers.length === 0) return;
     document.getElementById('report-date-value').textContent = fmtDateShort(reportDate);
+    populateListMonthFilter();
     if (currentDetailCode && custByCode[currentDetailCode]) renderDetail();
     else render();
   } catch (e){
