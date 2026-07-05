@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Laporan Saldo Pallet — PT. Karya Indah Multiguna</title>
+<link rel="icon" type="image/png" href="logo.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1b1a17;--ink2:#5f5b52;--ink3:#9a9488;
+  --bg:#f6f3ec;--surface:#ffffff;--border:#e7e1d3;--border2:#d9d1bd;
+  --surface-glass:rgba(255,255,255,.62);--border-glass:rgba(231,225,211,.7);
+  --brass:#96741f;--brass-mid:#b8912f;--brass-bg:#f6ecd2;--brass-line:#d9b96b;
+  --green:#1f6e50;--green-bg:#e5f1e9;--green-mid:#2c8a63;
+  --amber:#a06a08;--amber-bg:#faf0d7;
+  --red:#a13a29;--red-bg:#f9e9e4;
+  --reset-y:#a17f00;--reset-y-bg:#fff2b0;--reset-y-line:#e6c235;
+  --opnam-r:#ffffff;--opnam-r-bg:#c0392b;--opnam-r-line:#a13a29;
+  --saldo-navy:#ffffff;--saldo-navy-bg:#1f3864;
+  --gray:#6b7280;--gray-bg:#e7e8ea;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 2px 18px rgba(30,26,16,.06);
+}
+[data-theme="dark"]{
+  --ink:#ece7db;--ink2:#b6afa0;--ink3:#726b5c;
+  --bg:#14130f;--surface:#1d1b16;--border:#332f25;--border2:#453f30;
+  --surface-glass:rgba(29,27,22,.55);--border-glass:rgba(51,47,37,.7);
+  --brass:#d9b563;--brass-mid:#e0c27c;--brass-bg:#2c260f;--brass-line:#6b551f;
+  --green:#4cbd8e;--green-bg:#123024;--green-mid:#4cbd8e;
+  --amber:#e0b64c;--amber-bg:#332608;
+  --red:#e28068;--red-bg:#341c15;
+  --reset-y:#f2d675;--reset-y-bg:#3a3210;--reset-y-line:#6b551f;
+  --opnam-r:#ffffff;--opnam-r-bg:#7a2a20;--opnam-r-line:#a13a29;
+  --saldo-navy:#dbe6ff;--saldo-navy-bg:#1c2b47;
+  --gray:#9aa1ab;--gray-bg:#2a2d33;
+  --shadow:0 4px 28px rgba(0,0,0,.45);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;transition:background .3s,color .3s}
+.mono{font-family:'JetBrains Mono',monospace}
+.serif{font-family:'Fraunces',serif}
+
+/* ===== HEADER ===== */
+.header{background:var(--surface-glass);border-bottom:1px solid var(--border-glass);padding:1.1rem 1.6rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;position:sticky;top:0;z-index:100;transition:background .3s,border-color .3s,box-shadow .3s;backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6)}
+.header.scrolled{box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:13px}
+.logo-circle{width:46px;height:46px;border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1.5px solid var(--brass-line);padding:4px;overflow:hidden;box-shadow:0 0 0 3px var(--brass-bg)}
+.logo-circle img{width:100%;height:100%;object-fit:contain;border-radius:6px}
+.logo-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--brass);font-size:20px}
+.brand-text h1{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--ink);line-height:1.2;letter-spacing:.01em}
+.brand-text p{font-size:11.5px;color:var(--ink3);margin-top:1px;font-family:'JetBrains Mono',monospace}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+.period-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:999px;background:var(--brass-bg);border:1px solid var(--brass-line);font-size:11.5px;color:var(--brass);font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--green-mid);position:relative;flex-shrink:0}
+.pulse-dot::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:var(--green-mid);opacity:.35;animation:pulse 1.8s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.7);opacity:.4}70%{transform:scale(1.7);opacity:0}100%{transform:scale(1.7);opacity:0}}
+
+.icon-btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px;border-radius:999px;border:1px solid var(--border2);background:var(--surface);color:var(--ink2);font-size:12.5px;font-family:inherit;font-weight:500;cursor:pointer;transition:all .18s}
+.icon-btn:hover{border-color:var(--brass-line);color:var(--brass)}
+.icon-btn svg{flex-shrink:0}
+.icon-btn.spinning svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.icon-btn.primary{background:linear-gradient(135deg,var(--brass-mid),var(--brass));color:#fff;border-color:var(--brass)}
+.icon-btn.primary:hover{filter:brightness(1.06);color:#fff}
+.icon-btn.icon-only{width:34px;padding:0;justify-content:center;gap:0}
+
+/* theme switch: pill with sun/moon icon riding inside the sliding knob */
+.theme-switch{display:inline-flex;align-items:center;padding:4px;border-radius:999px;border:1px solid var(--border2);background:var(--surface);height:34px;cursor:pointer}
+.switch-track{width:44px;height:24px;border-radius:999px;background:linear-gradient(135deg,#dfe6ee,#eef2f6);position:relative;cursor:pointer;transition:background .4s;flex-shrink:0;overflow:hidden}
+.switch-track.on{background:linear-gradient(135deg,var(--saldo-navy-bg),#0f1a2e)}
+.switch-track .sky-star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:0;transition:opacity .4s}
+.switch-track.on .sky-star{opacity:.85;animation:twinkle 2.4s ease-in-out infinite}
+.switch-track .sky-star.s1{top:5px;left:7px}
+.switch-track .sky-star.s2{top:14px;left:13px;animation-delay:.7s}
+.switch-thumb{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 1px 3px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;overflow:visible}
+.switch-track.on .switch-thumb{left:22px}
+.switch-thumb svg{position:absolute;transition:opacity .3s,transform .4s}
+.icon-sun{color:#e0a530;opacity:1;transform:rotate(0deg) scale(1)}
+.icon-moon{color:#5b6b8c;opacity:0;transform:rotate(-90deg) scale(.4)}
+.switch-track.on .icon-sun{opacity:0;transform:rotate(90deg) scale(.4)}
+.switch-track.on .icon-moon{opacity:1;transform:rotate(0deg) scale(1)}
+.sun-rays{transform-box:fill-box;transform-origin:center;animation:sunSpin 7s linear infinite}
+@keyframes sunSpin{to{transform:rotate(360deg)}}
+.moon-star{animation:twinkle 2.2s ease-in-out infinite}
+.moon-star.s2{animation-delay:.8s}
+@keyframes twinkle{0%,100%{opacity:.3}50%{opacity:1}}
+
+@media(max-width:760px){
+  .header{padding:.9rem 1rem}
+  .brand-text p{display:none}
+  .period-badge .pb-label{display:none}
+  .icon-btn .lbl{display:none}
+  .icon-btn{padding:0 10px}
+}
+
+/* ===== LAYOUT ===== */
+.container{max-width:1240px;margin:0 auto;padding:1.75rem 1.6rem 4rem}
+@media(max-width:760px){.container{padding:1.2rem 1rem 3rem}}
+
+.eyebrow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--brass);font-weight:600;margin-bottom:6px;font-family:'JetBrains Mono',monospace}
+.page-title{font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--ink3);margin-bottom:1.5rem}
+
+/* ===== STAT CARDS ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.stat-card.neutral::before{background:var(--border2)}
+.stat-card.brass::before{background:var(--brass-mid)}
+.stat-card.green::before{background:var(--green-mid)}
+.stat-card.red::before{background:var(--red)}
+.stat-card .label{font-size:10.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:9px;font-weight:600}
+.stat-card .value{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:600;color:var(--ink);line-height:1}
+.stat-card.brass .value{color:var(--brass)}
+.stat-card.green .value{color:var(--green)}
+.stat-card.red .value{color:var(--red)}
+.stat-card .sub{font-size:11px;color:var(--ink3);margin-top:5px}
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* ===== FILTER ROW ===== */
+.filter-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.search-wrap{position:relative;flex:1;min-width:220px}
+.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink3)}
+.search-wrap input{width:100%;height:38px;border:1px solid var(--border2);border-radius:var(--radius);padding:0 12px 0 34px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink);outline:none;transition:border .15s}
+.search-wrap input:focus{border-color:var(--brass-mid)}
+.chip{padding:0 13px;height:38px;border-radius:999px;border:1px solid var(--border2);background:var(--surface);font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink2);font-weight:500;transition:all .18s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.chip:hover{background:var(--bg)}
+.chip.on{background:linear-gradient(135deg,var(--brass-bg),var(--brass-bg));border-color:var(--brass-line);color:var(--brass);font-weight:600}
+.chip .dot-sm{width:7px;height:7px;border-radius:50%}
+.sort-select{height:38px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--ink2);font-size:12px;font-family:inherit;padding:0 10px;cursor:pointer;outline:none}
+
+/* ===== TABLE ===== */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow-x:auto;-webkit-overflow-scrolling:touch;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:12.8px;min-width:900px}
+thead th{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 14px;text-align:left;font-size:10.2px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--ink)}
+@media(max-width:760px){
+  table{min-width:0;font-size:11.5px}
+  table.list-table{min-width:780px}
+  thead th{padding:8px 6px;font-size:9px}
+  tbody td{padding:8px 6px}
+  .gauge{display:none}
+  .code-tag{padding:1px 5px;font-size:9.8px}
+  .trx-date .meta{max-width:110px;overflow:hidden;text-overflow:ellipsis}
+  .mh-cell{gap:3px;font-size:10.8px}
+}
+@media(max-width:420px){
+  thead th{padding:7px 4px;font-size:8.5px}
+  tbody td{padding:7px 4px}
+  .cust-cell{font-size:11.5px}
+}
+tbody tr:last-child td{border-bottom:none}
+tbody tr.data-row{cursor:pointer;transition:background .12s}
+tbody tr.data-row:hover td{background:var(--brass-bg)}
+[data-theme="dark"] tbody tr.data-row:hover td{background:rgba(217,181,99,.10)}
+.no-cell{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)}
+.code-tag{font-family:'JetBrains Mono',monospace;font-size:10.8px;background:var(--bg);border:1px solid var(--border);padding:2px 8px;border-radius:6px;color:var(--ink2);white-space:nowrap}
+.cust-cell{font-weight:600;font-size:12.8px}
+.num-cell{font-family:'JetBrains Mono',monospace;text-align:right;white-space:nowrap}
+.saldo-cell{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.status-dot.green{background:var(--green-mid);box-shadow:0 0 0 3px var(--green-bg)}
+.status-dot.amber{background:var(--amber);box-shadow:0 0 0 3px var(--amber-bg)}
+.status-dot.red{background:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
+.status-dot.gray{background:var(--gray);box-shadow:0 0 0 3px var(--gray-bg)}
+.gauge{width:32px;height:5px;border-radius:99px;background:var(--border);overflow:hidden;display:inline-block;margin-right:6px;vertical-align:middle}
+.gauge-fill{height:100%;border-radius:99px}
+.gauge-fill.green{background:var(--green-mid)}
+.gauge-fill.amber{background:var(--amber)}
+.gauge-fill.red{background:var(--red)}
+.gauge-fill.gray{background:var(--gray)}
+.mh-cell{font-family:'JetBrains Mono',monospace;font-size:11.8px;color:var(--ink2);display:flex;align-items:center;justify-content:flex-end;gap:5px;white-space:nowrap}
+.mh-cell svg{opacity:.9}
+.mh-cell.green svg{color:var(--green-mid)}
+.mh-cell.amber svg{color:var(--amber)}
+.mh-cell.gray svg{color:var(--gray)}
+.mh-cell.red svg{color:var(--red)}
+
+/* ===== TAG RESET / OPNAM ===== */
+.tag-reset,.tag-opnam{display:inline-block;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;letter-spacing:.03em;padding:3px 9px;border-radius:6px;white-space:nowrap}
+.tag-reset{background:var(--reset-y-bg);color:var(--reset-y);border:1px solid var(--reset-y-line)}
+.tag-opnam{background:var(--opnam-r-bg);color:var(--opnam-r);border:1px solid var(--opnam-r-line)}
+tr.row-reset td{background:var(--reset-y-bg)!important}
+tr.row-opnam td{background:var(--opnam-r-bg)!important;color:var(--opnam-r)!important}
+tr.row-opnam td .num-cell,tr.row-opnam .num-cell{color:var(--opnam-r)!important}
+tr.row-opnam td span{color:var(--opnam-r)!important}
+[data-theme="dark"] tr.row-reset td{background:var(--reset-y-bg)!important}
+
+/* ===== LEGEND / KODE & WARNA ===== */
+.legend-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:1.2rem;overflow:hidden}
+.legend-box summary{list-style:none;cursor:pointer;padding:10px 16px;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink2);user-select:none}
+.legend-box summary::-webkit-details-marker{display:none}
+.legend-box summary .chev-sm{transition:transform .2s;margin-left:auto;color:var(--ink3)}
+.legend-box[open] summary .chev-sm{transform:rotate(90deg)}
+.legend-body{padding:2px 16px 14px;display:flex;flex-direction:column;gap:10px}
+.legend-item{display:flex;gap:10px;align-items:flex-start}
+.legend-chip{flex-shrink:0;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;padding:3px 10px;border-radius:6px;white-space:nowrap;margin-top:1px}
+.legend-chip.reset{background:var(--reset-y-bg);color:var(--reset-y);border:1px solid var(--reset-y-line)}
+.legend-chip.opnam{background:var(--opnam-r-bg);color:var(--opnam-r);border:1px solid var(--opnam-r-line)}
+.legend-chip.in,.legend-chip.out{background:var(--green-bg);color:var(--green);border:1px solid var(--green-mid)}
+.legend-chip.saldo{background:var(--saldo-navy-bg);color:var(--saldo-navy)}
+.legend-item p{font-size:12px;color:var(--ink2);line-height:1.5}
+.legend-item p b{color:var(--ink)}
+.legend-pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--brass-mid);position:relative;flex-shrink:0}
+.legend-pulse-dot::before{content:'';position:absolute;inset:-4px;border-radius:50%;background:var(--brass-mid);opacity:.4;animation:pulse 1.6s ease-out infinite}
+.legend-hint{font-size:10.5px;color:var(--brass);font-weight:600;animation:hintFade 1.6s ease-in-out infinite}
+@keyframes hintFade{0%,100%{opacity:.5}50%{opacity:1}}
+.legend-box.legend-seen .legend-pulse-dot{display:none}
+.legend-box.legend-seen .legend-hint{display:none}
+.legend-divider{height:1px;background:var(--border);margin:4px 0 2px}
+.legend-subtitle{font-size:11.5px;font-weight:700;color:var(--ink);margin-top:2px}
+.legend-color-grid{display:flex;flex-direction:column;gap:7px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:2px}
+.lc-row{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ink2)}
+.lc-row .status-dot{flex-shrink:0}
+.mh-arrow{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;flex-shrink:0}
+.mh-arrow.green{color:var(--green-mid)}
+.mh-arrow.amber{color:var(--amber)}
+.mh-arrow.gray{color:var(--gray)}
+.mh-arrow.red{color:var(--red)}
+.trx-date{font-size:11.5px;color:var(--ink2);display:flex;flex-direction:column;gap:1px}
+.trx-date .meta{font-size:10px;color:var(--ink3);font-family:'JetBrains Mono',monospace}
+.trx-date.warn{color:var(--amber)}
+.trx-date.warn .meta{color:var(--amber)}
+.trx-date.severe{color:var(--red)}
+.trx-date.severe .meta{color:var(--red)}
+.chev{color:var(--ink3);flex-shrink:0}
+.tfoot-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;font-size:11.5px;color:var(--ink3);border-top:1px solid var(--border);background:var(--bg)}
+
+/* ===== DETAIL VIEW ===== */
+.back-btn{display:inline-flex;align-items:center;gap:7px;background:none;border:none;color:var(--ink2);font-size:12.5px;font-weight:600;cursor:pointer;padding:6px 0;margin-bottom:14px;font-family:inherit}
+.back-btn:hover{color:var(--brass)}
+.detail-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:1.4rem}
+.detail-title h2{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--ink)}
+.detail-title p{font-size:12px;color:var(--ink3);margin-top:4px;font-family:'JetBrains Mono',monospace}
+.detail-side{display:flex;gap:10px;flex-wrap:wrap}
+.side-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 16px;text-align:center;min-width:90px}
+.side-box .n{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;color:var(--brass)}
+.side-box .l{font-size:9.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem;border-top:3px solid var(--border2)}
+.sum-card.awal{border-top-color:var(--ink3)}
+.sum-card.in{border-top-color:var(--green-mid)}
+.sum-card.out{border-top-color:var(--red)}
+.sum-card.akhir{border-top-color:var(--brass-mid);background:var(--brass-bg)}
+.sum-card .l{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.sum-card .v{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;margin-top:6px}
+.sum-card.in .v{color:var(--green)}
+.sum-card.out .v{color:var(--red)}
+.sum-card.akhir .v{color:var(--brass)}
+@media(max-width:700px){.summary-strip{grid-template-columns:repeat(2,1fr)}}
+
+.trx-table tbody tr.awal-row td{background:var(--brass-bg);font-weight:600;color:var(--brass)}
+.trx-table tbody tr.awal-row:hover td{background:var(--brass-bg)!important}
+
+/* ===== MODAL: ANALISA AI ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(20,18,12,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);max-width:720px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border)}
+.modal-head h3{font-family:'Fraunces',serif;font-size:16.5px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px}
+.modal-head h3 svg{color:var(--brass);flex-shrink:0}
+.modal-close{background:none;border:none;font-size:22px;line-height:1;color:var(--ink3);cursor:pointer;padding:2px 6px;border-radius:6px;flex-shrink:0}
+.modal-close:hover{color:var(--ink);background:var(--bg)}
+.modal-desc{padding:14px 20px 0;font-size:12.5px;color:var(--ink2);line-height:1.65}
+.analysis-textarea{margin:14px 20px 6px;flex:1;min-height:280px;resize:vertical;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.55;padding:12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--ink);white-space:pre;overflow:auto}
+.modal-actions{display:flex;align-items:center;gap:12px;padding:4px 20px 18px}
+.copy-feedback{font-size:12px;color:var(--green);font-weight:600;opacity:0;transition:opacity .2s}
+.copy-feedback.show{opacity:1}
+@media(max-width:600px){
+  .modal-box{max-height:92vh}
+  .analysis-textarea{min-height:200px;font-size:10.3px}
+  .modal-head h3{font-size:15px}
+}
+
+/* ===== STATE BOXES ===== */
+.state-box{text-align:center;padding:4rem 1rem;color:var(--ink3)}
+.spinner{display:inline-block;width:26px;height:26px;border:2.5px solid var(--border2);border-top-color:var(--brass-mid);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:14px}
+.state-box p{font-size:13.5px}
+.err-box{background:var(--red-bg);border:1px solid var(--red);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;font-size:13px;color:var(--red)}
+.empty-row td{text-align:center;padding:3rem 1rem;color:var(--ink3);font-size:13px}
+
+footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--ink3);font-family:'JetBrains Mono',monospace}
+
+/* ===== PRINT ===== */
+@media print{
+  @page{margin:10mm}
+  .theme-switch,.icon-btn,.filter-row,.back-btn,.chip{display:none!important}
+  body{background:#fff}
+  .header{position:static!important;box-shadow:none!important;border-bottom:1.5px solid #ccc!important}
+  .table-wrap{box-shadow:none!important;overflow:visible!important;border:1px solid #ccc}
+  table{min-width:0!important;font-size:10px}
+}
+</style>
+</head>
+<body>
+
+<div class="header" id="header">
+  <div class="brand">
+    <div class="logo-circle" id="logo-wrap">
+      <img src="logo.png" alt="Logo" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='flex'"/>
+      <div class="logo-fallback" id="logo-fallback" style="display:none">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg>
+      </div>
+    </div>
+    <div class="brand-text">
+      <h1>Laporan Saldo Pallet</h1>
+      <p>PT. KARYA INDAH MULTIGUNA · PERIODE 2026</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn icon-only" id="btn-refresh" onclick="refreshData()" title="Perbarui data" aria-label="Perbarui data">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
+    </button>
+    <button class="icon-btn" id="btn-analisa" onclick="openAnalysisModal()" title="Salin data untuk dianalisa AI">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M19 15l.7 1.6L21.3 17.3l-1.6.7L19 19.6l-.7-1.6L16.7 17.3l1.6-.7L19 15z"/></svg>
+      <span class="lbl">Analisa AI</span>
+    </button>
+    <button class="icon-btn primary" onclick="window.print()" title="Cetak laporan">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="0.5"/></svg>
+      <span class="lbl">Cetak</span>
+    </button>
+    <div class="theme-switch" onclick="toggleTheme()" role="button" aria-label="Ganti tema">
+      <div class="switch-track" id="switch-track">
+        <span class="sky-star s1"></span>
+        <span class="sky-star s2"></span>
+        <div class="switch-thumb">
+          <svg class="icon-sun" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <g class="sun-rays">
+              <line x1="12" y1="1.5" x2="12" y2="3.2"/><line x1="12" y1="20.8" x2="12" y2="22.5"/>
+              <line x1="4.22" y1="4.22" x2="5.4" y2="5.4"/><line x1="18.6" y1="18.6" x2="19.78" y2="19.78"/>
+              <line x1="1.5" y1="12" x2="3.2" y2="12"/><line x1="20.8" y1="12" x2="22.5" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.4" y2="18.6"/><line x1="18.6" y1="5.4" x2="19.78" y2="4.22"/>
+            </g>
+            <circle cx="12" cy="12" r="4.3" fill="currentColor" stroke="none"/>
+          </svg>
+          <svg class="icon-moon" width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>
+            <circle class="moon-star s1" cx="6.2" cy="6" r="0.8" fill="currentColor"/>
+            <circle class="moon-star s2" cx="4.3" cy="13.5" r="0.55" fill="currentColor"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <span class="period-badge" id="period-badge" style="display:none">
+      <span class="pulse-dot"></span>
+      <span class="pb-label">Update:</span>
+      <span id="report-date-value">—</span>
+    </span>
+  </div>
+</div>
+
+<div class="container">
+  <div id="err-box" class="err-box" style="display:none"></div>
+  <div id="loading" class="state-box">
+    <div class="spinner"></div>
+    <p>Mengambil data pallet dari spreadsheet…</p>
+  </div>
+
+  <!-- ===== VIEW: LIST ===== -->
+  <div id="view-list" style="display:none">
+    <div class="eyebrow">Daftar Saldo Pallet</div>
+    <div class="page-title">Saldo Pallet di Customer</div>
+    <div class="page-sub" id="page-sub">Ringkasan saldo awal, mutasi, dan saldo akhir pallet per customer.</div>
+
+    <div class="stats-grid">
+      <div class="stat-card neutral">
+        <div class="label">Σ Customer</div>
+        <div class="value" id="s-cust">—</div>
+        <div class="sub">customer terdaftar</div>
+      </div>
+      <div class="stat-card neutral">
+        <div class="label" id="s-awal-label">Saldo Awal</div>
+        <div class="value" id="s-awal">—</div>
+        <div class="sub">pallet</div>
+      </div>
+      <div class="stat-card green">
+        <div class="label">Total In</div>
+        <div class="value" id="s-in">—</div>
+        <div class="sub">pallet masuk</div>
+      </div>
+      <div class="stat-card red">
+        <div class="label">Total Out</div>
+        <div class="value" id="s-out">—</div>
+        <div class="sub">pallet keluar</div>
+      </div>
+      <div class="stat-card brass">
+        <div class="label">Saldo Akhir</div>
+        <div class="value" id="s-akhir">—</div>
+        <div class="sub">pallet di lapangan</div>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search" placeholder="Cari nama customer atau kode..." oninput="render()"/>
+      </div>
+      <button class="chip on" id="f-all" onclick="setFilter('all')">Semua</button>
+      <button class="chip" id="f-red" onclick="setFilter('red')"><span class="dot-sm" style="background:var(--red)"></span>Perlu Perhatian</button>
+      <button class="chip" id="f-amber" onclick="setFilter('amber')"><span class="dot-sm" style="background:var(--amber)"></span>Pantau</button>
+      <button class="chip" id="f-green" onclick="setFilter('green')"><span class="dot-sm" style="background:var(--green-mid)"></span>Sehat</button>
+      <select class="sort-select" id="list-month-filter" onchange="render()">
+        <option value="all">Semua Bulan</option>
+      </select>
+      <select class="sort-select" id="sort-select" onchange="render()">
+        <option value="name">Urutkan: Nama A-Z</option>
+        <option value="akhir-desc">Saldo Akhir Terbesar</option>
+        <option value="akhir-asc">Saldo Akhir Terkecil</option>
+        <option value="stale">Paling Lama Tidak Aktif</option>
+      </select>
+    </div>
+
+    <details class="legend-box" id="legend-box">
+      <summary>
+        <span class="legend-pulse-dot"></span>
+        <span>🎨 Kode &amp; Warna Transaksi</span>
+        <span class="legend-hint">Ketuk untuk lihat penjelasan</span>
+        <svg class="chev-sm" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </summary>
+      <div class="legend-body">
+        <div class="legend-item">
+          <span class="legend-chip reset">RESET</span>
+          <p><b>RESET</b> dilakukan ketika saldo akhir menjadi negatif atau muncul tanda kurung, misal (20) dibaca min 20. Saldo dikembalikan ke 0 agar perhitungan transaksi berikutnya tetap akurat dan tidak membawa error dari data sebelumnya.</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip opnam">OPNAM</span>
+          <p><b>OPNAM</b> dilakukan ketika KIM dan customer menyamakan data saldo pallet berdasarkan hasil pengecekan lapangan / informasi valid. Data hasil opname dicatat sebagai dasar penyesuaian saldo (adjustment).</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip in">IN</span>
+          <p><b>IN</b> adalah pallet yang diterima kembali dari customer (balikan). Setiap transaksi IN akan mengurangi saldo akhir customer.</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip out">OUT</span>
+          <p><b>OUT</b> adalah pallet yang dikirim dari KIM ke customer. Setiap transaksi OUT akan menambah saldo akhir customer.</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip saldo">SALDO</span>
+          <p><b>Saldo</b> adalah jumlah pallet milik KIM yang tercatat berada di customer pada periode berjalan. Saldo berubah mengikuti transaksi IN, OUT, serta penyesuaian melalui OPNAM atau RESET bila diperlukan.</p>
+        </div>
+
+        <div class="legend-divider"></div>
+        <div class="legend-subtitle">Titik Warna pada Saldo Akhir (Saldo Max)</div>
+        <div class="legend-item">
+          <p><b>Saldo Max</b> = rata-rata pergerakan pallet (IN + OUT) selama 3 bulan terakhir sebelum bulan berjalan × 50%. Nilai ini jadi ambang wajar bagi saldo akhir customer.</p>
+        </div>
+        <div class="legend-color-grid">
+          <div class="lc-row"><span class="status-dot green"></span>Saldo Akhir ≤ 100% Saldo Max — kondisi sehat</div>
+          <div class="lc-row"><span class="status-dot amber"></span>Saldo Akhir 100–200% Saldo Max — mulai tinggi, perlu monitoring</div>
+          <div class="lc-row"><span class="status-dot red"></span>Saldo Akhir &gt; 200% Saldo Max — saldo berlebih, potensi pallet mengendap</div>
+        </div>
+
+        <div class="legend-divider"></div>
+        <div class="legend-subtitle">Panah MH (Moving Health)</div>
+        <div class="legend-item">
+          <p><b>MH</b> = rata-rata pergerakan pallet (IN + OUT) 3 bulan terakhir ÷ saldo akhir saat ini. Semakin tinggi nilainya, semakin cepat pallet berputar di customer tersebut.</p>
+        </div>
+        <div class="legend-color-grid">
+          <div class="lc-row"><span class="mh-arrow green"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="19 12 12 5 5 12"/><line x1="12" y1="5" x2="12" y2="19"/></svg></span>&gt; 4 — Sangat Sehat, pallet bergerak cepat</div>
+          <div class="lc-row"><span class="mh-arrow amber"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(45deg)"><polyline points="19 12 12 5 5 12"/><line x1="12" y1="5" x2="12" y2="19"/></svg></span>2 – 4 — Cukup Sehat, pergerakan normal</div>
+          <div class="lc-row"><span class="mh-arrow gray"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(135deg)"><polyline points="19 12 12 5 5 12"/><line x1="12" y1="5" x2="12" y2="19"/></svg></span>1 – 2 — Kurang Sehat, pergerakan rendah</div>
+          <div class="lc-row"><span class="mh-arrow red"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><polyline points="19 12 12 5 5 12"/><line x1="12" y1="5" x2="12" y2="19"/></svg></span>&lt; 1 — Tidak Sehat, mengendap / risiko pallet hilang</div>
+        </div>
+      </div>
+    </details>
+
+    <div class="table-wrap">
+      <table class="list-table">
+        <thead>
+          <tr>
+            <th style="width:36px">No</th>
+            <th style="width:88px">C.Code</th>
+            <th>Customer</th>
+            <th style="text-align:right">Saldo Awal</th>
+            <th style="text-align:right">In</th>
+            <th style="text-align:right">Out</th>
+            <th style="text-align:right">Saldo Akhir</th>
+            <th style="text-align:right" title="Rata-rata pergerakan pallet (IN+OUT) 3 bulan terakhir ÷ saldo akhir saat ini">MH</th>
+            <th>Transaksi Terakhir</th>
+            <th style="width:24px"></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-list"></tbody>
+      </table>
+      <div class="tfoot-row">
+        <span id="foot-count"></span>
+        <span id="foot-note">MH = rata-rata pergerakan (IN+OUT) 3 bulan terakhir ÷ saldo akhir saat ini</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: DETAIL ===== -->
+  <div id="view-detail" style="display:none">
+    <button class="back-btn" onclick="goList()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Kembali ke Daftar
+    </button>
+    <div class="detail-head">
+      <div class="detail-title">
+        <h2 id="d-name">—</h2>
+        <p><span id="d-code">—</span> · Laporan per <span id="d-reportdate">—</span></p>
+      </div>
+      <div class="detail-side">
+        <div class="side-box"><div class="n" id="d-cust-count">—</div><div class="l">Σ Customer</div></div>
+        <div class="side-box"><div class="n" id="d-trx-count">—</div><div class="l">Σ Transaksi</div></div>
+        <div class="side-box"><div class="n" id="d-month-count">—</div><div class="l">Input Bln Ini</div></div>
+      </div>
+    </div>
+
+    <div class="summary-strip">
+      <div class="sum-card awal"><div class="l">Saldo Awal</div><div class="v" id="d-awal">—</div></div>
+      <div class="sum-card in"><div class="l">Jumlah In</div><div class="v" id="d-in">—</div></div>
+      <div class="sum-card out"><div class="l">Jumlah Out</div><div class="v" id="d-out">—</div></div>
+      <div class="sum-card akhir"><div class="l">Saldo Akhir</div><div class="v" id="d-akhir">—</div></div>
+    </div>
+
+    <details class="legend-box" id="legend-box-detail">
+      <summary>
+        <span class="legend-pulse-dot"></span>
+        <span>🎨 Kode &amp; Warna Transaksi</span>
+        <span class="legend-hint">Ketuk untuk lihat penjelasan</span>
+        <svg class="chev-sm" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </summary>
+      <div class="legend-body">
+        <div class="legend-item">
+          <span class="legend-chip reset">RESET</span>
+          <p><b>RESET</b> dilakukan ketika saldo akhir menjadi negatif atau muncul tanda kurung, misal (20) dibaca min 20. Saldo dikembalikan ke 0 agar perhitungan transaksi berikutnya tetap akurat.</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip opnam">OPNAM</span>
+          <p><b>OPNAM</b> dilakukan ketika KIM dan customer menyamakan data saldo pallet berdasarkan hasil pengecekan lapangan / informasi valid, sebagai dasar penyesuaian saldo (adjustment).</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip in">IN</span>
+          <p><b>IN</b> adalah pallet yang diterima kembali dari customer (balikan), mengurangi saldo akhir customer.</p>
+        </div>
+        <div class="legend-item">
+          <span class="legend-chip out">OUT</span>
+          <p><b>OUT</b> adalah pallet yang dikirim dari KIM ke customer, menambah saldo akhir customer.</p>
+        </div>
+      </div>
+    </details>
+
+    <div class="filter-row">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="d-search" placeholder="Cari nomor polisi atau tanggal..." oninput="renderDetail()"/>
+      </div>
+      <select class="sort-select" id="d-month-filter" onchange="renderDetail()">
+        <option value="all">Semua Bulan</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table class="trx-table">
+        <thead>
+          <tr>
+            <th style="width:36px">No</th>
+            <th>Tanggal</th>
+            <th>No Pol</th>
+            <th style="text-align:right">In</th>
+            <th style="text-align:right">Out</th>
+            <th style="text-align:right">Saldo</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-detail"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer class="credit">Data ditarik langsung dari Google Sheets · PT. Karya Indah Multiguna</footer>
+</div>
+
+<!-- ===== MODAL: ANALISA AI ===== -->
+<div id="analysis-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this) closeAnalysisModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M19 15l.7 1.6L21.3 17.3l-1.6.7L19 19.6l-.7-1.6L16.7 17.3l1.6-.7L19 15z"/></svg>
+        Analisa Kondisi Pallet dengan AI
+      </h3>
+      <button class="modal-close" onclick="closeAnalysisModal()" aria-label="Tutup">&times;</button>
+    </div>
+    <p class="modal-desc">Data di bawah ini sudah dirangkum khusus agar mudah dibaca oleh AI. Tekan <b>Salin Data</b>, lalu tempel (paste) ke AI yang Anda gunakan (ChatGPT, Claude, Gemini, dll.) dan biarkan AI tersebut menganalisa kondisi saldo pallet saat ini beserta kemungkinan risiko dan rekomendasinya.</p>
+    <textarea id="analysis-text" class="analysis-textarea" readonly onclick="this.select()"></textarea>
+    <div class="modal-actions">
+      <button class="icon-btn primary" onclick="copyAnalysisText()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Salin Data</span>
+      </button>
+      <span id="copy-feedback" class="copy-feedback">✓ Tersalin ke clipboard!</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   KONFIGURASI SUMBER DATA
+   ============================================================ */
+// URL sumber data di-encode (base64, dipecah beberapa bagian) agar tidak langsung terbaca saat inspect element.
+// Catatan: ini hanya penyamaran sederhana, bukan enkripsi/keamanan sesungguhnya.
+const _p1 = 'aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvZS8yUEFDWC0xdlQwLUczbkxJ';
+const _p2 = 'MXN6LTVNMmdveHlTU0NBYmxuS0hkc0E5Z2UtVm5jX3lNelZJQ2dJc2VrX0d5Zzl5ZHk2ZUx6ZUEv';
+const _p3 = 'cHViP2dpZD0xNTM2MTQyMTE3JnNpbmdsZT10cnVlJm91dHB1dD1jc3Y=';
+const CSV_URL = atob(_p1 + _p2 + _p3);
+
+const MONTH_ID_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const MONTH_ID_LONG  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const MONTH_MAP = {jan:0,feb:1,mar:2,apr:3,mei:4,jun:5,jul:6,agu:7,sep:8,okt:9,nov:10,des:11};
+
+let customers = [];      // array of customer records
+let custByCode = {};      // normCode -> customer record
+let globalStats = {};
+let reportDate = null;
+let currentFilter = 'all';
+let currentDetailCode = null;
+
+/* ============================================================
+   CSV PARSER (menangani koma & tanda kutip di dalam nilai)
+   ============================================================ */
+function parseCSVText(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (inQuotes){
+      if (c === '"'){
+        if (text[i+1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\r') { /* skip */ }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else field += c;
+    }
+  }
+  if (field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+function parseNumber(s){
+  if (s === null || s === undefined) return 0;
+  s = String(s).trim();
+  if (s === '' || s === '-') return 0;
+  s = s.replace(/[^\d-]/g, '');
+  const n = parseInt(s, 10);
+  return isNaN(n) ? 0 : n;
+}
+
+function normCode(code){
+  let c = (code || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (/^[\d.]+$/.test(c)) c = c.replace(/\./g, ''); // format ribuan spreadsheet, mis. "1.270" -> "1270"
+  return c;
+}
+
+function parseDateID(str){
+  if (!str) return null;
+  str = str.trim();
+  const m = str.match(/^(\d{1,2})-([A-Za-z]{3,4})-(\d{2,4})$/);
+  if (!m) return null;
+  const day = parseInt(m[1], 10);
+  const mon = MONTH_MAP[m[2].toLowerCase().slice(0,3)];
+  if (mon === undefined) return null;
+  let year = parseInt(m[3], 10);
+  if (year < 100) year += 2000;
+  const d = new Date(year, mon, day);
+  if (year < 2020 || year > 2100) return null; // buang baris pengisi/junk
+  return d;
+}
+
+function fmtDateShort(d){
+  if (!d) return '—';
+  return `${d.getDate()}-${MONTH_ID_SHORT[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`;
+}
+function fmtDateLong(d){
+  if (!d) return '—';
+  return `${d.getDate()} ${MONTH_ID_LONG[d.getMonth()]} ${d.getFullYear()}`;
+}
+function fmtNum(n){
+  return (n || 0).toLocaleString('id-ID');
+}
+// format saldo: nilai negatif ditampilkan dalam tanda kurung, mis. (20) = min 20, sesuai konvensi pada spreadsheet
+function fmtSaldo(n){
+  n = n || 0;
+  const plain = Math.abs(n).toLocaleString('id-ID');
+  return n < 0 ? `(${plain})` : plain;
+}
+function fmtSaldoHTML(n){
+  n = n || 0;
+  const plain = Math.abs(n).toLocaleString('id-ID');
+  return n < 0 ? `<span style="color:var(--red)">(${plain})</span>` : plain;
+}
+
+/* ============================================================
+   PARSING DATA UTAMA
+   ============================================================ */
+function buildData(text){
+  const rows = parseCSVText(text);
+  custByCode = {};
+  let firstDate = null, lastDate = null;
+
+  // --- 1. Tabel master saldo awal (kolom I-K / index 8-10) ---
+  for (let i = 0; i < rows.length; i++){
+    const r = rows[i];
+    if (!r || r.length < 11) continue;
+    const code = (r[8] || '').trim();
+    const name = (r[9] || '').trim();
+    const saldoRaw = (r[10] || '').trim();
+    if (!code || code.toLowerCase() === 'c.code') continue;
+    if (!name || name.toLowerCase() === 'total') continue;
+    const norm = normCode(code);
+    if (!custByCode[norm]){
+      custByCode[norm] = {
+        code: code, name: name, saldoAwal: parseNumber(saldoRaw),
+        sumIn: 0, sumOut: 0, trx: []
+      };
+    }
+  }
+
+  // --- 2. Baris transaksi (kolom A-G / index 0-6) ---
+  for (let i = 1; i < rows.length; i++){
+    const r = rows[i];
+    if (!r || r.length < 5) continue;
+    const dateStr = (r[0] || '').trim();
+    const codeRaw = (r[1] || '').trim();
+    const noPol = (r[2] || '').trim();
+    const inVal = parseNumber(r[3]);
+    const outVal = parseNumber(r[4]);
+    const nameRaw = (r[6] || '').trim();
+
+    // buang baris kosong/pengisi: kode "-", kode "0", atau kombinasi tanpa data nyata
+    if (!codeRaw || codeRaw === '0' || /^-+$/.test(codeRaw.replace(/\s+/g,''))) continue;
+    const date = parseDateID(dateStr);
+    if (!date) continue;
+    if (inVal === 0 && outVal === 0 && (!noPol || noPol === '0')) continue;
+
+    const norm = normCode(codeRaw);
+    if (!custByCode[norm]){
+      custByCode[norm] = {
+        code: norm, name: nameRaw || '', saldoAwal: 0,
+        sumIn: 0, sumOut: 0, trx: []
+      };
+    }
+    const cust = custByCode[norm];
+    if (nameRaw) cust.name = nameRaw; // nama customer selalu mengikuti kolom G bila tersedia; kosong bila tidak ada
+    cust.sumIn += inVal;
+    cust.sumOut += outVal;
+
+    // deteksi kode khusus RESET / OPNAM pada kolom "No Mobil"
+    const noPolUp = noPol.trim().toUpperCase();
+    let marker = null;
+    if (noPolUp === 'RESET') marker = 'reset';
+    else if (noPolUp === 'OPNAM') marker = 'opnam';
+
+    cust.trx.push({ date, noPol, inVal, outVal, marker, _idx: i });
+
+    if (!firstDate || date < firstDate) firstDate = date;
+    if (!lastDate || date > lastDate) lastDate = date;
+  }
+
+  reportDate = lastDate || new Date();
+
+  // 3 bulan kalender sebelum bulan berjalan (mis. bulan berjalan Juli -> Apr, Mei, Jun)
+  const curY = reportDate.getFullYear(), curM = reportDate.getMonth();
+  const prev3Months = [1, 2, 3].map(offset => {
+    let m = curM - offset, y = curY;
+    if (m < 0){ m += 12; y -= 1; }
+    return { y, m };
+  });
+  function monthlyMovement(trx, y, m){
+    return trx.reduce((s,t) => (t.date.getFullYear() === y && t.date.getMonth() === m) ? s + t.inVal + t.outVal : s, 0);
+  }
+
+  // --- 3. Finalisasi tiap customer ---
+  customers = Object.keys(custByCode).map(norm => {
+    const c = custByCode[norm];
+    c.trx.sort((a,b) => (a.date - b.date) || (a._idx - b._idx));
+    let running = c.saldoAwal;
+    c.trx.forEach(t => {
+      // OUT = pallet dikirim ke customer (menambah saldo di customer)
+      // IN  = pallet dikembalikan dari customer (mengurangi saldo di customer)
+      // RESET & OPNAM tetap memakai rumus akumulasi biasa (saldo sebelumnya + out - in).
+      // Nilai yang ditulis di kolom IN/OUT pada baris RESET/OPNAM adalah angka penyesuaian
+      // yang sengaja diisi agar hasil akumulasi ini match dengan hasil fisik opname,
+      // bukan nilai mutlak pengganti saldo.
+      running += (t.outVal - t.inVal);
+      t.saldo = running;
+    });
+    c.saldoAkhir = c.saldoAwal + c.sumOut - c.sumIn;
+    c.lastTrx = c.trx.length ? c.trx[c.trx.length - 1] : null;
+    c.daysSinceLast = c.lastTrx ? Math.round((reportDate - c.lastTrx.date) / 86400000) : Infinity;
+
+    // rata-rata pergerakan pallet (IN+OUT) 3 bulan kalender terakhir sebelum bulan berjalan
+    c.avgMovement3 = prev3Months.reduce((s, pm) => s + monthlyMovement(c.trx, pm.y, pm.m), 0) / 3;
+
+    // Saldo Max = setengah dari rata-rata movement 3 bulan -> ambang kewajaran saldo akhir
+    c.saldoMax = c.avgMovement3 * 0.5;
+    const ratio = c.saldoMax > 0 ? (c.saldoAkhir / c.saldoMax) : (c.saldoAkhir > 0 ? Infinity : 0);
+    c.saldoMaxRatio = ratio;
+    if (ratio <= 1) c.status = 'green';
+    else if (ratio <= 2) c.status = 'amber';
+    else c.status = 'red';
+
+    // MH (Moving Health) = rata-rata movement 3 bulan ÷ saldo akhir saat ini
+    c.mh = c.saldoAkhir > 0 ? (c.avgMovement3 / c.saldoAkhir) : (c.avgMovement3 > 0 ? Infinity : 0);
+    if (!isFinite(c.mh) || c.mh > 4) c.mhCategory = 'green';
+    else if (c.mh >= 2) c.mhCategory = 'amber';
+    else if (c.mh >= 1) c.mhCategory = 'gray';
+    else c.mhCategory = 'red';
+
+    c.monthCount = c.trx.filter(t => t.date.getMonth() === reportDate.getMonth() && t.date.getFullYear() === reportDate.getFullYear()).length;
+    return c;
+  }).filter(c => c.name && c.name.trim() !== ''); // sembunyikan customer yang tidak punya nama
+
+  const maxAkhir = Math.max(1, ...customers.map(c => c.saldoAkhir));
+  customers.forEach(c => { c.gaugePct = Math.max(0, Math.min(100, Math.round((c.saldoAkhir / maxAkhir) * 100))); });
+
+  globalStats = {
+    totalCust: customers.length,
+    totalAwal: customers.reduce((s,c) => s + c.saldoAwal, 0),
+    totalIn: customers.reduce((s,c) => s + c.sumIn, 0),
+    totalOut: customers.reduce((s,c) => s + c.sumOut, 0),
+    totalAkhir: customers.reduce((s,c) => s + c.saldoAkhir, 0),
+  };
+}
+
+/* ============================================================
+   RENDER: DAFTAR (LIST VIEW)
+   ============================================================ */
+function setFilter(f){
+  currentFilter = f;
+  ['all','red','amber','green'].forEach(k => document.getElementById('f-'+k).classList.toggle('on', k===f));
+  render();
+}
+
+function statusLabel(status, days){
+  if (status === 'red') return 'Perlu perhatian';
+  if (status === 'amber') return 'Pantau';
+  return 'Sehat';
+}
+
+function saldoDotTitle(c){
+  const pct = isFinite(c.saldoMaxRatio) ? Math.round(c.saldoMaxRatio * 100) + '%' : '∞';
+  return `${statusLabel(c.status)} — Saldo Akhir ${pct} dari Saldo Max (${fmtNum(Math.round(c.saldoMax))})`;
+}
+
+function mhTitle(c){
+  const label = { green:'Sangat Sehat', amber:'Cukup Sehat', gray:'Kurang Sehat', red:'Tidak Sehat' }[c.mhCategory];
+  return `MH ${isFinite(c.mh) ? c.mh.toFixed(2) : '∞'} — ${label}`;
+}
+
+const MH_ROTATE = { green:0, amber:45, gray:135, red:180 };
+function mhArrowSvg(category){
+  const deg = MH_ROTATE[category] ?? 0;
+  return `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(${deg}deg)"><polyline points="19 12 12 5 5 12"/><line x1="12" y1="5" x2="12" y2="19"/></svg>`;
+}
+
+/* Kumpulkan semua bulan yang punya transaksi, gabungan dari seluruh customer */
+function getAllMonthsAcrossCustomers(){
+  const seen = new Set();
+  const months = [];
+  customers.forEach(c => {
+    c.trx.forEach(t => {
+      const key = `${t.date.getFullYear()}-${String(t.date.getMonth()+1).padStart(2,'0')}`;
+      if (!seen.has(key)){ seen.add(key); months.push({ key, y: t.date.getFullYear(), m: t.date.getMonth() }); }
+    });
+  });
+  months.sort((a,b) => (a.y - b.y) || (a.m - b.m));
+  return months;
+}
+
+function populateListMonthFilter(){
+  const sel = document.getElementById('list-month-filter');
+  const prevValue = sel.value || 'all';
+  const months = getAllMonthsAcrossCustomers();
+  let opts = '<option value="all">Semua Bulan</option>';
+  opts += months.map(mo => `<option value="${mo.key}">${MONTH_ID_LONG[mo.m]} ${mo.y}</option>`).join('');
+  sel.innerHTML = opts;
+  // pertahankan pilihan bulan sebelumnya bila masih tersedia (mis. setelah refresh)
+  const stillExists = Array.from(sel.options).some(o => o.value === prevValue);
+  sel.value = stillExists ? prevValue : 'all';
+}
+
+/* Hitung saldo awal/in/out/akhir customer untuk bulan tertentu (carry-over dari saldo berjalan
+   sebelum bulan tsb — sama seperti logika di tampilan detail per customer), tanpa menambahkan
+   baris carry-over di tabel — hanya dipakai untuk angka ringkasan. */
+function customerPeriodData(c, monthFilter){
+  if (!monthFilter || monthFilter === 'all'){
+    return { awal: c.saldoAwal, in: c.sumIn, out: c.sumOut, akhir: c.saldoAkhir };
+  }
+  const [fy, fm] = monthFilter.split('-').map(Number);
+  const startOfMonth = new Date(fy, fm - 1, 1);
+  const endOfMonth = new Date(fy, fm, 0, 23, 59, 59, 999);
+
+  const before = c.trx.filter(t => t.date < startOfMonth);
+  const awal = before.length ? before[before.length - 1].saldo : c.saldoAwal;
+
+  const inMonth = c.trx.filter(t => t.date >= startOfMonth && t.date <= endOfMonth);
+  const inSum = inMonth.reduce((s,t) => s + t.inVal, 0);
+  const outSum = inMonth.reduce((s,t) => s + t.outVal, 0);
+  const akhir = inMonth.length ? inMonth[inMonth.length - 1].saldo : awal;
+
+  return { awal, in: inSum, out: outSum, akhir };
+}
+
+function render(){
+  const monthFilter = document.getElementById('list-month-filter') ? document.getElementById('list-month-filter').value : 'all';
+
+  // hitung ulang saldo awal/in/out/akhir tiap customer sesuai bulan terpilih
+  let totalAwal = 0, totalIn = 0, totalOut = 0, totalAkhir = 0;
+  customers.forEach(c => {
+    const pd = customerPeriodData(c, monthFilter);
+    c._pAwal = pd.awal; c._pIn = pd.in; c._pOut = pd.out; c._pAkhir = pd.akhir;
+    totalAwal += pd.awal; totalIn += pd.in; totalOut += pd.out; totalAkhir += pd.akhir;
+  });
+
+  document.getElementById('s-cust').textContent = fmtNum(globalStats.totalCust);
+  document.getElementById('s-awal').textContent = fmtSaldo(totalAwal);
+  document.getElementById('s-in').textContent = fmtNum(totalIn);
+  document.getElementById('s-out').textContent = fmtNum(totalOut);
+  document.getElementById('s-akhir').textContent = fmtSaldo(totalAkhir);
+  document.getElementById('report-date-value').textContent = fmtDateShort(reportDate);
+
+  // label "Saldo Awal" berubah jadi "Saldo Awal <Bulan>" saat filter bulan aktif
+  const awalLabelEl = document.getElementById('s-awal-label');
+  if (monthFilter && monthFilter !== 'all'){
+    const fm = Number(monthFilter.split('-')[1]);
+    awalLabelEl.textContent = 'Saldo Awal ' + MONTH_ID_LONG[fm - 1];
+  } else {
+    awalLabelEl.textContent = 'Saldo Awal';
+  }
+
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const sortMode = document.getElementById('sort-select').value;
+
+  let list = customers.slice();
+  if (currentFilter !== 'all') list = list.filter(c => c.status === currentFilter);
+  if (q) list = list.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
+
+  if (sortMode === 'name') list.sort((a,b) => a.name.localeCompare(b.name));
+  else if (sortMode === 'akhir-desc') list.sort((a,b) => b._pAkhir - a._pAkhir);
+  else if (sortMode === 'akhir-asc') list.sort((a,b) => a._pAkhir - b._pAkhir);
+  else if (sortMode === 'stale') list.sort((a,b) => (b.daysSinceLast===Infinity?99999:b.daysSinceLast) - (a.daysSinceLast===Infinity?99999:a.daysSinceLast));
+
+  const tbody = document.getElementById('tbody-list');
+  if (list.length === 0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="10">Tidak ada customer yang cocok dengan pencarian/filter.</td></tr>`;
+  } else {
+    tbody.innerHTML = list.map((c, idx) => {
+      const warn = c.daysSinceLast > 60 ? 'severe' : (c.daysSinceLast > 7 ? 'warn' : '');
+      const warnIcon = warn ? ' ⚠' : '';
+      let lastPolInfo = 'Belum ada transaksi';
+      if (c.lastTrx){
+        const lt = c.lastTrx;
+        const suffix = lt.outVal ? ' [Out:'+lt.outVal+']' : (lt.inVal ? ' [In:'+lt.inVal+']' : '');
+        if (lt.marker === 'reset') lastPolInfo = `<span class="tag-reset">RESET</span>${suffix}`;
+        else if (lt.marker === 'opnam') lastPolInfo = `<span class="tag-opnam">OPNAM</span>${suffix}`;
+        else lastPolInfo = `${lt.noPol}${suffix}`;
+      }
+      return `<tr class="data-row" onclick="showDetail('${c.code.replace(/'/g,"\\'")}')">
+        <td class="no-cell">${idx+1}</td>
+        <td><span class="code-tag">${c.code}</span></td>
+        <td class="cust-cell">${c.name}</td>
+        <td class="num-cell">${fmtSaldoHTML(c._pAwal)}</td>
+        <td class="num-cell">${c._pIn ? fmtNum(c._pIn) : '–'}</td>
+        <td class="num-cell">${c._pOut ? fmtNum(c._pOut) : '–'}</td>
+        <td class="num-cell">
+          <span class="saldo-cell">
+            <span class="gauge" title="Level saldo relatif terhadap customer terbesar"><span class="gauge-fill ${c.status}" style="width:${c.gaugePct}%"></span></span>
+            <span class="status-dot ${c.status}" title="${saldoDotTitle(c)}"></span>
+            ${fmtSaldoHTML(c._pAkhir)}
+          </span>
+        </td>
+        <td>
+          <span class="mh-cell ${c.mhCategory}" title="${mhTitle(c)}">
+            ${mhArrowSvg(c.mhCategory)}
+            ${isFinite(c.mh) ? c.mh.toFixed(1) : '∞'}
+          </span>
+        </td>
+        <td>
+          <div class="trx-date ${warn}">
+            <span>${c.lastTrx ? fmtDateShort(c.lastTrx.date) : '—'}${warnIcon}</span>
+            <span class="meta">${lastPolInfo}</span>
+          </div>
+        </td>
+        <td class="chev">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('foot-count').textContent = `Menampilkan ${list.length} dari ${customers.length} customer`;
+}
+
+/* ============================================================
+   RENDER: DETAIL PER CUSTOMER
+   ============================================================ */
+function showDetail(code){
+  currentDetailCode = code.toUpperCase();
+  location.hash = 'c/' + encodeURIComponent(code);
+  document.getElementById('view-list').style.display = 'none';
+  document.getElementById('view-detail').style.display = 'block';
+  document.getElementById('d-search').value = '';
+  populateMonthFilter(custByCode[currentDetailCode]);
+  renderDetail();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function populateMonthFilter(c){
+  const sel = document.getElementById('d-month-filter');
+  if (!c){ sel.innerHTML = '<option value="all">Semua Bulan</option>'; return; }
+  const seen = new Set();
+  const months = [];
+  c.trx.forEach(t => {
+    const key = `${t.date.getFullYear()}-${String(t.date.getMonth()+1).padStart(2,'0')}`;
+    if (!seen.has(key)){ seen.add(key); months.push({ key, y: t.date.getFullYear(), m: t.date.getMonth() }); }
+  });
+  months.sort((a,b) => (a.y - b.y) || (a.m - b.m));
+  let opts = '<option value="all">Semua Bulan</option>';
+  opts += months.map(mo => `<option value="${mo.key}">${MONTH_ID_LONG[mo.m]} ${mo.y}</option>`).join('');
+  sel.innerHTML = opts;
+  sel.value = 'all';
+}
+
+function goList(){
+  currentDetailCode = null;
+  location.hash = '';
+  document.getElementById('view-detail').style.display = 'none';
+  document.getElementById('view-list').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+  silentRefresh();
+}
+
+function renderDetail(){
+  const c = custByCode[currentDetailCode];
+  if (!c){ goList(); return; }
+
+  document.getElementById('d-name').textContent = c.name || '(Tanpa Nama)';
+  document.getElementById('d-code').textContent = 'C.Code ' + c.code;
+  document.getElementById('d-reportdate').textContent = fmtDateLong(reportDate);
+  document.getElementById('d-cust-count').textContent = fmtNum(globalStats.totalCust);
+  document.getElementById('d-trx-count').textContent = fmtNum(c.trx.length);
+  document.getElementById('d-month-count').textContent = fmtNum(c.monthCount);
+
+  const monthFilter = document.getElementById('d-month-filter').value;
+  let trxList = c.trx;
+  let periodAwal = c.saldoAwal, periodIn = c.sumIn, periodOut = c.sumOut, periodAkhir = c.saldoAkhir;
+  let awalLabel = 'Saldo Awal →';
+
+  if (monthFilter && monthFilter !== 'all'){
+    const [fy, fm] = monthFilter.split('-').map(Number);
+    const startOfMonth = new Date(fy, fm - 1, 1);
+    const endOfMonth = new Date(fy, fm, 0, 23, 59, 59, 999);
+
+    // saldo awal periode = saldo berjalan terakhir sebelum bulan terpilih (carry-over dari input bulan sebelumnya)
+    const before = c.trx.filter(t => t.date < startOfMonth);
+    periodAwal = before.length ? before[before.length - 1].saldo : c.saldoAwal;
+    if (before.length){
+      const lastBefore = before[before.length - 1].date;
+      awalLabel = `Saldo Awal (carry-over per ${fmtDateShort(lastBefore)}) →`;
+    } else {
+      awalLabel = 'Saldo Awal →';
+    }
+
+    const inMonth = c.trx.filter(t => t.date >= startOfMonth && t.date <= endOfMonth);
+    periodIn = inMonth.reduce((s,t) => s + t.inVal, 0);
+    periodOut = inMonth.reduce((s,t) => s + t.outVal, 0);
+    periodAkhir = inMonth.length ? inMonth[inMonth.length - 1].saldo : periodAwal;
+    trxList = inMonth;
+  }
+
+  document.getElementById('d-awal').textContent = fmtSaldo(periodAwal);
+  document.getElementById('d-in').textContent = fmtNum(periodIn);
+  document.getElementById('d-out').textContent = fmtNum(periodOut);
+  document.getElementById('d-akhir').textContent = fmtSaldo(periodAkhir);
+
+  const q = document.getElementById('d-search').value.trim().toLowerCase();
+  if (q) trxList = trxList.filter(t => t.noPol.toLowerCase().includes(q) || fmtDateShort(t.date).toLowerCase().includes(q));
+
+  let rows = `<tr class="awal-row"><td class="no-cell">—</td><td>${awalLabel}</td><td>—</td><td class="num-cell">–</td><td class="num-cell">–</td><td class="num-cell">${fmtSaldoHTML(periodAwal)}</td></tr>`;
+  rows += trxList.map((t, idx) => {
+    const rowClass = t.marker === 'reset' ? 'row-reset' : (t.marker === 'opnam' ? 'row-opnam' : '');
+    let noPolCell;
+    if (t.marker === 'reset') noPolCell = `<span class="tag-reset">RESET</span>`;
+    else if (t.marker === 'opnam') noPolCell = `<span class="tag-opnam">OPNAM</span>`;
+    else noPolCell = `<span class="code-tag" style="display:inline-block">${t.noPol || '—'}</span>`;
+    return `<tr class="${rowClass}">
+      <td class="no-cell">${idx+1}</td>
+      <td>${fmtDateShort(t.date)}</td>
+      <td>${noPolCell}</td>
+      <td class="num-cell">${t.inVal ? fmtNum(t.inVal) : '–'}</td>
+      <td class="num-cell">${t.outVal ? fmtNum(t.outVal) : '–'}</td>
+      <td class="num-cell">${fmtSaldoHTML(t.saldo)}</td>
+    </tr>`;
+  }).join('');
+
+  if (trxList.length === 0){
+    rows += `<tr class="empty-row"><td colspan="6">Tidak ada transaksi pada periode ini.</td></tr>`;
+  }
+  document.getElementById('tbody-detail').innerHTML = rows;
+}
+
+/* ============================================================
+   INIT / FETCH
+   ============================================================ */
+async function init(){
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('view-list').style.display = 'none';
+  document.getElementById('view-detail').style.display = 'none';
+  document.getElementById('err-box').style.display = 'none';
+  document.getElementById('period-badge').style.display = 'none';
+  try {
+    const t = new Date().getTime();
+    const res = await fetch(`${CSV_URL}&t=${t}`);
+    if (!res.ok) throw new Error('Gagal menarik data dari Google Sheets.');
+    const text = await res.text();
+    buildData(text);
+    if (customers.length === 0) throw new Error('Data tidak dapat diproses. Periksa struktur kolom pada spreadsheet.');
+
+    document.getElementById('period-badge').style.display = 'inline-flex';
+    document.getElementById('loading').style.display = 'none';
+    populateListMonthFilter();
+
+    const hash = location.hash;
+    if (hash.startsWith('#c/')){
+      const code = decodeURIComponent(hash.slice(3));
+      if (custByCode[code.toUpperCase()]){ showDetail(code); return; }
+    }
+    document.getElementById('view-list').style.display = 'block';
+    render();
+  } catch (e){
+    console.error(e);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('err-box').style.display = 'block';
+    document.getElementById('err-box').innerHTML = `⚠️ <strong>Gagal memuat data:</strong> ${e.message}`;
+  }
+}
+
+function refreshData(){
+  const btn = document.getElementById('btn-refresh');
+  btn.classList.add('spinning');
+  setTimeout(() => btn.classList.remove('spinning'), 900);
+  init();
+}
+
+/* Refresh data quietly in the background (no loading overlay) — dipakai saat kembali ke daftar */
+async function silentRefresh(){
+  const btn = document.getElementById('btn-refresh');
+  btn.classList.add('spinning');
+  try {
+    const t = new Date().getTime();
+    const res = await fetch(`${CSV_URL}&t=${t}`);
+    if (!res.ok) return;
+    const text = await res.text();
+    buildData(text);
+    if (customers.length === 0) return;
+    document.getElementById('report-date-value').textContent = fmtDateShort(reportDate);
+    populateListMonthFilter();
+    if (currentDetailCode && custByCode[currentDetailCode]) renderDetail();
+    else render();
+  } catch (e){
+    console.error('Silent refresh gagal:', e);
+  } finally {
+    setTimeout(() => btn.classList.remove('spinning'), 400);
+  }
+}
+
+window.addEventListener('hashchange', () => {
+  if (!location.hash && currentDetailCode) goList();
+});
+
+/* ============================================================
+   ANALISA AI: rangkum data jadi teks siap tempel ke AI
+   ============================================================ */
+function buildAnalysisText(){
+  const lines = [];
+  lines.push('=== LAPORAN KONDISI SALDO PALLET — PT. KARYA INDAH MULTIGUNA ===');
+  lines.push(`Tanggal data terakhir: ${fmtDateLong(reportDate)}`);
+  lines.push('');
+  lines.push('RINGKASAN GLOBAL (seluruh customer, seluruh periode)');
+  lines.push(`- Jumlah customer terdaftar: ${globalStats.totalCust}`);
+  lines.push(`- Total Saldo Awal: ${fmtSaldo(globalStats.totalAwal)} pallet`);
+  lines.push(`- Total Pallet Masuk (IN): ${fmtNum(globalStats.totalIn)} pallet`);
+  lines.push(`- Total Pallet Keluar (OUT): ${fmtNum(globalStats.totalOut)} pallet`);
+  lines.push(`- Total Saldo Akhir saat ini: ${fmtSaldo(globalStats.totalAkhir)} pallet`);
+  lines.push('');
+  lines.push('PENJELASAN ISTILAH UNTUK KONTEKS ANALISA');
+  lines.push('- IN = pallet yang diterima kembali dari customer (mengurangi saldo di customer tsb).');
+  lines.push('- OUT = pallet yang dikirim dari perusahaan ke customer (menambah saldo di customer tsb).');
+  lines.push('- Saldo Akhir = jumlah pallet milik perusahaan yang saat ini tercatat berada di customer tsb.');
+  lines.push('- Saldo Max = rata-rata pergerakan pallet (IN+OUT) 3 bulan kalender terakhir × 50%; jadi ambang batas kewajaran saldo akhir.');
+  lines.push('- Status SEHAT = saldo akhir ≤ 100% Saldo Max. PANTAU = 100–200% Saldo Max. PERLU PERHATIAN = > 200% Saldo Max (indikasi pallet mengendap/berlebih).');
+  lines.push('- MH (Moving Health) = rata-rata pergerakan 3 bulan terakhir ÷ saldo akhir saat ini. Semakin tinggi = semakin cepat pallet berputar. > 4 sangat sehat, 2–4 cukup sehat, 1–2 kurang sehat, < 1 tidak sehat / berisiko pallet mengendap atau hilang.');
+  lines.push('- RESET = penyesuaian saat saldo akhir hasil perhitungan menjadi negatif/minus, dikembalikan ke 0 agar perhitungan berikutnya tetap akurat.');
+  lines.push('- OPNAM = penyesuaian saldo berdasarkan hasil pengecekan fisik lapangan bersama customer (adjustment).');
+  lines.push('');
+
+  const sorted = customers.slice().sort((a,b) => {
+    const order = { red:0, amber:1, green:2 };
+    return (order[a.status]-order[b.status]) || (b.saldoAkhir - a.saldoAkhir);
+  });
+
+  lines.push(`DATA PER CUSTOMER (${sorted.length} customer, diurutkan dari yang paling berisiko/tinggi saldonya)`);
+  lines.push('Format: Kode | Nama | Saldo Awal | In | Out | Saldo Akhir | Status | MH | Transaksi Terakhir | Hari Sejak Transaksi Terakhir');
+  sorted.forEach(c => {
+    const statusLbl = c.status === 'red' ? 'PERLU PERHATIAN' : (c.status === 'amber' ? 'PANTAU' : 'SEHAT');
+    const mhVal = isFinite(c.mh) ? c.mh.toFixed(2) : 'tak terhingga';
+    const lastDate = c.lastTrx ? fmtDateShort(c.lastTrx.date) : 'belum ada transaksi';
+    const days = c.daysSinceLast === Infinity ? '-' : c.daysSinceLast;
+    lines.push(`${c.code} | ${c.name} | ${fmtSaldo(c.saldoAwal)} | ${fmtNum(c.sumIn)} | ${fmtNum(c.sumOut)} | ${fmtSaldo(c.saldoAkhir)} | ${statusLbl} | ${mhVal} | ${lastDate} | ${days} hari`);
+  });
+
+  lines.push('');
+  lines.push('PERMINTAAN ANALISA UNTUK AI:');
+  lines.push('Berdasarkan data di atas, tolong analisa kondisi saldo pallet perusahaan saat ini secara keseluruhan. Sebutkan:');
+  lines.push('1. Customer mana saja yang paling berisiko (saldo mengendap/berlebih atau lama tidak ada transaksi) dan kenapa.');
+  lines.push('2. Pola atau kejanggalan yang terlihat dari data (mis. saldo naik terus tanpa pengembalian, transaksi berhenti tiba-tiba, dsb).');
+  lines.push('3. Kemungkinan penyebab atau risiko yang perlu diwaspadai (pallet hilang, tertahan lama, dsb).');
+  lines.push('4. Rekomendasi tindak lanjut yang bisa dilakukan tim untuk masing-masing kondisi tsb.');
+
+  return lines.join('\n');
+}
+
+function openAnalysisModal(){
+  document.getElementById('analysis-text').value = buildAnalysisText();
+  document.getElementById('analysis-modal').style.display = 'flex';
+  document.getElementById('copy-feedback').classList.remove('show');
+}
+
+function closeAnalysisModal(){
+  document.getElementById('analysis-modal').style.display = 'none';
+}
+
+function copyAnalysisText(){
+  const ta = document.getElementById('analysis-text');
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0, 999999);
+  const showFeedback = () => {
+    const fb = document.getElementById('copy-feedback');
+    fb.classList.add('show');
+    setTimeout(() => fb.classList.remove('show'), 2500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(showFeedback).catch(() => {
+      try { document.execCommand('copy'); showFeedback(); } catch(e){}
+    });
+  } else {
+    try { document.execCommand('copy'); showFeedback(); } catch(e){}
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape'){
+    const modal = document.getElementById('analysis-modal');
+    if (modal && modal.style.display === 'flex') closeAnalysisModal();
+  }
+});
+
+init();
+
+/* ============================================================
+   HEADER SCROLL EFFECT
+   ============================================================ */
+(function(){
+  const hdr = document.getElementById('header');
+  window.addEventListener('scroll', () => {
+    hdr.classList.toggle('scrolled', window.scrollY > 8);
+  }, { passive: true });
+})();
+
+/* ============================================================
+   TEMA GELAP / TERANG
+   ============================================================ */
+function toggleTheme(){
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  document.getElementById('switch-track').classList.toggle('on', next === 'dark');
+  localStorage.setItem('pallet-theme', next);
+}
+(function(){
+  const saved = localStorage.getItem('pallet-theme');
+  if (saved === 'dark'){
+    document.documentElement.setAttribute('data-theme','dark');
+    document.getElementById('switch-track').classList.add('on');
+  }
+})();
+
+/* ============================================================
+   LEGEND: sembunyikan default, kasih tanda pulse sampai dibuka
+   ============================================================ */
+(function(){
+  const SEEN_KEY = 'pallet-legend-seen';
+  const boxes = document.querySelectorAll('.legend-box');
+  const markSeen = () => {
+    localStorage.setItem(SEEN_KEY, '1');
+    boxes.forEach(b => b.classList.add('legend-seen'));
+  };
+  if (localStorage.getItem(SEEN_KEY)) boxes.forEach(b => b.classList.add('legend-seen'));
+  boxes.forEach(box => {
+    box.addEventListener('toggle', () => { if (box.open) markSeen(); });
+  });
+})();
+</script>
+</body>
+</html>
