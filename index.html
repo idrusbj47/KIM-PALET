@@ -67,14 +67,28 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 @keyframes spin{to{transform:rotate(360deg)}}
 .icon-btn.primary{background:linear-gradient(135deg,var(--brass-mid),var(--brass));color:#fff;border-color:var(--brass)}
 .icon-btn.primary:hover{filter:brightness(1.06);color:#fff}
+.icon-btn.icon-only{width:34px;padding:0;justify-content:center;gap:0}
 
-/* theme switch */
-.theme-switch{display:inline-flex;align-items:center;gap:8px;padding:4px 6px 4px 12px;border-radius:999px;border:1px solid var(--border2);background:var(--surface);height:34px}
-.theme-switch span.lbl{font-size:11.5px;color:var(--ink2);font-weight:500;white-space:nowrap}
-.switch-track{width:38px;height:20px;border-radius:999px;background:var(--border2);position:relative;cursor:pointer;transition:background .25s;flex-shrink:0}
-.switch-track.on{background:linear-gradient(135deg,var(--brass-mid),var(--brass))}
-.switch-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .25s;box-shadow:0 1px 3px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:9px}
-.switch-track.on .switch-thumb{left:20px}
+/* theme switch: pill with sun/moon icon riding inside the sliding knob */
+.theme-switch{display:inline-flex;align-items:center;padding:4px;border-radius:999px;border:1px solid var(--border2);background:var(--surface);height:34px;cursor:pointer}
+.switch-track{width:44px;height:24px;border-radius:999px;background:linear-gradient(135deg,#dfe6ee,#eef2f6);position:relative;cursor:pointer;transition:background .4s;flex-shrink:0;overflow:hidden}
+.switch-track.on{background:linear-gradient(135deg,var(--saldo-navy-bg),#0f1a2e)}
+.switch-track .sky-star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:0;transition:opacity .4s}
+.switch-track.on .sky-star{opacity:.85;animation:twinkle 2.4s ease-in-out infinite}
+.switch-track .sky-star.s1{top:5px;left:7px}
+.switch-track .sky-star.s2{top:14px;left:13px;animation-delay:.7s}
+.switch-thumb{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 1px 3px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;overflow:visible}
+.switch-track.on .switch-thumb{left:22px}
+.switch-thumb svg{position:absolute;transition:opacity .3s,transform .4s}
+.icon-sun{color:#e0a530;opacity:1;transform:rotate(0deg) scale(1)}
+.icon-moon{color:#5b6b8c;opacity:0;transform:rotate(-90deg) scale(.4)}
+.switch-track.on .icon-sun{opacity:0;transform:rotate(90deg) scale(.4)}
+.switch-track.on .icon-moon{opacity:1;transform:rotate(0deg) scale(1)}
+.sun-rays{transform-box:fill-box;transform-origin:center;animation:sunSpin 7s linear infinite}
+@keyframes sunSpin{to{transform:rotate(360deg)}}
+.moon-star{animation:twinkle 2.2s ease-in-out infinite}
+.moon-star.s2{animation-delay:.8s}
+@keyframes twinkle{0%,100%{opacity:.3}50%{opacity:1}}
 
 @media(max-width:760px){
   .header{padding:.9rem 1rem}
@@ -133,13 +147,15 @@ tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:
   .gauge{display:none}
   .code-tag{padding:1px 5px;font-size:9.8px}
   .trx-date .meta{max-width:110px;overflow:hidden;text-overflow:ellipsis}
-  table.list-table th:nth-child(8),table.list-table td:nth-child(8){display:none}
+  table.list-table th:nth-child(1),table.list-table td:nth-child(1){display:none}
+  .mh-cell{gap:3px;font-size:10.8px}
 }
 @media(max-width:420px){
   thead th{padding:7px 4px;font-size:8.5px}
   tbody td{padding:7px 4px}
   .cust-cell{font-size:11.5px}
-  table.list-table th:nth-child(4),table.list-table td:nth-child(4){display:none}
+  table.list-table th:nth-child(5),table.list-table td:nth-child(5),
+  table.list-table th:nth-child(6),table.list-table td:nth-child(6){display:none}
 }
 tbody tr:last-child td{border-bottom:none}
 tbody tr.data-row{cursor:pointer;transition:background .12s}
@@ -155,7 +171,7 @@ tbody tr.data-row:hover td{background:var(--brass-bg)}
 .status-dot.amber{background:var(--amber);box-shadow:0 0 0 3px var(--amber-bg)}
 .status-dot.red{background:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
 .status-dot.gray{background:var(--gray);box-shadow:0 0 0 3px var(--gray-bg)}
-.gauge{width:52px;height:5px;border-radius:99px;background:var(--border);overflow:hidden;display:inline-block;margin-right:8px;vertical-align:middle}
+.gauge{width:32px;height:5px;border-radius:99px;background:var(--border);overflow:hidden;display:inline-block;margin-right:6px;vertical-align:middle}
 .gauge-fill{height:100%;border-radius:99px}
 .gauge-fill.green{background:var(--green-mid)}
 .gauge-fill.amber{background:var(--amber)}
@@ -281,23 +297,40 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     </div>
   </div>
   <div class="header-right">
-    <span class="period-badge" id="period-badge" style="display:none">
-      <span class="pulse-dot"></span>
-      <span class="pb-label">Update:</span>
-      <span id="report-date-value">—</span>
-    </span>
-    <button class="icon-btn" id="btn-refresh" onclick="refreshData()" title="Perbarui data">
+    <button class="icon-btn icon-only" id="btn-refresh" onclick="refreshData()" title="Perbarui data" aria-label="Perbarui data">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
-      <span class="lbl">Refresh</span>
     </button>
     <button class="icon-btn primary" onclick="window.print()" title="Cetak laporan">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="0.5"/></svg>
       <span class="lbl">Cetak</span>
     </button>
-    <div class="theme-switch">
-      <span class="lbl">🌙</span>
-      <div class="switch-track" id="switch-track" onclick="toggleTheme()"><div class="switch-thumb"></div></div>
+    <div class="theme-switch" onclick="toggleTheme()" role="button" aria-label="Ganti tema">
+      <div class="switch-track" id="switch-track">
+        <span class="sky-star s1"></span>
+        <span class="sky-star s2"></span>
+        <div class="switch-thumb">
+          <svg class="icon-sun" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <g class="sun-rays">
+              <line x1="12" y1="1.5" x2="12" y2="3.2"/><line x1="12" y1="20.8" x2="12" y2="22.5"/>
+              <line x1="4.22" y1="4.22" x2="5.4" y2="5.4"/><line x1="18.6" y1="18.6" x2="19.78" y2="19.78"/>
+              <line x1="1.5" y1="12" x2="3.2" y2="12"/><line x1="20.8" y1="12" x2="22.5" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.4" y2="18.6"/><line x1="18.6" y1="5.4" x2="19.78" y2="4.22"/>
+            </g>
+            <circle cx="12" cy="12" r="4.3" fill="currentColor" stroke="none"/>
+          </svg>
+          <svg class="icon-moon" width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>
+            <circle class="moon-star s1" cx="6.2" cy="6" r="0.8" fill="currentColor"/>
+            <circle class="moon-star s2" cx="4.3" cy="13.5" r="0.55" fill="currentColor"/>
+          </svg>
+        </div>
+      </div>
     </div>
+    <span class="period-badge" id="period-badge" style="display:none">
+      <span class="pulse-dot"></span>
+      <span class="pb-label">Update:</span>
+      <span id="report-date-value">—</span>
+    </span>
   </div>
 </div>
 
@@ -885,6 +918,7 @@ function goList(){
   document.getElementById('view-detail').style.display = 'none';
   document.getElementById('view-list').style.display = 'block';
   window.scrollTo({top:0, behavior:'smooth'});
+  silentRefresh();
 }
 
 function renderDetail(){
@@ -996,6 +1030,27 @@ function refreshData(){
   btn.classList.add('spinning');
   setTimeout(() => btn.classList.remove('spinning'), 900);
   init();
+}
+
+/* Refresh data quietly in the background (no loading overlay) — dipakai saat kembali ke daftar */
+async function silentRefresh(){
+  const btn = document.getElementById('btn-refresh');
+  btn.classList.add('spinning');
+  try {
+    const t = new Date().getTime();
+    const res = await fetch(`${CSV_URL}&t=${t}`);
+    if (!res.ok) return;
+    const text = await res.text();
+    buildData(text);
+    if (customers.length === 0) return;
+    document.getElementById('report-date-value').textContent = fmtDateShort(reportDate);
+    if (currentDetailCode && custByCode[currentDetailCode]) renderDetail();
+    else render();
+  } catch (e){
+    console.error('Silent refresh gagal:', e);
+  } finally {
+    setTimeout(() => btn.classList.remove('spinning'), 400);
+  }
 }
 
 window.addEventListener('hashchange', () => {
