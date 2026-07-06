@@ -1,0 +1,22 @@
+{
+  "name": "Laporan Saldo Pallet — PT. Karya Indah Multiguna",
+  "short_name": "Laporan Pallet",
+  "description": "Aplikasi Pemantauan Saldo Pallet PT. Karya Indah Multiguna",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f3ec",
+  "theme_color": "#f6f3ec",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "logo1.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo1.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
