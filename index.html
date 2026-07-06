@@ -98,6 +98,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
   .icon-btn{padding:0 10px}
 }
 
+/* ===== SCROLL TO TOP ===== */
+.scroll-top-btn{position:fixed;bottom:26px;right:26px;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--brass-mid),var(--brass));color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(30,26,16,.28);opacity:0;visibility:hidden;transform:translateY(12px);transition:opacity .25s ease,transform .25s ease,visibility .25s,filter .18s;z-index:200}
+.scroll-top-btn.show{opacity:1;visibility:visible;transform:translateY(0)}
+.scroll-top-btn:hover{filter:brightness(1.08)}
+.scroll-top-btn:active{transform:translateY(0) scale(.94)}
+@media(max-width:760px){.scroll-top-btn{bottom:18px;right:18px;width:42px;height:42px}}
+
 /* ===== LAYOUT ===== */
 .container{max-width:1240px;margin:0 auto;padding:1.75rem 1.6rem 4rem}
 @media(max-width:760px){.container{padding:1.2rem 1rem 3rem}}
@@ -243,17 +250,21 @@ tr.row-opnam td span{color:var(--opnam-r)!important}
 .side-box .n{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;color:var(--brass)}
 .side-box .l{font-size:9.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
 
-.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.summary-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.5rem}
 .sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem;border-top:3px solid var(--border2)}
 .sum-card.awal{border-top-color:var(--ink3)}
 .sum-card.in{border-top-color:var(--green-mid)}
 .sum-card.out{border-top-color:var(--red)}
 .sum-card.akhir{border-top-color:var(--brass-mid);background:var(--brass-bg)}
+.sum-card.opname{border-top-color:var(--reset-y-line)}
 .sum-card .l{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
 .sum-card .v{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;margin-top:6px}
+.sum-card .sub{font-size:11px;color:var(--ink3);margin-top:4px;font-family:'JetBrains Mono',monospace}
 .sum-card.in .v{color:var(--green)}
 .sum-card.out .v{color:var(--red)}
 .sum-card.akhir .v{color:var(--brass)}
+.sum-card.opname .v{color:var(--reset-y)}
+@media(max-width:1000px){.summary-strip{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:700px){.summary-strip{grid-template-columns:repeat(2,1fr)}}
 
 .trx-table tbody tr.awal-row td{background:var(--brass-bg);font-weight:600;color:var(--brass)}
@@ -518,6 +529,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       <div class="sum-card in"><div class="l">Jumlah In</div><div class="v" id="d-in">—</div></div>
       <div class="sum-card out"><div class="l">Jumlah Out</div><div class="v" id="d-out">—</div></div>
       <div class="sum-card akhir"><div class="l">Saldo Akhir</div><div class="v" id="d-akhir">—</div></div>
+      <div class="sum-card opname"><div class="l">Opname Terakhir</div><div class="v" id="d-opnam-date">—</div><div class="sub" id="d-opnam-sub"></div></div>
     </div>
 
     <details class="legend-box" id="legend-box-detail">
@@ -576,6 +588,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 
   <footer class="credit">Data ditarik langsung dari Google Sheets · PT. Karya Indah Multiguna</footer>
 </div>
+
+<button id="scroll-top-btn" class="scroll-top-btn" onclick="scrollToTop()" aria-label="Kembali ke atas" title="Kembali ke atas">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+</button>
 
 <!-- ===== MODAL: ANALISA AI ===== -->
 <div id="analysis-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this) closeAnalysisModal()">
@@ -674,6 +690,22 @@ function parseDateID(str){
   return d;
 }
 
+// format tanggal opname pada kolom O (mis. "30/Sep/25") — dipisah "/" bukan "-"
+function parseDateOpnamID(str){
+  if (!str) return null;
+  str = str.trim();
+  const m = str.match(/^(\d{1,2})\/([A-Za-z]{3,4})\/(\d{2,4})$/);
+  if (!m) return null;
+  const day = parseInt(m[1], 10);
+  const mon = MONTH_MAP[m[2].toLowerCase().slice(0,3)];
+  if (mon === undefined) return null;
+  let year = parseInt(m[3], 10);
+  if (year < 100) year += 2000;
+  const d = new Date(year, mon, day);
+  if (year < 2000 || year > 2100) return null;
+  return d;
+}
+
 function fmtDateShort(d){
   if (!d) return '—';
   return `${d.getDate()}-${MONTH_ID_SHORT[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`;
@@ -719,6 +751,28 @@ function buildData(text){
       custByCode[norm] = {
         code: code, name: name, saldoAwal: parseNumber(saldoRaw),
         sumIn: 0, sumOut: 0, trx: []
+      };
+    }
+  }
+
+  // --- 1b. Tabel Tanggal Terakhir Opname (kolom M-P / index 12-15) ---
+  const opnamByCode = {};
+  for (let i = 0; i < rows.length; i++){
+    const r = rows[i];
+    if (!r || r.length < 16) continue;
+    const code = (r[12] || '').trim();
+    const name = (r[13] || '').trim();
+    const tglRaw = (r[14] || '').trim();
+    const qtyRaw = (r[15] || '').trim();
+    if (!code || code.toLowerCase() === 'c.code') continue;
+    if (!name) continue;
+    const norm = normCode(code);
+    if (!opnamByCode[norm]){
+      opnamByCode[norm] = {
+        code: code, name: name,
+        tglRaw: tglRaw,
+        tglDate: parseDateOpnamID(tglRaw),
+        qty: qtyRaw
       };
     }
   }
@@ -815,6 +869,7 @@ function buildData(text){
     else c.mhCategory = 'red';
 
     c.monthCount = c.trx.filter(t => t.date.getMonth() === reportDate.getMonth() && t.date.getFullYear() === reportDate.getFullYear()).length;
+    c.opnam = opnamByCode[norm] || null;
     return c;
   }).filter(c => c.name && c.name.trim() !== ''); // sembunyikan customer yang tidak punya nama
 
@@ -853,6 +908,34 @@ function saldoDotTitle(c){
 function mhTitle(c){
   const label = { green:'Sangat Sehat', amber:'Cukup Sehat', gray:'Kurang Sehat', red:'Tidak Sehat' }[c.mhCategory];
   return `MH ${isFinite(c.mh) ? c.mh.toFixed(2) : '∞'} — ${label}`;
+}
+
+/* Ringkasan transaksi pada TANGGAL TERAKHIR seorang customer — menggabungkan seluruh baris
+   pada tanggal tsb (bisa lebih dari satu kendaraan/baris) sehingga In & Out yang sama-sama
+   ada pada tanggal itu ditampilkan sekaligus, bukan cuma salah satu saja. */
+function lastTrxSummaryHtml(c){
+  if (!c.lastTrx) return 'Belum ada transaksi';
+  const lastDateStr = c.lastTrx.date.toDateString();
+  const sameDay = c.trx.filter(t => t.date.toDateString() === lastDateStr);
+  let sumIn = 0, sumOut = 0, hasReset = false, hasOpnamMarker = false;
+  const plates = [];
+  sameDay.forEach(t => {
+    sumIn += t.inVal;
+    sumOut += t.outVal;
+    if (t.marker === 'reset') hasReset = true;
+    else if (t.marker === 'opnam') hasOpnamMarker = true;
+    else if (t.noPol && !plates.includes(t.noPol)) plates.push(t.noPol);
+  });
+  const parts = [];
+  if (sumIn) parts.push('In:' + fmtNum(sumIn));
+  if (sumOut) parts.push('Out:' + fmtNum(sumOut));
+  const suffix = parts.length ? ' [' + parts.join(', ') + ']' : '';
+  let tagHtml = '';
+  if (hasReset) tagHtml += '<span class="tag-reset">RESET</span> ';
+  if (hasOpnamMarker) tagHtml += '<span class="tag-opnam">OPNAM</span> ';
+  const plateText = plates.length ? plates.join(', ') : '';
+  const result = `${tagHtml}${plateText}${suffix}`.trim();
+  return result || '—';
 }
 
 const MH_ROTATE = { green:0, amber:45, gray:135, red:180 };
@@ -955,14 +1038,7 @@ function render(){
     tbody.innerHTML = list.map((c, idx) => {
       const warn = c.daysSinceLast > 60 ? 'severe' : (c.daysSinceLast > 7 ? 'warn' : '');
       const warnIcon = warn ? ' ⚠' : '';
-      let lastPolInfo = 'Belum ada transaksi';
-      if (c.lastTrx){
-        const lt = c.lastTrx;
-        const suffix = lt.outVal ? ' [Out:'+lt.outVal+']' : (lt.inVal ? ' [In:'+lt.inVal+']' : '');
-        if (lt.marker === 'reset') lastPolInfo = `<span class="tag-reset">RESET</span>${suffix}`;
-        else if (lt.marker === 'opnam') lastPolInfo = `<span class="tag-opnam">OPNAM</span>${suffix}`;
-        else lastPolInfo = `${lt.noPol}${suffix}`;
-      }
+      let lastPolInfo = c.lastTrx ? lastTrxSummaryHtml(c) : 'Belum ada transaksi';
       return `<tr class="data-row" onclick="showDetail('${c.code.replace(/'/g,"\\'")}')">
         <td class="no-cell">${idx+1}</td>
         <td><span class="code-tag">${c.code}</span></td>
@@ -1079,6 +1155,22 @@ function renderDetail(){
   document.getElementById('d-in').textContent = fmtNum(periodIn);
   document.getElementById('d-out').textContent = fmtNum(periodOut);
   document.getElementById('d-akhir').textContent = fmtSaldo(periodAkhir);
+
+  // Card Opname Terakhir — diambil dari tabel "Tanggal Terahir Opnam" (kolom M-P) pada CSV
+  const opn = c.opnam;
+  const opDateEl = document.getElementById('d-opnam-date');
+  const opSubEl = document.getElementById('d-opnam-sub');
+  if (opn && opn.tglDate){
+    const days = Math.round((reportDate - opn.tglDate) / 86400000);
+    opDateEl.textContent = fmtDateShort(opn.tglDate);
+    opSubEl.textContent = `${days} hari lalu · QTY ${opn.qty || '–'}`;
+  } else if (opn && opn.tglRaw){
+    opDateEl.textContent = opn.tglRaw;
+    opSubEl.textContent = opn.qty ? `QTY ${opn.qty}` : '';
+  } else {
+    opDateEl.textContent = 'Belum ada data';
+    opSubEl.textContent = '';
+  }
 
   const q = document.getElementById('d-search').value.trim().toLowerCase();
   if (q) trxList = trxList.filter(t => t.noPol.toLowerCase().includes(q) || fmtDateShort(t.date).toLowerCase().includes(q));
@@ -1272,6 +1364,19 @@ init();
   const hdr = document.getElementById('header');
   window.addEventListener('scroll', () => {
     hdr.classList.toggle('scrolled', window.scrollY > 8);
+  }, { passive: true });
+})();
+
+/* ============================================================
+   SCROLL TO TOP
+   ============================================================ */
+function scrollToTop(){
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+(function(){
+  const btn = document.getElementById('scroll-top-btn');
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('show', window.scrollY > 320);
   }, { passive: true });
 })();
 
