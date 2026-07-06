@@ -98,6 +98,43 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
   .icon-btn{padding:0 10px}
 }
 
+/* ===== SCROLL TO TOP ===== */
+.scroll-top-btn{position:fixed;bottom:26px;right:26px;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--brass-mid),var(--brass));color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(30,26,16,.28);opacity:0;visibility:hidden;transform:translateY(12px);transition:opacity .25s ease,transform .25s ease,visibility .25s,filter .18s;z-index:200}
+.scroll-top-btn.show{opacity:1;visibility:visible;transform:translateY(0)}
+.scroll-top-btn:hover{filter:brightness(1.08)}
+.scroll-top-btn:active{transform:translateY(0) scale(.94)}
+
+/* ===== LOGIN SCREEN ===== */
+.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;overflow-y:auto}
+.login-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.1rem 1.9rem;box-shadow:var(--shadow)}
+.login-logo{text-align:center;margin-bottom:1.5rem}
+.login-logo .logo-circle{margin:0 auto 12px;width:52px;height:52px}
+.login-logo h1{font-family:'Fraunces',serif;font-size:19px;font-weight:600;color:var(--ink);line-height:1.2}
+.login-logo p{font-size:11px;color:var(--ink3);font-family:'JetBrains Mono',monospace;margin-top:3px}
+.login-tabs{display:flex;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:4px;margin-bottom:1.5rem}
+.login-tab{flex:1;border:none;background:transparent;padding:9px 0;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--ink3);cursor:pointer;font-family:inherit;transition:all .18s}
+.login-tab.on{background:linear-gradient(135deg,var(--brass-mid),var(--brass));color:#fff}
+.login-pane{display:flex;flex-direction:column}
+.login-label{display:block;font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:6px;margin-top:14px}
+.login-label:first-of-type{margin-top:0}
+.login-select,.login-input{width:100%;height:40px;border:1px solid var(--border2);border-radius:var(--radius);padding:0 12px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink);outline:none;transition:border .15s}
+.login-select:focus,.login-input:focus{border-color:var(--brass-mid)}
+.login-pass-wrap{display:flex;align-items:center;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;background:var(--surface);transition:border .15s}
+.login-pass-wrap:focus-within{border-color:var(--brass-mid)}
+.login-pass-prefix{padding:0 2px 0 12px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink3);font-weight:700;user-select:none;white-space:nowrap}
+.login-pass-input{flex:1;height:40px;border:none;padding:0 12px 0 2px;font-size:13px;font-family:'JetBrains Mono',monospace;background:transparent;color:var(--ink);outline:none;min-width:0}
+.login-btn{width:100%;height:42px;margin-top:20px;border-radius:var(--radius);border:none;background:linear-gradient(135deg,var(--brass-mid),var(--brass));color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:filter .18s}
+.login-btn:hover{filter:brightness(1.06)}
+.login-btn:active{filter:brightness(.97)}
+.login-error{color:var(--red);font-size:12px;margin-top:10px;min-height:14px;line-height:1.4}
+.login-hint{color:var(--ink3);font-size:11px;margin-top:14px;text-align:center;line-height:1.5}
+
+/* ===== ROLE BADGE (setelah login) ===== */
+.role-badge{display:none;align-items:center;gap:7px;padding:6px 13px;border-radius:999px;background:var(--gray-bg);border:1px solid var(--border2);font-size:11.5px;color:var(--ink2);font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.role-badge.admin{background:var(--brass-bg);border-color:var(--brass-line);color:var(--brass)}
+@media(max-width:760px){.role-badge span.rb-full{display:none}}
+@media(max-width:760px){.scroll-top-btn{bottom:18px;right:18px;width:42px;height:42px}}
+
 /* ===== LAYOUT ===== */
 .container{max-width:1240px;margin:0 auto;padding:1.75rem 1.6rem 4rem}
 @media(max-width:760px){.container{padding:1.2rem 1rem 3rem}}
@@ -243,17 +280,21 @@ tr.row-opnam td span{color:var(--opnam-r)!important}
 .side-box .n{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;color:var(--brass)}
 .side-box .l{font-size:9.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
 
-.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.summary-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.5rem}
 .sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem;border-top:3px solid var(--border2)}
 .sum-card.awal{border-top-color:var(--ink3)}
 .sum-card.in{border-top-color:var(--green-mid)}
 .sum-card.out{border-top-color:var(--red)}
 .sum-card.akhir{border-top-color:var(--brass-mid);background:var(--brass-bg)}
+.sum-card.opname{border-top-color:var(--reset-y-line)}
 .sum-card .l{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
 .sum-card .v{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;margin-top:6px}
+.sum-card .sub{font-size:11px;color:var(--ink3);margin-top:4px;font-family:'JetBrains Mono',monospace}
 .sum-card.in .v{color:var(--green)}
 .sum-card.out .v{color:var(--red)}
 .sum-card.akhir .v{color:var(--brass)}
+.sum-card.opname .v{color:var(--reset-y)}
+@media(max-width:1000px){.summary-strip{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:700px){.summary-strip{grid-template-columns:repeat(2,1fr)}}
 
 .trx-table tbody tr.awal-row td{background:var(--brass-bg);font-weight:600;color:var(--brass)}
@@ -300,6 +341,49 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 </head>
 <body>
 
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-circle">
+        <img src="logo.png" alt="Logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+        <div class="logo-fallback" style="display:none">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg>
+        </div>
+      </div>
+      <h1>Laporan Saldo Pallet</h1>
+      <p>PT. KARYA INDAH MULTIGUNA</p>
+    </div>
+
+    <div class="login-tabs">
+      <button class="login-tab on" id="tab-customer" onclick="switchLoginTab('customer')" type="button">Customer</button>
+      <button class="login-tab" id="tab-admin" onclick="switchLoginTab('admin')" type="button">Staff KIM</button>
+    </div>
+
+    <div id="login-pane-customer" class="login-pane">
+      <label class="login-label">Pilih Nama Perusahaan</label>
+      <select id="login-cust-select" class="login-select">
+        <option value="">— Pilih PT / Customer —</option>
+      </select>
+      <label class="login-label">Kode Akses</label>
+      <div class="login-pass-wrap">
+        <span class="login-pass-prefix">KIM-</span>
+        <input type="text" id="login-cust-code" class="login-pass-input" placeholder="kode Anda" autocomplete="off" onkeydown="if(event.key==='Enter') doCustomerLogin()"/>
+      </div>
+      <button class="login-btn" type="button" onclick="doCustomerLogin()">Masuk</button>
+      <p class="login-error" id="login-error-customer"></p>
+      <p class="login-hint">Belum tahu kode akses Anda? Silakan hubungi pihak PT. Karya Indah Multiguna.</p>
+    </div>
+
+    <div id="login-pane-admin" class="login-pane" style="display:none">
+      <label class="login-label">Password Staff</label>
+      <input type="password" id="login-admin-pass" class="login-input" placeholder="Masukkan password" autocomplete="off" onkeydown="if(event.key==='Enter') doAdminLogin()"/>
+      <button class="login-btn" type="button" onclick="doAdminLogin()">Masuk sebagai Staff</button>
+      <p class="login-error" id="login-error-admin"></p>
+    </div>
+  </div>
+</div>
+
 <div class="header" id="header">
   <div class="brand">
     <div class="logo-circle" id="logo-wrap">
@@ -314,12 +398,20 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     </div>
   </div>
   <div class="header-right">
+    <span class="role-badge" id="role-badge">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="rb-full" id="role-badge-text">—</span>
+    </span>
     <button class="icon-btn icon-only" id="btn-refresh" onclick="refreshData()" title="Perbarui data" aria-label="Perbarui data">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
     </button>
     <button class="icon-btn" id="btn-analisa" onclick="openAnalysisModal()" title="Salin data untuk dianalisa AI">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M19 15l.7 1.6L21.3 17.3l-1.6.7L19 19.6l-.7-1.6L16.7 17.3l1.6-.7L19 15z"/></svg>
       <span class="lbl">Analisa AI</span>
+    </button>
+    <button class="icon-btn" id="btn-logout" onclick="doLogout()" title="Keluar" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span class="lbl">Keluar</span>
     </button>
     <button class="icon-btn primary" onclick="window.print()" title="Cetak laporan">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="0.5"/></svg>
@@ -497,7 +589,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 
   <!-- ===== VIEW: DETAIL ===== -->
   <div id="view-detail" style="display:none">
-    <button class="back-btn" onclick="goList()">
+    <button class="back-btn" id="back-to-list-btn" onclick="goList()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       Kembali ke Daftar
     </button>
@@ -507,7 +599,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <p><span id="d-code">—</span> · Laporan per <span id="d-reportdate">—</span></p>
       </div>
       <div class="detail-side">
-        <div class="side-box"><div class="n" id="d-cust-count">—</div><div class="l">Σ Customer</div></div>
+        <div class="side-box" id="side-cust-count-box"><div class="n" id="d-cust-count">—</div><div class="l">Σ Customer</div></div>
         <div class="side-box"><div class="n" id="d-trx-count">—</div><div class="l">Σ Transaksi</div></div>
         <div class="side-box"><div class="n" id="d-month-count">—</div><div class="l">Input Bln Ini</div></div>
       </div>
@@ -518,6 +610,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       <div class="sum-card in"><div class="l">Jumlah In</div><div class="v" id="d-in">—</div></div>
       <div class="sum-card out"><div class="l">Jumlah Out</div><div class="v" id="d-out">—</div></div>
       <div class="sum-card akhir"><div class="l">Saldo Akhir</div><div class="v" id="d-akhir">—</div></div>
+      <div class="sum-card opname"><div class="l">Opname Terakhir</div><div class="v" id="d-opnam-date">—</div><div class="sub" id="d-opnam-sub"></div></div>
     </div>
 
     <details class="legend-box" id="legend-box-detail">
@@ -577,6 +670,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
   <footer class="credit">Data ditarik langsung dari Google Sheets · PT. Karya Indah Multiguna</footer>
 </div>
 
+<button id="scroll-top-btn" class="scroll-top-btn" onclick="scrollToTop()" aria-label="Kembali ke atas" title="Kembali ke atas">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+</button>
+
 <!-- ===== MODAL: ANALISA AI ===== -->
 <div id="analysis-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this) closeAnalysisModal()">
   <div class="modal-box">
@@ -601,15 +698,13 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 
 <script>
 /* ============================================================
-   KONFIGURASI SUMBER DATA
+   KONFIGURASI
    ============================================================ */
-// URL sumber data di-encode (base64, dipecah beberapa bagian) agar tidak langsung terbaca saat inspect element.
-// Catatan: ini hanya penyamaran sederhana, bukan enkripsi/keamanan sesungguhnya.
-const _p1 = 'aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvZS8yUEFDWC0xdlQwLUczbkxJ';
-const _p2 = 'MXN6LTVNMmdveHlTU0NBYmxuS0hkc0E5Z2UtVm5jX3lNelZJQ2dJc2VrX0d5Zzl5ZHk2ZUx6ZUEv';
-const _p3 = 'cHViP2dpZD0xNTM2MTQyMTE3JnNpbmdsZT10cnVlJm91dHB1dD1jc3Y=';
+const _p1 = 'aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvZS8yUEFDWC0xdlRPenRrbUxrLXJ3';
+const _p2 = 'NDMyTzZOSEQ2SklSMmlMUk4xUnRoTGhpTU83YTBZZzFmUkx1ZnZHNDVEVUpGMG1aSF9jR2E5NTdPUFpI';
+const _p3 = 'TVptX2xMSC9wdWI/Z2lkPTkxMjE4ODc1OCZzaW5nbGU9dHJ1ZSZvdXRwdXQ9Y3N2';
 const CSV_URL = atob(_p1 + _p2 + _p3);
-
+  
 const MONTH_ID_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const MONTH_ID_LONG  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const MONTH_MAP = {jan:0,feb:1,mar:2,apr:3,mei:4,jun:5,jul:6,agu:7,sep:8,okt:9,nov:10,des:11};
@@ -620,6 +715,15 @@ let globalStats = {};
 let reportDate = null;
 let currentFilter = 'all';
 let currentDetailCode = null;
+
+/* ============================================================
+   LOGIN / AKSES
+   ============================================================ */
+// Password login Staff KIM — ganti nilai di bawah ini kapan saja untuk mengubah password admin.
+const ADMIN_PASSWORD = 'KIM-ADMIN-2026';
+
+let authRole = null; // 'admin' | 'customer'
+let authCode = null; // kode customer yang sedang login (khusus role 'customer')
 
 /* ============================================================
    CSV PARSER (menangani koma & tanda kutip di dalam nilai)
@@ -676,6 +780,22 @@ function parseDateID(str){
   return d;
 }
 
+// format tanggal opname pada kolom O (mis. "30/Sep/25") — dipisah "/" bukan "-"
+function parseDateOpnamID(str){
+  if (!str) return null;
+  str = str.trim();
+  const m = str.match(/^(\d{1,2})\/([A-Za-z]{3,4})\/(\d{2,4})$/);
+  if (!m) return null;
+  const day = parseInt(m[1], 10);
+  const mon = MONTH_MAP[m[2].toLowerCase().slice(0,3)];
+  if (mon === undefined) return null;
+  let year = parseInt(m[3], 10);
+  if (year < 100) year += 2000;
+  const d = new Date(year, mon, day);
+  if (year < 2000 || year > 2100) return null;
+  return d;
+}
+
 function fmtDateShort(d){
   if (!d) return '—';
   return `${d.getDate()}-${MONTH_ID_SHORT[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`;
@@ -721,6 +841,28 @@ function buildData(text){
       custByCode[norm] = {
         code: code, name: name, saldoAwal: parseNumber(saldoRaw),
         sumIn: 0, sumOut: 0, trx: []
+      };
+    }
+  }
+
+  // --- 1b. Tabel Tanggal Terakhir Opname (kolom M-P / index 12-15) ---
+  const opnamByCode = {};
+  for (let i = 0; i < rows.length; i++){
+    const r = rows[i];
+    if (!r || r.length < 16) continue;
+    const code = (r[12] || '').trim();
+    const name = (r[13] || '').trim();
+    const tglRaw = (r[14] || '').trim();
+    const qtyRaw = (r[15] || '').trim();
+    if (!code || code.toLowerCase() === 'c.code') continue;
+    if (!name) continue;
+    const norm = normCode(code);
+    if (!opnamByCode[norm]){
+      opnamByCode[norm] = {
+        code: code, name: name,
+        tglRaw: tglRaw,
+        tglDate: parseDateOpnamID(tglRaw),
+        qty: qtyRaw
       };
     }
   }
@@ -817,6 +959,7 @@ function buildData(text){
     else c.mhCategory = 'red';
 
     c.monthCount = c.trx.filter(t => t.date.getMonth() === reportDate.getMonth() && t.date.getFullYear() === reportDate.getFullYear()).length;
+    c.opnam = opnamByCode[norm] || null;
     return c;
   }).filter(c => c.name && c.name.trim() !== ''); // sembunyikan customer yang tidak punya nama
 
@@ -835,6 +978,135 @@ function buildData(text){
 /* ============================================================
    RENDER: DAFTAR (LIST VIEW)
    ============================================================ */
+/* Tentukan status login (role aktif di sesi ini, atau sesi tersimpan) lalu masuk ke aplikasi
+   atau tampilkan layar login. Dipanggil saat load awal maupun saat refreshData(). */
+function resolveAuthAndEnter(){
+  // Sudah login pada sesi/tab berjalan ini (mis. dipanggil ulang oleh refreshData) -> langsung masuk lagi.
+  if (authRole === 'admin'){ enterApp(); return; }
+  if (authRole === 'customer' && custByCode[authCode]){ enterApp(); return; }
+
+  // Cek sesi tersimpan (sessionStorage bertahan sampai tab/browser ditutup, sesuai kebijakan akses).
+  const savedRole = sessionStorage.getItem('pallet-auth-role');
+  const savedCode = sessionStorage.getItem('pallet-auth-code');
+  if (savedRole === 'admin'){
+    authRole = 'admin'; authCode = null;
+    enterApp();
+    return;
+  }
+  if (savedRole === 'customer' && savedCode && custByCode[savedCode]){
+    authRole = 'customer'; authCode = savedCode;
+    enterApp();
+    return;
+  }
+
+  // Belum ada sesi valid -> tampilkan layar login.
+  authRole = null; authCode = null;
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+
+function switchLoginTab(tab){
+  document.getElementById('tab-customer').classList.toggle('on', tab === 'customer');
+  document.getElementById('tab-admin').classList.toggle('on', tab === 'admin');
+  document.getElementById('login-pane-customer').style.display = tab === 'customer' ? 'flex' : 'none';
+  document.getElementById('login-pane-admin').style.display = tab === 'admin' ? 'flex' : 'none';
+  document.getElementById('login-error-customer').textContent = '';
+  document.getElementById('login-error-admin').textContent = '';
+}
+
+function populateLoginCustomerSelect(){
+  const sel = document.getElementById('login-cust-select');
+  const sorted = customers.slice().sort((a,b) => a.name.localeCompare(b.name));
+  sel.innerHTML = '<option value="">— Pilih PT / Customer —</option>' +
+    sorted.map(c => `<option value="${c.code.replace(/"/g,'&quot;')}">${c.name}</option>`).join('');
+}
+
+function doCustomerLogin(){
+  const sel = document.getElementById('login-cust-select');
+  const errEl = document.getElementById('login-error-customer');
+  const selectedCode = sel.value;
+  const typed = document.getElementById('login-cust-code').value.trim();
+  errEl.textContent = '';
+  if (!selectedCode){ errEl.textContent = 'Silakan pilih nama perusahaan terlebih dahulu.'; return; }
+  if (!typed){ errEl.textContent = 'Masukkan kode akses Anda.'; return; }
+  const normSelected = normCode(selectedCode);
+  const normTyped = normCode(typed);
+  if (normTyped !== normSelected || !custByCode[normSelected]){
+    errEl.textContent = 'Kode akses tidak sesuai dengan perusahaan yang dipilih. Periksa kembali.';
+    return;
+  }
+  authRole = 'customer';
+  authCode = normSelected;
+  sessionStorage.setItem('pallet-auth-role', 'customer');
+  sessionStorage.setItem('pallet-auth-code', normSelected);
+  enterApp();
+}
+
+function doAdminLogin(){
+  const errEl = document.getElementById('login-error-admin');
+  const typed = document.getElementById('login-admin-pass').value;
+  if (typed !== ADMIN_PASSWORD){
+    errEl.textContent = 'Password salah.';
+    return;
+  }
+  authRole = 'admin';
+  authCode = null;
+  sessionStorage.setItem('pallet-auth-role', 'admin');
+  sessionStorage.removeItem('pallet-auth-code');
+  enterApp();
+}
+
+function doLogout(){
+  sessionStorage.removeItem('pallet-auth-role');
+  sessionStorage.removeItem('pallet-auth-code');
+  location.hash = '';
+  location.reload();
+}
+
+/* Masuk ke aplikasi setelah login berhasil (atau sesi tersimpan masih valid) */
+function enterApp(){
+  document.getElementById('login-screen').style.display = 'none';
+  applyRoleUI();
+
+  if (authRole === 'customer'){
+    // Customer dikunci ke halaman detail miliknya sendiri — tidak bisa ke daftar / customer lain.
+    document.getElementById('view-list').style.display = 'none';
+    populateMonthFilter(custByCode[authCode]);
+    showDetail(authCode);
+  } else {
+    const hash = location.hash;
+    if (hash.startsWith('#c/')){
+      const code = decodeURIComponent(hash.slice(3));
+      if (custByCode[code.toUpperCase()]){ showDetail(code); return; }
+    }
+    document.getElementById('view-list').style.display = 'block';
+    render();
+  }
+}
+
+/* Sesuaikan elemen UI yang boleh/tidak boleh diakses berdasarkan role */
+function applyRoleUI(){
+  const isCustomer = authRole === 'customer';
+  document.getElementById('btn-analisa').style.display = isCustomer ? 'none' : '';
+  document.getElementById('btn-logout').style.display = 'inline-flex';
+  const backBtn = document.getElementById('back-to-list-btn');
+  if (backBtn) backBtn.style.display = isCustomer ? 'none' : '';
+  const custCountBox = document.getElementById('side-cust-count-box');
+  if (custCountBox) custCountBox.style.display = isCustomer ? 'none' : '';
+
+  const badge = document.getElementById('role-badge');
+  const badgeText = document.getElementById('role-badge-text');
+  badge.style.display = 'inline-flex';
+  badge.classList.toggle('admin', !isCustomer);
+  if (isCustomer){
+    const c = custByCode[authCode];
+    badgeText.textContent = c ? c.name : authCode;
+  } else {
+    badgeText.textContent = 'Staff KIM';
+  }
+}
+
+
 function setFilter(f){
   currentFilter = f;
   ['all','red','amber','green'].forEach(k => document.getElementById('f-'+k).classList.toggle('on', k===f));
@@ -855,6 +1127,34 @@ function saldoDotTitle(c){
 function mhTitle(c){
   const label = { green:'Sangat Sehat', amber:'Cukup Sehat', gray:'Kurang Sehat', red:'Tidak Sehat' }[c.mhCategory];
   return `MH ${isFinite(c.mh) ? c.mh.toFixed(2) : '∞'} — ${label}`;
+}
+
+/* Ringkasan transaksi pada TANGGAL TERAKHIR seorang customer — menggabungkan seluruh baris
+   pada tanggal tsb (bisa lebih dari satu kendaraan/baris) sehingga In & Out yang sama-sama
+   ada pada tanggal itu ditampilkan sekaligus, bukan cuma salah satu saja. */
+function lastTrxSummaryHtml(c){
+  if (!c.lastTrx) return 'Belum ada transaksi';
+  const lastDateStr = c.lastTrx.date.toDateString();
+  const sameDay = c.trx.filter(t => t.date.toDateString() === lastDateStr);
+  let sumIn = 0, sumOut = 0, hasReset = false, hasOpnamMarker = false;
+  const plates = [];
+  sameDay.forEach(t => {
+    sumIn += t.inVal;
+    sumOut += t.outVal;
+    if (t.marker === 'reset') hasReset = true;
+    else if (t.marker === 'opnam') hasOpnamMarker = true;
+    else if (t.noPol && !plates.includes(t.noPol)) plates.push(t.noPol);
+  });
+  const parts = [];
+  if (sumIn) parts.push('In:' + fmtNum(sumIn));
+  if (sumOut) parts.push('Out:' + fmtNum(sumOut));
+  const suffix = parts.length ? ' [' + parts.join(', ') + ']' : '';
+  let tagHtml = '';
+  if (hasReset) tagHtml += '<span class="tag-reset">RESET</span> ';
+  if (hasOpnamMarker) tagHtml += '<span class="tag-opnam">OPNAM</span> ';
+  const plateText = plates.length ? plates.join(', ') : '';
+  const result = `${tagHtml}${plateText}${suffix}`.trim();
+  return result || '—';
 }
 
 const MH_ROTATE = { green:0, amber:45, gray:135, red:180 };
@@ -957,14 +1257,7 @@ function render(){
     tbody.innerHTML = list.map((c, idx) => {
       const warn = c.daysSinceLast > 60 ? 'severe' : (c.daysSinceLast > 7 ? 'warn' : '');
       const warnIcon = warn ? ' ⚠' : '';
-      let lastPolInfo = 'Belum ada transaksi';
-      if (c.lastTrx){
-        const lt = c.lastTrx;
-        const suffix = lt.outVal ? ' [Out:'+lt.outVal+']' : (lt.inVal ? ' [In:'+lt.inVal+']' : '');
-        if (lt.marker === 'reset') lastPolInfo = `<span class="tag-reset">RESET</span>${suffix}`;
-        else if (lt.marker === 'opnam') lastPolInfo = `<span class="tag-opnam">OPNAM</span>${suffix}`;
-        else lastPolInfo = `${lt.noPol}${suffix}`;
-      }
+      let lastPolInfo = c.lastTrx ? lastTrxSummaryHtml(c) : 'Belum ada transaksi';
       return `<tr class="data-row" onclick="showDetail('${c.code.replace(/'/g,"\\'")}')">
         <td class="no-cell">${idx+1}</td>
         <td><span class="code-tag">${c.code}</span></td>
@@ -1004,6 +1297,10 @@ function render(){
    RENDER: DETAIL PER CUSTOMER
    ============================================================ */
 function showDetail(code){
+  // Customer terkunci ke kode miliknya sendiri — paksa kembali ke kode itu jika ada usaha membuka kode lain.
+  if (authRole === 'customer' && normCode(code) !== authCode){
+    code = authCode;
+  }
   currentDetailCode = code.toUpperCase();
   location.hash = 'c/' + encodeURIComponent(code);
   document.getElementById('view-list').style.display = 'none';
@@ -1031,6 +1328,8 @@ function populateMonthFilter(c){
 }
 
 function goList(){
+  // Customer tidak boleh melihat daftar seluruh customer.
+  if (authRole === 'customer') return;
   currentDetailCode = null;
   location.hash = '';
   document.getElementById('view-detail').style.display = 'none';
@@ -1082,6 +1381,22 @@ function renderDetail(){
   document.getElementById('d-out').textContent = fmtNum(periodOut);
   document.getElementById('d-akhir').textContent = fmtSaldo(periodAkhir);
 
+  // Card Opname Terakhir — diambil dari tabel "Tanggal Terahir Opnam" (kolom M-P) pada CSV
+  const opn = c.opnam;
+  const opDateEl = document.getElementById('d-opnam-date');
+  const opSubEl = document.getElementById('d-opnam-sub');
+  if (opn && opn.tglDate){
+    const days = Math.round((reportDate - opn.tglDate) / 86400000);
+    opDateEl.textContent = fmtDateShort(opn.tglDate);
+    opSubEl.textContent = `${days} hari lalu · QTY ${opn.qty || '–'}`;
+  } else if (opn && opn.tglRaw){
+    opDateEl.textContent = opn.tglRaw;
+    opSubEl.textContent = opn.qty ? `QTY ${opn.qty}` : '';
+  } else {
+    opDateEl.textContent = 'Belum ada data';
+    opSubEl.textContent = '';
+  }
+
   const q = document.getElementById('d-search').value.trim().toLowerCase();
   if (q) trxList = trxList.filter(t => t.noPol.toLowerCase().includes(q) || fmtDateShort(t.date).toLowerCase().includes(q));
 
@@ -1128,14 +1443,9 @@ async function init(){
     document.getElementById('period-badge').style.display = 'inline-flex';
     document.getElementById('loading').style.display = 'none';
     populateListMonthFilter();
+    populateLoginCustomerSelect();
 
-    const hash = location.hash;
-    if (hash.startsWith('#c/')){
-      const code = decodeURIComponent(hash.slice(3));
-      if (custByCode[code.toUpperCase()]){ showDetail(code); return; }
-    }
-    document.getElementById('view-list').style.display = 'block';
-    render();
+    resolveAuthAndEnter();
   } catch (e){
     console.error(e);
     document.getElementById('loading').style.display = 'none';
@@ -1174,6 +1484,13 @@ async function silentRefresh(){
 }
 
 window.addEventListener('hashchange', () => {
+  if (authRole === 'customer'){
+    // Customer terkunci ke kodenya sendiri — abaikan/tolak percobaan pindah kode lewat address bar.
+    const hash = location.hash;
+    const wantCode = hash.startsWith('#c/') ? decodeURIComponent(hash.slice(3)) : null;
+    if (!wantCode || normCode(wantCode) !== authCode) showDetail(authCode);
+    return;
+  }
   if (!location.hash && currentDetailCode) goList();
 });
 
@@ -1274,6 +1591,19 @@ init();
   const hdr = document.getElementById('header');
   window.addEventListener('scroll', () => {
     hdr.classList.toggle('scrolled', window.scrollY > 8);
+  }, { passive: true });
+})();
+
+/* ============================================================
+   SCROLL TO TOP
+   ============================================================ */
+function scrollToTop(){
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+(function(){
+  const btn = document.getElementById('scroll-top-btn');
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('show', window.scrollY > 320);
   }, { passive: true });
 })();
 
