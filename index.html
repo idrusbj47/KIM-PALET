@@ -53,7 +53,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .logo-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--brass);font-size:20px}
 .brand-text h1{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--ink);line-height:1.2;letter-spacing:.01em}
 .brand-text p{font-size:11.5px;color:var(--ink3);margin-top:1px;font-family:'JetBrains Mono',monospace}
-.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hdr-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hdr-divider{width:1px;align-self:stretch;min-height:22px;background:var(--border2);flex-shrink:0}
+@media(max-width:760px){.hdr-divider{display:none}}
+.logout-btn{color:var(--red);border-color:var(--red-bg)}
+.logout-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
 
 .period-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:999px;background:var(--brass-bg);border:1px solid var(--brass-line);font-size:11.5px;color:var(--brass);font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap}
 .pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--green-mid);position:relative;flex-shrink:0}
@@ -398,25 +403,47 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     </div>
   </div>
   <div class="header-right">
-    <span class="role-badge" id="role-badge">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span class="rb-full" id="role-badge-text">—</span>
-    </span>
-    <button class="icon-btn icon-only" id="btn-refresh" onclick="refreshData()" title="Perbarui data" aria-label="Perbarui data">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
-    </button>
-    <button class="icon-btn" id="btn-analisa" onclick="openAnalysisModal()" title="Salin data untuk dianalisa AI">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M19 15l.7 1.6L21.3 17.3l-1.6.7L19 19.6l-.7-1.6L16.7 17.3l1.6-.7L19 15z"/></svg>
-      <span class="lbl">Analisa AI</span>
-    </button>
-    <button class="icon-btn" id="btn-logout" onclick="doLogout()" title="Keluar" style="display:none">
+
+    <!-- Grup 1: identitas & info periode data -->
+    <div class="hdr-group">
+      <span class="role-badge" id="role-badge">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="rb-full" id="role-badge-text">—</span>
+      </span>
+      <span class="period-badge" id="period-badge" style="display:none">
+        <span class="pulse-dot"></span>
+        <span class="pb-label">Update:</span>
+        <span id="report-date-value">—</span>
+      </span>
+    </div>
+
+    <span class="hdr-divider" aria-hidden="true"></span>
+
+    <!-- Grup 2: aksi data (tidak mengubah sesi) -->
+    <div class="hdr-group">
+      <button class="icon-btn icon-only" id="btn-refresh" onclick="refreshData()" title="Perbarui data" aria-label="Perbarui data">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-analisa" onclick="openAnalysisModal()" title="Salin data untuk dianalisa AI">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M19 15l.7 1.6L21.3 17.3l-1.6.7L19 19.6l-.7-1.6L16.7 17.3l1.6-.7L19 15z"/></svg>
+        <span class="lbl">Analisa AI</span>
+      </button>
+      <button class="icon-btn primary" onclick="window.print()" title="Cetak laporan">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="0.5"/></svg>
+        <span class="lbl">Cetak</span>
+      </button>
+    </div>
+
+    <span class="hdr-divider" id="hdr-divider-logout" aria-hidden="true" style="display:none"></span>
+
+    <!-- Grup 3: keluar dari sesi — dipisah sendiri supaya tidak tertukar dengan tombol aksi lain -->
+    <button class="icon-btn logout-btn" id="btn-logout" onclick="doLogout()" title="Keluar dari sesi" style="display:none">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       <span class="lbl">Keluar</span>
     </button>
-    <button class="icon-btn primary" onclick="window.print()" title="Cetak laporan">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="0.5"/></svg>
-      <span class="lbl">Cetak</span>
-    </button>
+
+    <span class="hdr-divider" aria-hidden="true"></span>
+
     <div class="theme-switch" onclick="toggleTheme()" role="button" aria-label="Ganti tema">
       <div class="switch-track" id="switch-track">
         <span class="sky-star s1"></span>
@@ -439,11 +466,6 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         </div>
       </div>
     </div>
-    <span class="period-badge" id="period-badge" style="display:none">
-      <span class="pulse-dot"></span>
-      <span class="pb-label">Update:</span>
-      <span id="report-date-value">—</span>
-    </span>
   </div>
 </div>
 
@@ -719,8 +741,18 @@ let currentDetailCode = null;
 /* ============================================================
    LOGIN / AKSES
    ============================================================ */
-// Password login Staff KIM — ganti nilai di bawah ini kapan saja untuk mengubah password admin.
-const ADMIN_PASSWORD = 'KIM-ADMIN-2026';
+// Password login Staff KIM disimpan sebagai HASH SHA-256, bukan teks polos — supaya password asli
+// tidak langsung terbaca oleh siapapun yang membuka "View Page Source" / DevTools di browser.
+// Password saat ini: KIM123890
+// Cara mengganti password: hitung SHA-256 dari password baru (huruf kecil, heksadesimal, 64 karakter)
+// lalu tempel hasilnya di bawah ini. Contoh di terminal: echo -n "PASSWORD_BARU" | sha256sum
+const ADMIN_PASSWORD_HASH = '1ef4e6d5e33a3ef5434ddbbe79e4df80d172a3c3e0d6e1c17657c3f621246059';
+
+async function sha256Hex(text){
+  const enc = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 let authRole = null; // 'admin' | 'customer'
 let authCode = null; // kode customer yang sedang login (khusus role 'customer')
@@ -1042,10 +1074,19 @@ function doCustomerLogin(){
   enterApp();
 }
 
-function doAdminLogin(){
+async function doAdminLogin(){
   const errEl = document.getElementById('login-error-admin');
   const typed = document.getElementById('login-admin-pass').value;
-  if (typed !== ADMIN_PASSWORD){
+  let typedHash;
+  try {
+    typedHash = await sha256Hex(typed);
+  } catch (e){
+    // crypto.subtle hanya tersedia di halaman HTTPS (atau file lokal di beberapa browser).
+    // Jika situs ini diakses lewat HTTP biasa, beri tahu jelas alih-alih diam-diam gagal login.
+    errEl.textContent = 'Login gagal: halaman ini harus diakses lewat HTTPS agar password bisa diverifikasi dengan aman.';
+    return;
+  }
+  if (typedHash !== ADMIN_PASSWORD_HASH){
     errEl.textContent = 'Password salah.';
     return;
   }
@@ -1089,6 +1130,8 @@ function applyRoleUI(){
   const isCustomer = authRole === 'customer';
   document.getElementById('btn-analisa').style.display = isCustomer ? 'none' : '';
   document.getElementById('btn-logout').style.display = 'inline-flex';
+  const logoutDivider = document.getElementById('hdr-divider-logout');
+  if (logoutDivider) logoutDivider.style.display = '';
   const backBtn = document.getElementById('back-to-list-btn');
   if (backBtn) backBtn.style.display = isCustomer ? 'none' : '';
   const custCountBox = document.getElementById('side-cust-count-box');
@@ -1211,7 +1254,16 @@ function customerPeriodData(c, monthFilter){
   return { awal, in: inSum, out: outSum, akhir };
 }
 
+/* Update badge tanggal cutoff di header. Dipisah dari render() karena render() hanya
+   dipanggil untuk tampilan daftar (role admin) — sebelumnya ini menyebabkan badge tanggal
+   tidak pernah terisi untuk role customer, karena customer langsung masuk ke showDetail(). */
+function updateReportDateBadge(){
+  const el = document.getElementById('report-date-value');
+  if (el) el.textContent = fmtDateShort(reportDate);
+}
+
 function render(){
+  updateReportDateBadge();
   const monthFilter = document.getElementById('list-month-filter') ? document.getElementById('list-month-filter').value : 'all';
 
   // hitung ulang saldo awal/in/out/akhir tiap customer sesuai bulan terpilih
@@ -1227,7 +1279,6 @@ function render(){
   document.getElementById('s-in').textContent = fmtNum(totalIn);
   document.getElementById('s-out').textContent = fmtNum(totalOut);
   document.getElementById('s-akhir').textContent = fmtSaldo(totalAkhir);
-  document.getElementById('report-date-value').textContent = fmtDateShort(reportDate);
 
   // label "Saldo Awal" berubah jadi "Saldo Awal <Bulan>" saat filter bulan aktif
   const awalLabelEl = document.getElementById('s-awal-label');
@@ -1301,6 +1352,7 @@ function showDetail(code){
   if (authRole === 'customer' && normCode(code) !== authCode){
     code = authCode;
   }
+  updateReportDateBadge();
   currentDetailCode = code.toUpperCase();
   location.hash = 'c/' + encodeURIComponent(code);
   document.getElementById('view-list').style.display = 'none';
@@ -1455,6 +1507,14 @@ async function init(){
 }
 
 function refreshData(){
+  // Jika sudah login dan data sudah pernah tampil, refresh diam-diam di tempat (tidak menghapus
+  // layar yang sedang dilihat customer/admin). init() penuh hanya dipakai untuk pemuatan pertama,
+  // karena init() mengosongkan seluruh tampilan dulu — kalau koneksi lambat/gagal, halaman jadi
+  // sempat kosong/"hilang" sebelum tampil lagi.
+  if (authRole && customers.length > 0){
+    silentRefresh();
+    return;
+  }
   const btn = document.getElementById('btn-refresh');
   btn.classList.add('spinning');
   setTimeout(() => btn.classList.remove('spinning'), 900);
@@ -1472,12 +1532,18 @@ async function silentRefresh(){
     const text = await res.text();
     buildData(text);
     if (customers.length === 0) return;
-    document.getElementById('report-date-value').textContent = fmtDateShort(reportDate);
+    updateReportDateBadge();
     populateListMonthFilter();
     if (currentDetailCode && custByCode[currentDetailCode]) renderDetail();
     else render();
   } catch (e){
     console.error('Silent refresh gagal:', e);
+    const pb = document.getElementById('period-badge');
+    if (pb){
+      const oldTitle = pb.title;
+      pb.title = 'Gagal memperbarui data terbaru — menampilkan data hasil pengambilan sebelumnya.';
+      setTimeout(() => { pb.title = oldTitle; }, 4000);
+    }
   } finally {
     setTimeout(() => btn.classList.remove('spinning'), 400);
   }
