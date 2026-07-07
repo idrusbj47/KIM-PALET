@@ -139,35 +139,25 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .login-error{color:var(--red);font-size:12px;margin-top:10px;min-height:14px;line-height:1.4}
 .login-hint{color:var(--ink3);font-size:11px;margin-top:14px;text-align:center;line-height:1.5}
 
-/* ===== KUCING PEEK-A-BOO MUNCUL DARI BELAKANG FORM LOGIN ===== */
-/* Stage diletakkan tepat di atas .login-card dengan z-index LEBIH RENDAH,
-   lalu ditarik turun (margin-bottom negatif besar) agar sebagian besar
-   badan kucing bersembunyi di BELAKANG kartu login, dan hanya bagian
-   kepala/telinga yang terlihat mengintip di atas tepi kartu. */
+/* ===== KUCING PEEK-A-BOO DI ATAS FORM LOGIN ===== */
+/* Cat.svg sudah di-crop lewat viewBox-nya sendiri: hanya wajah/kepala kucing
+   yang tampil, badannya otomatis terpotong pas di garis "meja". Jadi cukup
+   ditumpuk langsung di atas kartu login, tanpa perlu trik z-index/overlap. */
 .login-cat-stage{
-  --cat-render-w:260px;   /* lebar render SVG kucing (utuh, sebelum dipotong) */
-  --cat-stage-h:170px;    /* tinggi kotak yang terlihat (bagian yg dipotong/crop) */
-  --cat-peek:38px;        /* seberapa tinggi bagian kepala yg nongol di atas kartu */
   width:100%;
-  max-width:400px;
-  height:var(--cat-stage-h);
-  margin:0 auto calc(-1 * (var(--cat-stage-h) - var(--cat-peek)));
-  overflow:hidden;
-  position:relative;
+  max-width:300px;
+  margin:0 auto -1px;
   pointer-events:none;
+  position:relative;
   z-index:1;
 }
-.login-cat-stage svg{
-  position:absolute;
-  left:50%;
-  bottom:0;
-  width:var(--cat-render-w);
+.login-cat-stage img{
+  width:100%;
   height:auto;
-  transform:translateX(-50%);
   display:block;
 }
 @media(max-width:420px){
-  .login-cat-stage{--cat-render-w:210px;--cat-stage-h:140px;--cat-peek:30px}
+  .login-cat-stage{max-width:230px}
 }
 
 /* ===== TOMBOL MATA (TOGGLE LIHAT PASSWORD) — dipakai di pane Staff KIM ===== */
@@ -404,7 +394,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 <!-- ===== LOGIN SCREEN ===== -->
 <div id="login-screen" class="login-screen">
   <div class="login-cat-stage" aria-hidden="true">
-    <img src="Cat.svg" alt="" />
+    <img src="Cat2.svg" alt="" />
   </div>
   <div class="login-card">
     <div class="login-logo">
