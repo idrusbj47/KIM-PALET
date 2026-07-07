@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" id="viewport-meta" content="width=device-width, initial-scale=1.0"/>
 <title>Laporan Saldo Pallet — PT. Karya Indah Multiguna</title>
 <link rel="icon" type="image/png" href="logop1.png"/>
   <link rel="apple-touch-icon" href="logoios3.png"/>
@@ -143,6 +143,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .role-badge{display:none;align-items:center;gap:7px;padding:6px 13px;border-radius:999px;background:var(--gray-bg);border:1px solid var(--border2);font-size:11.5px;color:var(--ink2);font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap}
 .role-badge.admin{background:var(--brass-bg);border-color:var(--brass-line);color:var(--brass)}
 @media(max-width:760px){.role-badge span.rb-full{display:none}}
+/* Font-size 16px di kolom login khusus mobile: mencegah sebagian browser (terutama Chrome/Android & Safari)
+   melakukan auto-zoom berlebihan saat kolom di-tap, karena font di bawah 16px memicu zoom otomatis. */
+@media(max-width:760px){
+  .login-select,.login-input,.login-pass-input{font-size:16px}
+}
 @media(max-width:760px){.scroll-top-btn{bottom:18px;right:18px;width:42px;height:42px}}
 
 /* ===== LAYOUT ===== */
@@ -1109,9 +1114,32 @@ function doLogout(){
   location.reload();
 }
 
+/* Memaksa browser mengembalikan zoom ke ukuran normal.
+   Dibutuhkan karena di beberapa HP (terutama Android), saat mengetik di kolom
+   password/kode, browser otomatis memperbesar (zoom) tampilan. Setelah login
+   berhasil, fokus pada input tidak otomatis hilang sehingga zoom tetap
+   tertinggal. Fungsi ini melepas fokus dari input & memaksa browser reset zoom. */
+function resetMobileZoom(){
+  if (document.activeElement && typeof document.activeElement.blur === 'function'){
+    document.activeElement.blur();
+  }
+  const vp = document.getElementById('viewport-meta');
+  if (vp){
+    const original = vp.getAttribute('content');
+    // Menambahkan maximum-scale sesaat memaksa browser reset ke skala 1.
+    vp.setAttribute('content', original + ', maximum-scale=1.0');
+    setTimeout(() => {
+      // Kembalikan ke pengaturan semula agar user tetap bisa pinch-zoom manual jika perlu.
+      vp.setAttribute('content', original);
+    }, 350);
+  }
+  window.scrollTo(0, 0);
+}
+
 /* Masuk ke aplikasi setelah login berhasil (atau sesi tersimpan masih valid) */
 function enterApp(){
   document.getElementById('login-screen').style.display = 'none';
+  resetMobileZoom();
   applyRoleUI();
 
   if (authRole === 'customer'){
