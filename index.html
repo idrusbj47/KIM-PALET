@@ -139,86 +139,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .login-error{color:var(--red);font-size:12px;margin-top:10px;min-height:14px;line-height:1.4}
 .login-hint{color:var(--ink3);font-size:11px;margin-top:14px;text-align:center;line-height:1.5}
 
-/* ===== MASKOT DANBO (login) ===== */
-.login-card-wrap{position:relative;width:100%;max-width:400px;margin:0 auto}
-.login-card{animation:danboCardEnter .65s cubic-bezier(.34,1.56,.64,1) .12s both}
-
-.danbo-mascot{position:absolute;top:-72px;left:50%;width:84px;height:96px;transform:translateX(-50%);z-index:2;pointer-events:none;
-  animation:danboEnter .8s cubic-bezier(.34,1.56,.64,1) both}
-.danbo-bob{width:100%;height:100%;animation:danboBob 2.8s ease-in-out .8s infinite}
-
-/* Ekspresi wajah: default disembunyikan, dimunculkan sesuai data-expr di .danbo-mascot */
-.danbo-mascot .expr{opacity:0;transition:opacity .18s}
-.danbo-mascot[data-expr="idle"] .expr-idle,
-.danbo-mascot[data-expr="smile"] .expr-smile,
-.danbo-mascot[data-expr="sopan"] .expr-sopan,
-.danbo-mascot[data-expr="kaget"] .expr-kaget{opacity:1}
-
-.danbo-eyes-idle,.danbo-eyes-kaget{animation:danboBlink 4.4s ease-in-out .9s infinite}
-.danbo-arm-left{transform-box:fill-box;transform-origin:100% 0%;animation:danboWaveL 2.8s ease-in-out .8s infinite}
-.danbo-arm-right{transform-box:fill-box;transform-origin:0% 0%;animation:danboWaveR 2.8s ease-in-out .8s infinite}
-
-/* Senyum (tab Staff KIM): sedikit lompat gembira sekali saat berubah */
-.danbo-mascot.expr-pulse[data-expr="smile"] .danbo-bob{animation:danboHappyPulse .6s ease-out}
-/* Sopan (tab Customer): membungkuk sopan sekali saat berubah */
-.danbo-mascot.expr-pulse[data-expr="sopan"] .danbo-bob{animation:danboBowPulse .7s ease-out}
-/* Kaget (kode/password salah): kaget & mundur sekali */
-.danbo-mascot.expr-pulse[data-expr="kaget"] .danbo-bob{animation:danboStartlePulse .55s ease-out}
-/* Berputar (sedang memproses login) */
-.danbo-mascot.is-spinning .danbo-bob{animation:danboSpin .6s linear infinite}
-
-.danbo-package{position:absolute;top:-30px;left:calc(50% + 40px);width:38px;height:38px;z-index:1;pointer-events:none;
-  animation:packagePop .6s cubic-bezier(.34,1.56,.64,1) .55s both}
-.danbo-package img{width:100%;height:100%;display:block}
-
-@keyframes packagePop{
-  0%{transform:scale(0) rotate(-15deg);opacity:0}
-  100%{transform:scale(1) rotate(0);opacity:1}
-}
-@keyframes danboEnter{
-  0%{transform:translateX(-50%) translateY(-50px) rotate(-10deg);opacity:0}
-  55%{transform:translateX(-50%) translateY(8px) rotate(5deg);opacity:1}
-  100%{transform:translateX(-50%) translateY(0) rotate(0);opacity:1}
-}
-@keyframes danboCardEnter{
-  0%{transform:translateY(46px);opacity:0}
-  100%{transform:translateY(0);opacity:1}
-}
-@keyframes danboBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-@keyframes danboBlink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.15)}}
-@keyframes danboWaveL{0%,100%{transform:rotate(0)}50%{transform:rotate(-9deg)}}
-@keyframes danboWaveR{0%,100%{transform:rotate(0)}50%{transform:rotate(9deg)}}
-@keyframes danboHappyPulse{
-  0%{transform:translateY(0) scale(1)}
-  30%{transform:translateY(-11px) scale(1.05)}
-  55%{transform:translateY(0) scale(.98)}
-  75%{transform:translateY(-4px) scale(1.02)}
-  100%{transform:translateY(0) scale(1)}
-}
-@keyframes danboBowPulse{
-  0%{transform:rotate(0)}
-  40%{transform:rotate(14deg)}
-  70%{transform:rotate(-3deg)}
-  100%{transform:rotate(0)}
-}
-@keyframes danboStartlePulse{
-  0%{transform:translate(0,0) rotate(0)}
-  20%{transform:translate(-3px,-8px) rotate(-6deg)}
-  40%{transform:translate(3px,-6px) rotate(5deg)}
-  60%{transform:translate(-2px,-3px) rotate(-3deg)}
-  80%{transform:translate(1px,0) rotate(1deg)}
-  100%{transform:translate(0,0) rotate(0)}
-}
-@keyframes danboSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-
-@media(prefers-reduced-motion:reduce){
-  .danbo-mascot,.danbo-bob,.danbo-eyes-idle,.danbo-eyes-kaget,.danbo-arm-left,.danbo-arm-right,.danbo-package,.login-card{animation:none!important}
-}
-@media(max-width:420px){
-  .danbo-mascot{width:66px;height:76px;top:-58px}
-  .danbo-package{width:30px;height:30px;top:-22px;left:calc(50% + 30px)}
-}
-
 /* ===== ROLE BADGE (setelah login) ===== */
 .role-badge{display:none;align-items:center;gap:7px;padding:6px 13px;border-radius:999px;background:var(--gray-bg);border:1px solid var(--border2);font-size:11.5px;color:var(--ink2);font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap}
 .role-badge.admin{background:var(--brass-bg);border-color:var(--brass-line);color:var(--brass)}
@@ -438,73 +358,6 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 
 <!-- ===== LOGIN SCREEN ===== -->
 <div id="login-screen" class="login-screen">
-  <div class="login-card-wrap">
-
-    <!-- Maskot Danbo: kotak kardus kecil yang "mengantar" form login, dengan ekspresi interaktif -->
-    <div class="danbo-mascot" aria-hidden="true" data-expr="sopan">
-      <div class="danbo-bob">
-        <svg viewBox="0 0 100 130" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <!-- kaki (2 kotak kardus terpisah, gaya Danbo asli) -->
-          <rect x="28" y="108" width="16" height="18" rx="3" fill="#d9bb8c" stroke="#a9865a" stroke-width="2"/>
-          <rect x="56" y="108" width="16" height="18" rx="3" fill="#d9bb8c" stroke="#a9865a" stroke-width="2"/>
-          <circle cx="36" cy="108" r="3.4" fill="#c2a06e" stroke="#a9865a" stroke-width="1.4"/>
-          <circle cx="64" cy="108" r="3.4" fill="#c2a06e" stroke="#a9865a" stroke-width="1.4"/>
-
-          <!-- badan kotak -->
-          <rect x="18" y="52" width="64" height="58" rx="8" fill="#e3c393" stroke="#a9865a" stroke-width="2.2"/>
-          <line x1="18" y1="67" x2="82" y2="67" stroke="#a9865a" stroke-width="1.2" opacity=".7"/>
-          <line x1="50" y1="52" x2="50" y2="110" stroke="#a9865a" stroke-width="1" opacity=".45"/>
-
-          <!-- sendi bahu -->
-          <circle cx="18" cy="60" r="4.6" fill="#c2a06e" stroke="#a9865a" stroke-width="1.4"/>
-          <circle cx="82" cy="60" r="4.6" fill="#c2a06e" stroke="#a9865a" stroke-width="1.4"/>
-          <!-- lengan -->
-          <line class="danbo-arm-left" x1="18" y1="60" x2="1" y2="80" stroke="#a9865a" stroke-width="5" stroke-linecap="round"/>
-          <line class="danbo-arm-right" x1="82" y1="60" x2="99" y2="80" stroke="#a9865a" stroke-width="5" stroke-linecap="round"/>
-
-          <!-- kepala -->
-          <rect x="21" y="10" width="58" height="46" rx="10" fill="#ecd6a9" stroke="#a9865a" stroke-width="2.4"/>
-          <line x1="50" y1="10" x2="50" y2="56" stroke="#a9865a" stroke-width="1" opacity=".35"/>
-
-          <!-- ====== EKSPRESI: idle (netral) ====== -->
-          <g class="expr expr-idle">
-            <g class="danbo-eyes-idle">
-              <circle cx="37" cy="32" r="5.2" fill="#3a2f22"/>
-              <circle cx="63" cy="32" r="5.2" fill="#3a2f22"/>
-            </g>
-            <path d="M42,43 Q50,46 58,43" stroke="#3a2f22" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-          </g>
-
-          <!-- ====== EKSPRESI: smile (tab Staff KIM) ====== -->
-          <g class="expr expr-smile">
-            <circle cx="37" cy="31" r="5.2" fill="#3a2f22"/>
-            <circle cx="63" cy="31" r="5.2" fill="#3a2f22"/>
-            <path d="M36,42 Q50,52 64,42" stroke="#3a2f22" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-          </g>
-
-          <!-- ====== EKSPRESI: sopan (tab Customer) — mata melengkung ramah ====== -->
-          <g class="expr expr-sopan">
-            <path d="M31,32 Q37,27 43,32" stroke="#3a2f22" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-            <path d="M57,32 Q63,27 69,32" stroke="#3a2f22" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-            <path d="M43,44 Q50,47 57,44" stroke="#3a2f22" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-          </g>
-
-          <!-- ====== EKSPRESI: kaget (kode/password salah) ====== -->
-          <g class="expr expr-kaget">
-            <g class="danbo-eyes-kaget">
-              <circle cx="37" cy="30" r="7" fill="#3a2f22"/>
-              <circle cx="63" cy="30" r="7" fill="#3a2f22"/>
-            </g>
-            <ellipse cx="50" cy="45" rx="6.5" ry="8" fill="#3a2f22"/>
-          </g>
-        </svg>
-      </div>
-    </div>
-
-    <div class="danbo-package" aria-hidden="true">
-      <img src="box.svg" alt="" width="100%" height="100%"/>
-    </div>
-
   <div class="login-card">
     <div class="login-logo">
       <div class="logo-circle">
@@ -543,7 +396,6 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       <button class="login-btn" type="button" onclick="doAdminLogin()">Masuk sebagai Staff</button>
       <p class="login-error" id="login-error-admin"></p>
     </div>
-  </div>
   </div>
 </div>
 
@@ -1195,25 +1047,6 @@ function resolveAuthAndEnter(){
 }
 
 
-/* ===== Kontrol ekspresi & animasi maskot Danbo ===== */
-let danboTabExpr = 'sopan'; // ekspresi dasar sesuai tab login yang sedang aktif
-
-function setDanboExpr(expr){
-  const el = document.querySelector('.danbo-mascot');
-  if (!el) return;
-  el.dataset.expr = expr;
-  // Restart animasi one-shot (pulse) walau expr sama seperti sebelumnya
-  el.classList.remove('expr-pulse');
-  void el.offsetWidth; // paksa reflow supaya animasi CSS terulang
-  el.classList.add('expr-pulse');
-}
-
-function setDanboSpin(on){
-  const el = document.querySelector('.danbo-mascot');
-  if (!el) return;
-  el.classList.toggle('is-spinning', !!on);
-}
-
 function switchLoginTab(tab){
   document.getElementById('tab-customer').classList.toggle('on', tab === 'customer');
   document.getElementById('tab-admin').classList.toggle('on', tab === 'admin');
@@ -1221,8 +1054,6 @@ function switchLoginTab(tab){
   document.getElementById('login-pane-admin').style.display = tab === 'admin' ? 'flex' : 'none';
   document.getElementById('login-error-customer').textContent = '';
   document.getElementById('login-error-admin').textContent = '';
-  danboTabExpr = (tab === 'admin') ? 'smile' : 'sopan';
-  setDanboExpr(danboTabExpr);
 }
 
 function populateLoginCustomerSelect(){
@@ -1240,45 +1071,32 @@ function doCustomerLogin(){
   errEl.textContent = '';
   if (!selectedCode){ errEl.textContent = 'Silakan pilih nama perusahaan terlebih dahulu.'; return; }
   if (!typed){ errEl.textContent = 'Masukkan kode akses Anda.'; return; }
-  setDanboSpin(true);
-  setTimeout(() => {
-    const normSelected = normCode(selectedCode);
-    const normTyped = normCode(typed);
-    if (normTyped !== normSelected || !custByCode[normSelected]){
-      setDanboSpin(false);
-      setDanboExpr('kaget');
-      setTimeout(() => setDanboExpr(danboTabExpr), 1300);
-      errEl.textContent = 'Kode akses tidak sesuai dengan perusahaan yang dipilih. Periksa kembali.';
-      return;
-    }
-    authRole = 'customer';
-    authCode = normSelected;
-    sessionStorage.setItem('pallet-auth-role', 'customer');
-    sessionStorage.setItem('pallet-auth-code', normSelected);
-    enterApp();
-  }, 550);
+  const normSelected = normCode(selectedCode);
+  const normTyped = normCode(typed);
+  if (normTyped !== normSelected || !custByCode[normSelected]){
+    errEl.textContent = 'Kode akses tidak sesuai dengan perusahaan yang dipilih. Periksa kembali.';
+    return;
+  }
+  authRole = 'customer';
+  authCode = normSelected;
+  sessionStorage.setItem('pallet-auth-role', 'customer');
+  sessionStorage.setItem('pallet-auth-code', normSelected);
+  enterApp();
 }
 
 async function doAdminLogin(){
   const errEl = document.getElementById('login-error-admin');
   const typed = document.getElementById('login-admin-pass').value;
-  setDanboSpin(true);
   let typedHash;
   try {
     typedHash = await sha256Hex(typed);
   } catch (e){
-    setDanboSpin(false);
-    setDanboExpr('kaget');
-    setTimeout(() => setDanboExpr(danboTabExpr), 1300);
     // crypto.subtle hanya tersedia di halaman HTTPS (atau file lokal di beberapa browser).
     // Jika situs ini diakses lewat HTTP biasa, beri tahu jelas alih-alih diam-diam gagal login.
     errEl.textContent = 'Login gagal: halaman ini harus diakses lewat HTTPS agar password bisa diverifikasi dengan aman.';
     return;
   }
   if (typedHash !== ADMIN_PASSWORD_HASH){
-    setDanboSpin(false);
-    setDanboExpr('kaget');
-    setTimeout(() => setDanboExpr(danboTabExpr), 1300);
     errEl.textContent = 'Password salah.';
     return;
   }
@@ -1322,7 +1140,6 @@ function resetMobileZoom(){
 function enterApp(){
   document.getElementById('login-screen').style.display = 'none';
   resetMobileZoom();
-  setDanboSpin(false);
   applyRoleUI();
 
   if (authRole === 'customer'){
