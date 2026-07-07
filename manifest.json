@@ -9,19 +9,19 @@
   "orientation": "portrait-primary",
  "icons": [
     {
-      "src": "logop1.png",
+      "src": "logoios3.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "logop1.png",
+      "src": "logoios3.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "logo1-maskable.png",
+      "src": "logoios3.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
