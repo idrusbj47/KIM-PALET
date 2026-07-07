@@ -115,8 +115,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .scroll-top-btn:active{transform:translateY(0) scale(.94)}
 
 /* ===== LOGIN SCREEN ===== */
-.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;overflow-y:auto}
-.login-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.1rem 1.9rem;box-shadow:var(--shadow)}
+.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:500;padding:20px;overflow-y:auto}
+.login-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.1rem 1.9rem;box-shadow:var(--shadow);position:relative;z-index:2}
 .login-logo{text-align:center;margin-bottom:1.5rem}
 .login-logo .logo-circle{margin:0 auto 12px;width:52px;height:52px}
 .login-logo h1{font-family:'Fraunces',serif;font-size:19px;font-weight:600;color:var(--ink);line-height:1.2}
@@ -138,6 +138,51 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .login-btn:active{filter:brightness(.97)}
 .login-error{color:var(--red);font-size:12px;margin-top:10px;min-height:14px;line-height:1.4}
 .login-hint{color:var(--ink3);font-size:11px;margin-top:14px;text-align:center;line-height:1.5}
+
+/* ===== KUCING PEEK-A-BOO MUNCUL DARI BELAKANG FORM LOGIN ===== */
+/* Stage diletakkan tepat di atas .login-card dengan z-index LEBIH RENDAH,
+   lalu ditarik turun (margin-bottom negatif besar) agar sebagian besar
+   badan kucing bersembunyi di BELAKANG kartu login, dan hanya bagian
+   kepala/telinga yang terlihat mengintip di atas tepi kartu. */
+.login-cat-stage{
+  --cat-render-w:260px;   /* lebar render SVG kucing (utuh, sebelum dipotong) */
+  --cat-stage-h:170px;    /* tinggi kotak yang terlihat (bagian yg dipotong/crop) */
+  --cat-peek:38px;        /* seberapa tinggi bagian kepala yg nongol di atas kartu */
+  width:100%;
+  max-width:400px;
+  height:var(--cat-stage-h);
+  margin:0 auto calc(-1 * (var(--cat-stage-h) - var(--cat-peek)));
+  overflow:hidden;
+  position:relative;
+  pointer-events:none;
+  z-index:1;
+}
+.login-cat-stage svg{
+  position:absolute;
+  left:50%;
+  bottom:0;
+  width:var(--cat-render-w);
+  height:auto;
+  transform:translateX(-50%);
+  display:block;
+}
+@media(max-width:420px){
+  .login-cat-stage{--cat-render-w:210px;--cat-stage-h:140px;--cat-peek:30px}
+}
+
+/* ===== TOMBOL MATA (TOGGLE LIHAT PASSWORD) — dipakai di pane Staff KIM ===== */
+.login-pass-wrap.has-eye{position:relative}
+.login-pass-wrap.has-eye .login-pass-input{padding-right:4px}
+.pass-eye-btn{
+  flex-shrink:0;
+  width:38px;height:40px;
+  display:flex;align-items:center;justify-content:center;
+  border:none;background:transparent;cursor:pointer;
+  color:var(--ink3);
+  transition:color .15s;
+}
+.pass-eye-btn:hover{color:var(--brass)}
+.pass-eye-btn svg{width:18px;height:18px}
 
 /* ===== ROLE BADGE (setelah login) ===== */
 .role-badge{display:none;align-items:center;gap:7px;padding:6px 13px;border-radius:999px;background:var(--gray-bg);border:1px solid var(--border2);font-size:11.5px;color:var(--ink2);font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap}
@@ -358,6 +403,9 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 
 <!-- ===== LOGIN SCREEN ===== -->
 <div id="login-screen" class="login-screen">
+  <div class="login-cat-stage" aria-hidden="true">
+    <img src="Cat.svg" alt="" />
+  </div>
   <div class="login-card">
     <div class="login-logo">
       <div class="logo-circle">
@@ -392,7 +440,20 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 
     <div id="login-pane-admin" class="login-pane" style="display:none">
       <label class="login-label">Password Staff</label>
-      <input type="password" id="login-admin-pass" class="login-input" placeholder="Masukkan password" autocomplete="off" onkeydown="if(event.key==='Enter') doAdminLogin()"/>
+      <div class="login-pass-wrap has-eye">
+        <input type="password" id="login-admin-pass" class="login-pass-input" placeholder="Masukkan password" autocomplete="off" onkeydown="if(event.key==='Enter') doAdminLogin()"/>
+        <button type="button" class="pass-eye-btn" id="admin-pass-eye-btn" onclick="toggleAdminPassVisibility()" aria-label="Tampilkan password sementara">
+          <svg id="eye-icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <svg id="eye-icon-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+            <path d="M3 3l18 18"/>
+            <path d="M10.6 5.2A10.6 10.6 0 0 1 12 5c7 0 10.5 7 10.5 7a17.7 17.7 0 0 1-3.15 4.2M6.6 6.6C3.5 8.4 1.5 12 1.5 12s3.5 7 10.5 7c1.4 0 2.65-.28 3.75-.75"/>
+            <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+          </svg>
+        </button>
+      </div>
       <button class="login-btn" type="button" onclick="doAdminLogin()">Masuk sebagai Staff</button>
       <p class="login-error" id="login-error-admin"></p>
     </div>
@@ -1054,6 +1115,45 @@ function switchLoginTab(tab){
   document.getElementById('login-pane-admin').style.display = tab === 'admin' ? 'flex' : 'none';
   document.getElementById('login-error-customer').textContent = '';
   document.getElementById('login-error-admin').textContent = '';
+
+  // pastikan password staff kembali tersembunyi saat pindah tab
+  clearTimeout(_adminPassHideTimer);
+  const adminPassInput = document.getElementById('login-admin-pass');
+  if (adminPassInput && adminPassInput.type === 'text'){
+    adminPassInput.type = 'password';
+    document.getElementById('eye-icon-open').style.display = 'block';
+    document.getElementById('eye-icon-closed').style.display = 'none';
+  }
+}
+
+/* ============================================================
+   TOGGLE LIHAT PASSWORD STAFF KIM (sementara, auto-sembunyi lagi)
+   ============================================================ */
+let _adminPassHideTimer = null;
+function toggleAdminPassVisibility(){
+  const input = document.getElementById('login-admin-pass');
+  const iconOpen = document.getElementById('eye-icon-open');
+  const iconClosed = document.getElementById('eye-icon-closed');
+  const showing = input.type === 'text';
+
+  clearTimeout(_adminPassHideTimer);
+
+  if (showing){
+    // sedang terlihat -> sembunyikan lagi
+    input.type = 'password';
+    iconOpen.style.display = 'block';
+    iconClosed.style.display = 'none';
+  } else {
+    // sembunyikan -> tampilkan sementara, lalu otomatis kembali disembunyikan
+    input.type = 'text';
+    iconOpen.style.display = 'none';
+    iconClosed.style.display = 'block';
+    _adminPassHideTimer = setTimeout(() => {
+      input.type = 'password';
+      iconOpen.style.display = 'block';
+      iconClosed.style.display = 'none';
+    }, 6000); // password otomatis disembunyikan lagi setelah 6 detik
+  }
 }
 
 function populateLoginCustomerSelect(){
