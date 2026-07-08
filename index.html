@@ -802,7 +802,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     </div>
   </div>
 
-  <footer class="credit">©admin Pallet · PT. Karya Indah Multiguna</footer>
+  <footer class="credit">©Admin Pallet · PT. Karya Indah Multiguna</footer>
 </div>
 
 <!-- ===== ONBOARDING TOUR ===== -->
@@ -1990,7 +1990,7 @@ const TOUR_STEPS_CUSTOMER = [
 
 let tourSteps = [];
 let tourIndex = 0;
-let tourResizeBound = false;
+let tourListenersBound = false;
 
 function maybeStartTour(){
   if (localStorage.getItem(TOUR_SEEN_KEY)) return;
@@ -2004,23 +2004,59 @@ function startTour(){
   tourIndex = 0;
   document.getElementById('tour-overlay').style.display = 'block';
   showTourStep();
-  if (!tourResizeBound){
-    window.addEventListener('resize', () => {
+  if (!tourListenersBound){
+    const resyncActiveStep = () => {
       if (document.getElementById('tour-overlay').style.display === 'block' && tourSteps[tourIndex]){
         const t = document.querySelector(tourSteps[tourIndex].sel);
         if (t) positionTour(t);
       }
-    });
-    tourResizeBound = true;
+    };
+    window.addEventListener('resize', resyncActiveStep);
+    // Sinkronkan ulang posisi spotlight kalau user scroll manual saat tur masih aktif,
+    // supaya tidak melenceng dari fitur yang ditunjuk.
+    let scrollSyncTicking = false;
+    window.addEventListener('scroll', () => {
+      if (scrollSyncTicking) return;
+      scrollSyncTicking = true;
+      requestAnimationFrame(() => { resyncActiveStep(); scrollSyncTicking = false; });
+    }, { passive: true });
+    tourListenersBound = true;
   }
+}
+
+/* Menunggu sampai scroll benar-benar berhenti (bukan waktu tetap), karena durasi
+   scrollIntoView({behavior:'smooth'}) berbeda-beda tergantung jarak scroll —
+   kalau posisi dihitung terlalu cepat, spotlight jadi melenceng dari target. */
+function waitForScrollSettle(callback){
+  let lastY = window.scrollY;
+  let lastX = window.scrollX;
+  let stableFrames = 0;
+  const startedAt = Date.now();
+  const check = () => {
+    const y = window.scrollY, x = window.scrollX;
+    if (Math.abs(y - lastY) < 0.5 && Math.abs(x - lastX) < 0.5){
+      stableFrames++;
+    } else {
+      stableFrames = 0;
+      lastY = y; lastX = x;
+    }
+    // Stabil ~6 frame berturut-turut ATAU sudah lewat 1.2 detik (jaga-jaga) -> anggap selesai.
+    if (stableFrames >= 6 || Date.now() - startedAt > 1200){
+      callback();
+      return;
+    }
+    requestAnimationFrame(check);
+  };
+  requestAnimationFrame(check);
 }
 
 function showTourStep(){
   const step = tourSteps[tourIndex];
   const target = document.querySelector(step.sel);
   if (!target){ nextTourStep(); return; }
+  document.getElementById('tour-card').style.visibility = 'hidden';
   target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  setTimeout(() => positionTour(target), 330);
+  waitForScrollSettle(() => positionTour(target));
 }
 
 function positionTour(target){
