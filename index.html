@@ -419,6 +419,15 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 .tour-next:hover{filter:brightness(1.06)}
 @media(max-width:480px){.tour-card{width:calc(100vw - 28px)}}
 
+/* ===== INSTALL PWA ===== */
+.install-link{display:inline-flex;align-items:center;gap:7px;margin-top:14px;height:36px;padding:0 16px;border-radius:999px;border:1px solid var(--brass-line);background:var(--brass-bg);color:var(--brass);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .18s;width:100%;justify-content:center}
+.install-link:hover{filter:brightness(1.03);border-color:var(--brass-mid)}
+.install-step{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border)}
+.install-step:last-child{border-bottom:none}
+.install-step .num{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--brass-bg);color:var(--brass);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.install-step p{font-size:12.8px;color:var(--ink2);line-height:1.55;padding-top:2px}
+.install-step b{color:var(--ink)}
+
 /* ===== PRINT ===== */
 @media print{
   @page{margin:10mm}
@@ -464,6 +473,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       <button class="login-btn" type="button" onclick="doCustomerLogin()">Masuk</button>
       <p class="login-error" id="login-error-customer"></p>
       <p class="login-hint">Belum tahu kode akses Anda? Silakan hubungi pihak PT. Karya Indah Multiguna.</p>
+      <button class="install-link" id="install-btn-login" style="display:none" type="button" onclick="triggerInstall()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Instal Aplikasi ke HP / Laptop
+      </button>
     </div>
 
     <div id="login-pane-admin" class="login-pane" style="display:none">
@@ -532,6 +545,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     <button class="icon-btn logout-btn" id="btn-logout" onclick="doLogout()" title="Keluar dari sesi" style="display:none">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       <span class="lbl">Keluar</span>
+    </button>
+
+    <button class="icon-btn icon-only" id="install-btn-header" style="display:none" onclick="triggerInstall()" title="Instal aplikasi ini" aria-label="Instal aplikasi ini">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     </button>
 
     <button class="icon-btn icon-only" id="btn-help" onclick="startTour()" title="Panduan penggunaan" aria-label="Panduan penggunaan">
@@ -785,7 +802,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     </div>
   </div>
 
-  <footer class="credit">©admin Pallet · PT. Karya Indah Multiguna</footer>
+  <footer class="credit">Data ditarik langsung dari Google Sheets · PT. Karya Indah Multiguna</footer>
 </div>
 
 <!-- ===== ONBOARDING TOUR ===== -->
@@ -831,6 +848,32 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <span>Salin Data</span>
       </button>
       <span id="copy-feedback" class="copy-feedback">✓ Tersalin ke clipboard!</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: INSTAL APLIKASI ===== -->
+<div id="install-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this) closeInstallModal()">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-head">
+      <h3>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Instal Aplikasi
+      </h3>
+      <button class="modal-close" onclick="closeInstallModal()" aria-label="Tutup">&times;</button>
+    </div>
+    <p class="modal-desc" id="install-modal-intro">Ikuti langkah berikut agar aplikasi ini muncul sebagai ikon di layar utama, dan bisa dibuka langsung tanpa membuka browser.</p>
+    <div style="padding:6px 20px 20px">
+      <div id="install-steps-ios" style="display:none">
+        <div class="install-step"><span class="num">1</span><p>Ketuk ikon <b>Bagikan</b> (kotak dengan panah ke atas) di bagian bawah/atas Safari.</p></div>
+        <div class="install-step"><span class="num">2</span><p>Geser ke bawah lalu pilih <b>"Tambah ke Layar Utama" (Add to Home Screen)</b>.</p></div>
+        <div class="install-step"><span class="num">3</span><p>Ketuk <b>"Tambah"</b> di pojok kanan atas. Ikon aplikasi akan muncul di layar utama HP Anda.</p></div>
+      </div>
+      <div id="install-steps-generic">
+        <div class="install-step"><span class="num">1</span><p>Buka menu browser (biasanya ikon titik tiga <b>⋮</b> di pojok kanan atas).</p></div>
+        <div class="install-step"><span class="num">2</span><p>Pilih <b>"Instal aplikasi"</b> atau <b>"Tambahkan ke layar utama"</b>.</p></div>
+        <div class="install-step"><span class="num">3</span><p>Ikuti konfirmasi yang muncul. Aplikasi akan tersedia sebagai ikon tersendiri, tanpa perlu membuka browser lagi.</p></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1791,8 +1834,74 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape'){
     const modal = document.getElementById('analysis-modal');
     if (modal && modal.style.display === 'flex') closeAnalysisModal();
+    const imodal = document.getElementById('install-modal');
+    if (imodal && imodal.style.display === 'flex') closeInstallModal();
   }
 });
+
+/* ============================================================
+   INSTAL APLIKASI (PWA)
+   ============================================================ */
+let deferredInstallPrompt = null;
+
+function isStandaloneMode(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function isIOSDevice(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+}
+
+function showInstallButtons(){
+  if (isStandaloneMode()) return; // sudah terinstal, tidak perlu tampilkan tombol
+  const b1 = document.getElementById('install-btn-login');
+  const b2 = document.getElementById('install-btn-header');
+  if (b1) b1.style.display = 'inline-flex';
+  if (b2) b2.style.display = 'inline-flex';
+}
+function hideInstallButtons(){
+  const b1 = document.getElementById('install-btn-login');
+  const b2 = document.getElementById('install-btn-header');
+  if (b1) b1.style.display = 'none';
+  if (b2) b2.style.display = 'none';
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  showInstallButtons();
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  hideInstallButtons();
+});
+
+async function triggerInstall(){
+  if (deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    if (choice && choice.outcome === 'accepted') hideInstallButtons();
+    return;
+  }
+  // Browser tidak mendukung prompt otomatis (mis. iOS Safari) -> tampilkan panduan manual
+  openInstallModal();
+}
+
+function openInstallModal(){
+  const ios = isIOSDevice();
+  document.getElementById('install-steps-ios').style.display = ios ? 'block' : 'none';
+  document.getElementById('install-steps-generic').style.display = ios ? 'none' : 'block';
+  document.getElementById('install-modal').style.display = 'flex';
+}
+function closeInstallModal(){
+  document.getElementById('install-modal').style.display = 'none';
+}
+
+(function(){
+  if (isStandaloneMode()) return;
+  if (isIOSDevice()) showInstallButtons(); // iOS tidak fire beforeinstallprompt, tampilkan manual dari awal
+})();
 
 init();
 
