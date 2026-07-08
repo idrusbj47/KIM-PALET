@@ -115,8 +115,54 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .scroll-top-btn:active{transform:translateY(0) scale(.94)}
 
 /* ===== LOGIN SCREEN ===== */
-.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;overflow-y:auto}
-.login-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.1rem 1.9rem;box-shadow:var(--shadow)}
+@property --angle{syntax:'<angle>';initial-value:0deg;inherits:false}
+.login-screen{
+  position:fixed;inset:0;z-index:500;padding:20px;overflow-y:auto;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);
+}
+.login-screen::before{
+  content:'';position:absolute;inset:0;z-index:0;
+  background-image:url('latar-login.jpg');
+  background-size:cover;background-position:center right;
+  background-repeat:no-repeat;
+}
+.login-screen::after{
+  content:'';position:absolute;inset:0;z-index:0;
+  background:radial-gradient(ellipse 60% 55% at 50% 50%, rgba(246,243,236,.35) 0%, rgba(246,243,236,.08) 55%, rgba(246,243,236,0) 75%);
+}
+[data-theme="dark"] .login-screen::after{
+  background:radial-gradient(ellipse 60% 55% at 50% 50%, rgba(20,19,15,.55) 0%, rgba(20,19,15,.25) 55%, rgba(20,19,15,0) 75%);
+}
+[data-theme="dark"] .login-screen::before{opacity:.55;filter:saturate(.85) brightness(.75)}
+
+.login-card{
+  position:relative;z-index:1;
+  width:100%;max-width:400px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:2.1rem 1.9rem;
+  box-shadow:0 18px 50px -12px rgba(30,26,16,.28),0 2px 18px rgba(30,26,16,.08);
+  isolation:isolate;
+}
+/* garis cahaya elegan yang melintas mengelilingi tepi kartu */
+.login-card::before{
+  content:'';position:absolute;inset:-1px;z-index:-1;border-radius:inherit;
+  padding:1.4px;
+  background:conic-gradient(from var(--angle),
+    transparent 0deg, transparent 268deg,
+    rgba(217,185,107,0) 278deg,
+    var(--brass-line) 300deg,
+    #fff6da 318deg,
+    var(--brass-mid) 332deg,
+    rgba(217,185,107,0) 348deg,
+    transparent 360deg);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  animation:login-border-sweep 5.5s linear infinite;
+}
+@keyframes login-border-sweep{to{--angle:360deg}}
+@media (prefers-reduced-motion:reduce){
+  .login-card::before{animation:none;display:none}
+}
 .login-logo{text-align:center;margin-bottom:1.5rem}
 .login-logo .logo-circle{margin:0 auto 12px;width:52px;height:52px}
 .login-logo h1{font-family:'Fraunces',serif;font-size:19px;font-weight:600;color:var(--ink);line-height:1.2}
