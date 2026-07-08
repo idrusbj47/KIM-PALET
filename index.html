@@ -1861,8 +1861,9 @@ const TOUR_SEEN_KEY = 'pallet-tour-seen';
 const TOUR_STEPS_ADMIN = [
   { sel: '#view-list .stats-grid', title: 'Ringkasan Saldo', desc: 'Total customer, saldo awal, mutasi in/out, dan saldo akhir bisa dilihat sekilas di sini.' },
   { sel: '#view-list .search-wrap', title: 'Cari & Filter', desc: 'Ketik nama atau kode customer untuk mencari, atau ketuk chip status (Perlu Perhatian / Pantau / Sehat) untuk menyaring daftar.' },
+  { sel: '#list-month-filter', title: 'Filter per Bulan', desc: 'Pilih bulan tertentu di sini untuk melihat data saldo & mutasi hanya pada bulan itu saja, atau biarkan "Semua Bulan" untuk melihat keseluruhan periode.' },
   { sel: '#legend-box', title: 'Kode & Warna', desc: 'Ketuk bagian ini kapan saja untuk membaca penjelasan istilah IN, OUT, RESET, OPNAM, serta arti warna status.' },
-  { sel: '#view-list .table-wrap', title: 'Daftar Customer', desc: 'Ketuk salah satu baris pada tabel untuk membuka riwayat transaksi lengkap customer tersebut.' },
+  { sel: '#view-list .table-wrap', title: 'Daftar Customer', desc: 'Ketuk salah satu baris untuk membuka riwayat transaksinya. Tabel ini juga punya kolom MH (Moving Health) dengan panah warna dan status kesehatan saldo — di layar HP, geser tabel ke kiri/kanan agar kolom MH, indikator status, dan transaksi terakhir ikut terlihat.' },
   { sel: '#btn-analisa', title: 'Analisa AI', desc: 'Salin ringkasan data saldo pallet, lalu tempel ke AI favorit Anda untuk mendapat analisa dan rekomendasi otomatis.' },
   { sel: '.theme-switch', title: 'Mode Gelap / Terang', desc: 'Ganti tampilan halaman sesuai kenyamanan mata Anda, bisa diubah kapan saja.' },
   { sel: '#btn-help', title: 'Butuh Panduan Lagi?', desc: 'Ketuk tombol ini kapan pun untuk menampilkan ulang panduan singkat ini.' }
@@ -1871,8 +1872,9 @@ const TOUR_STEPS_ADMIN = [
 const TOUR_STEPS_CUSTOMER = [
   { sel: '#view-detail .summary-strip', title: 'Ringkasan Saldo Anda', desc: 'Saldo awal, jumlah in, out, saldo akhir, dan info opname terakhir ditampilkan di sini.' },
   { sel: '#legend-box-detail', title: 'Kode & Warna', desc: 'Ketuk bagian ini kapan saja untuk membaca penjelasan istilah RESET, OPNAM, IN, dan OUT.' },
-  { sel: '#view-detail .search-wrap', title: 'Cari Transaksi', desc: 'Cari transaksi berdasarkan nomor polisi atau tanggal, atau saring per bulan lewat menu di sebelahnya.' },
-  { sel: '#view-detail .table-wrap', title: 'Riwayat Transaksi', desc: 'Semua transaksi IN dan OUT pallet perusahaan Anda tercatat lengkap pada tabel ini.' },
+  { sel: '#view-detail .search-wrap', title: 'Cari Transaksi', desc: 'Cari transaksi berdasarkan nomor polisi atau tanggal.' },
+  { sel: '#d-month-filter', title: 'Filter per Bulan', desc: 'Pilih bulan tertentu di sini untuk melihat transaksi hanya pada bulan itu saja, atau biarkan "Semua Bulan" untuk melihat semua riwayat.' },
+  { sel: '#view-detail .table-wrap', title: 'Riwayat Transaksi', desc: 'Semua transaksi IN dan OUT pallet perusahaan Anda tercatat lengkap pada tabel ini. Di layar HP, geser tabel ke kiri/kanan bila ada kolom yang belum terlihat.' },
   { sel: '.theme-switch', title: 'Mode Gelap / Terang', desc: 'Ganti tampilan halaman sesuai kenyamanan mata Anda, bisa diubah kapan saja.' },
   { sel: '#btn-help', title: 'Butuh Panduan Lagi?', desc: 'Ketuk tombol ini kapan pun untuk menampilkan ulang panduan singkat ini.' }
 ];
