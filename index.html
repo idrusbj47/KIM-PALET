@@ -806,14 +806,8 @@ let reportDate = null;
 let currentFilter = 'all';
 let currentDetailCode = null;
 
-/* ============================================================
-   LOGIN / AKSES
-   ============================================================ */
-// Password login Staff KIM disimpan sebagai HASH SHA-256, bukan teks polos — supaya password asli
-// tidak langsung terbaca oleh siapapun yang membuka "View Page Source" / DevTools di browser.
-// Password saat ini: KIM123890
-// Cara mengganti password: hitung SHA-256 dari password baru (huruf kecil, heksadesimal, 64 karakter)
-// lalu tempel hasilnya di bawah ini. Contoh di terminal: echo -n "PASSWORD_BARU" | sha256sum
+
+// P
 const ADMIN_PASSWORD_HASH = '1ef4e6d5e33a3ef5434ddbbe79e4df80d172a3c3e0d6e1c17657c3f621246059';
 
 async function sha256Hex(text){
