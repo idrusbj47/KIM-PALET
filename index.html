@@ -126,17 +126,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
   background-image:url('latar-login.jpg');
   background-size:cover;background-position:center right;
   background-repeat:no-repeat;
-  filter:blur(14px) saturate(1.05);
-  transform:scale(1.06);
+  filter:blur(3px) saturate(1.05);
+  transform:scale(1.02);
 }
 .login-screen::after{
   content:'';position:absolute;inset:0;z-index:0;
-  background:radial-gradient(ellipse 65% 60% at 50% 50%, rgba(246,243,236,.55) 0%, rgba(246,243,236,.3) 55%, rgba(246,243,236,.08) 78%, rgba(246,243,236,0) 100%);
+  background:radial-gradient(ellipse 65% 60% at 50% 50%, rgba(246,243,236,.4) 0%, rgba(246,243,236,.18) 55%, rgba(246,243,236,.05) 78%, rgba(246,243,236,0) 100%);
 }
 [data-theme="dark"] .login-screen::after{
-  background:radial-gradient(ellipse 65% 60% at 50% 50%, rgba(20,19,15,.7) 0%, rgba(20,19,15,.45) 55%, rgba(20,19,15,.15) 78%, rgba(20,19,15,0) 100%);
+  background:radial-gradient(ellipse 65% 60% at 50% 50%, rgba(20,19,15,.6) 0%, rgba(20,19,15,.35) 55%, rgba(20,19,15,.1) 78%, rgba(20,19,15,0) 100%);
 }
-[data-theme="dark"] .login-screen::before{opacity:.5;filter:blur(14px) saturate(.85) brightness(.7)}
+[data-theme="dark"] .login-screen::before{opacity:.5;filter:blur(3px) saturate(.85) brightness(.7)}
 
 .login-card{
   position:relative;z-index:1;
