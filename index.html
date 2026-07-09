@@ -174,6 +174,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .login-tab.on{background:linear-gradient(135deg,var(--brass-mid),var(--brass));color:#fff}
 .login-pane{display:flex;flex-direction:column}
 .login-label{display:block;font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:6px;margin-top:14px}
+.login-label-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.login-refresh-btn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:1px solid var(--border2);background:var(--surface);color:var(--ink2);cursor:pointer;transition:all .18s;flex-shrink:0}
+.login-refresh-btn:hover{border-color:var(--brass-line);color:var(--brass)}
+.login-refresh-btn:disabled{opacity:.6;cursor:default}
+.login-refresh-btn.spinning svg{animation:spin .8s linear infinite}
+.login-cust-status{font-size:11.5px;margin-top:-4px;margin-bottom:10px;line-height:1.4}
 .login-label:first-of-type{margin-top:0}
 .login-select,.login-input{width:100%;height:40px;border:1px solid var(--border2);border-radius:var(--radius);padding:0 12px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink);outline:none;transition:border .15s}
 .login-select:focus,.login-input:focus{border-color:var(--brass-mid)}
@@ -360,6 +366,11 @@ tr.row-opnam td span{color:var(--opnam-r)!important}
 .sum-card.out .v{color:var(--red)}
 .sum-card.akhir .v{color:var(--brass)}
 .sum-card.opname .v{color:var(--reset-y)}
+.adj-breakdown{display:none;flex-direction:column;gap:2px;margin-top:7px;padding-top:7px;border-top:1px dashed var(--border2)}
+.adj-breakdown .adj-line{display:flex;justify-content:space-between;gap:10px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--ink3)}
+.adj-breakdown .adj-line b{font-weight:600;color:var(--ink2)}
+.adj-breakdown .adj-line.opnam b{color:var(--red)}
+.adj-breakdown .adj-line.reset b{color:var(--reset-y)}
 @media(max-width:1000px){.summary-strip{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:700px){.summary-strip{grid-template-columns:repeat(2,1fr)}}
 
@@ -461,10 +472,16 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     </div>
 
     <div id="login-pane-customer" class="login-pane">
-      <label class="login-label">Pilih Nama Perusahaan</label>
+      <label class="login-label login-label-row">
+        <span>Pilih Nama Perusahaan</span>
+        <button type="button" class="login-refresh-btn" id="login-refresh-btn" onclick="refreshLoginCustomerList()" title="Muat ulang daftar customer" aria-label="Muat ulang daftar customer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
+      </label>
       <select id="login-cust-select" class="login-select">
         <option value="">— Pilih PT / Customer —</option>
       </select>
+      <p class="login-cust-status" id="login-cust-list-status" style="display:none"></p>
       <label class="login-label">Kode Akses</label>
       <div class="login-pass-wrap">
         <span class="login-pass-prefix">KIM-</span>
@@ -742,8 +759,8 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 
     <div class="summary-strip">
       <div class="sum-card awal"><div class="l">Saldo Awal</div><div class="v" id="d-awal">—</div></div>
-      <div class="sum-card in"><div class="l">Jumlah In</div><div class="v" id="d-in">—</div></div>
-      <div class="sum-card out"><div class="l">Jumlah Out</div><div class="v" id="d-out">—</div></div>
+      <div class="sum-card in"><div class="l">Jumlah In</div><div class="v" id="d-in">—</div><div class="adj-breakdown" id="d-in-adj"></div></div>
+      <div class="sum-card out"><div class="l">Jumlah Out</div><div class="v" id="d-out">—</div><div class="adj-breakdown" id="d-out-adj"></div></div>
       <div class="sum-card akhir"><div class="l">Saldo Akhir</div><div class="v" id="d-akhir">—</div></div>
       <div class="sum-card opname"><div class="l">Opname Terakhir</div><div class="v" id="d-opnam-date">—</div><div class="sub" id="d-opnam-sub"></div></div>
     </div>
@@ -756,7 +773,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <svg class="chev-sm" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </summary>
       <div class="legend-body">
-        <div class="legend-item">
+        <div class="legend-item" id="legend-reset-detail">
           <span class="legend-chip reset">RESET</span>
           <p><b>RESET</b> dilakukan ketika saldo akhir menjadi negatif atau muncul tanda kurung, misal (20) dibaca min 20. Saldo dikembalikan ke 0 agar perhitungan transaksi berikutnya tetap akurat.</p>
         </div>
@@ -1217,6 +1234,42 @@ function populateLoginCustomerSelect(){
     sorted.map(c => `<option value="${c.code.replace(/"/g,'&quot;')}">${c.name}</option>`).join('');
 }
 
+/* Muat ulang daftar PT/customer di form login secara manual. Dipakai ketika daftar customer
+   kadang tidak termuat sempurna saat load pertama (mis. koneksi lambat/putus-nyambung saat
+   menarik data dari spreadsheet), supaya user tidak perlu me-refresh seluruh halaman. */
+async function refreshLoginCustomerList(){
+  const btn = document.getElementById('login-refresh-btn');
+  const statusEl = document.getElementById('login-cust-list-status');
+  const sel = document.getElementById('login-cust-select');
+  const prevValue = sel.value;
+  btn.classList.add('spinning');
+  btn.disabled = true;
+  statusEl.style.display = 'none';
+  try {
+    const t = new Date().getTime();
+    const res = await fetch(`${CSV_URL}&t=${t}`);
+    if (!res.ok) throw new Error('Gagal terhubung ke server data.');
+    const text = await res.text();
+    buildData(text);
+    if (customers.length === 0) throw new Error('Daftar customer masih kosong, coba lagi sebentar.');
+    populateListMonthFilter();
+    populateLoginCustomerSelect();
+    // pertahankan pilihan sebelumnya kalau customer itu masih ada di daftar baru
+    if (prevValue && Array.from(sel.options).some(o => o.value === prevValue)) sel.value = prevValue;
+    statusEl.textContent = `✓ Daftar customer diperbarui (${customers.length} customer).`;
+    statusEl.style.color = 'var(--green)';
+    statusEl.style.display = 'block';
+  } catch (e){
+    console.error(e);
+    statusEl.textContent = '⚠️ Gagal memuat daftar customer. Periksa koneksi internet Anda, lalu ketuk ikon refresh lagi.';
+    statusEl.style.color = 'var(--red)';
+    statusEl.style.display = 'block';
+  } finally {
+    btn.classList.remove('spinning');
+    btn.disabled = false;
+  }
+}
+
 function doCustomerLogin(){
   const sel = document.getElementById('login-cust-select');
   const errEl = document.getElementById('login-error-customer');
@@ -1336,6 +1389,12 @@ function applyRoleUI(){
   } else {
     badgeText.textContent = 'Staff KIM';
   }
+
+  // Keterangan RESET pada "Kode & Warna Transaksi" hanya disembunyikan di jendela khusus
+  // customer (login customer). Saat staff KIM membuka detail customer yang sama, keterangan
+  // RESET tetap tampil seperti biasa.
+  const resetLegendDetail = document.getElementById('legend-reset-detail');
+  if (resetLegendDetail) resetLegendDetail.style.display = isCustomer ? 'none' : '';
 }
 
 
@@ -1579,6 +1638,33 @@ function goList(){
   silentRefresh();
 }
 
+/* Hitung & tampilkan rincian "Asli" vs "Adj OPNAM" / "Adj RESET" pada card Jumlah In / Jumlah
+   Out. Hanya ditampilkan kalau memang ada baris OPNAM dan/atau RESET yang mengandung nilai
+   pada kolom terkait (in/out) di data yang sedang ditampilkan — kalau tidak ada, card kembali
+   tampil polos seperti biasa (tanpa rincian). */
+function renderAdjBreakdown(elId, list, key){
+  const el = document.getElementById(elId);
+  if (!el) return;
+  let asli = 0, adjOpnam = 0, adjReset = 0;
+  (list || []).forEach(t => {
+    const val = t[key] || 0;
+    if (!val) return;
+    if (t.marker === 'opnam') adjOpnam += val;
+    else if (t.marker === 'reset') adjReset += val;
+    else asli += val;
+  });
+  if (!adjOpnam && !adjReset){
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+  let html = `<div class="adj-line asli"><span>Asli</span><b>${fmtNum(asli)}</b></div>`;
+  if (adjOpnam) html += `<div class="adj-line opnam"><span>Adj OPNAM</span><b>${fmtNum(adjOpnam)}</b></div>`;
+  if (adjReset) html += `<div class="adj-line reset"><span>Adj RESET</span><b>${fmtNum(adjReset)}</b></div>`;
+  el.innerHTML = html;
+  el.style.display = 'flex';
+}
+
 function renderDetail(){
   const c = custByCode[currentDetailCode];
   if (!c){ goList(); return; }
@@ -1621,6 +1707,15 @@ function renderDetail(){
   document.getElementById('d-in').textContent = fmtNum(periodIn);
   document.getElementById('d-out').textContent = fmtNum(periodOut);
   document.getElementById('d-akhir').textContent = fmtSaldo(periodAkhir);
+
+  // Rincian Jumlah In / Jumlah Out: pisahkan porsi transaksi asli vs porsi penyesuaian
+  // (adjustment) yang berasal dari baris OPNAM / RESET, supaya kelihatan jelas kalau
+  // sebagian dari total In/Out itu bukan transaksi kendaraan biasa. Dihitung dari data
+  // periode yang sama dengan yang dipakai untuk d-in/d-out (sebelum difilter kata kunci
+  // pencarian), dan berlaku sama baik untuk tab Customer maupun Staff KIM karena keduanya
+  // memakai elemen #view-detail yang sama.
+  renderAdjBreakdown('d-in-adj', trxList, 'inVal');
+  renderAdjBreakdown('d-out-adj', trxList, 'outVal');
 
   // Card Opname Terakhir — diambil dari tabel "Tanggal Terahir Opnam" (kolom M-P) pada CSV
   const opn = c.opnam;
@@ -1692,6 +1787,14 @@ async function init(){
     document.getElementById('loading').style.display = 'none';
     document.getElementById('err-box').style.display = 'block';
     document.getElementById('err-box').innerHTML = `⚠️ <strong>Gagal memuat data:</strong> ${e.message}`;
+    // err-box ada di belakang layar login (login-screen menutupi seluruh layar), jadi
+    // tampilkan juga pesannya di dekat pilihan customer supaya user tahu harus tap refresh.
+    const statusEl = document.getElementById('login-cust-list-status');
+    if (statusEl){
+      statusEl.textContent = '⚠️ Daftar customer gagal dimuat. Ketuk ikon refresh di atas untuk mencoba lagi.';
+      statusEl.style.color = 'var(--red)';
+      statusEl.style.display = 'block';
+    }
   }
 }
 
@@ -1988,6 +2091,21 @@ const TOUR_STEPS_CUSTOMER = [
   { sel: '#btn-help', title: 'Butuh Panduan Lagi?', desc: 'Ketuk tombol ini kapan pun untuk menampilkan ulang panduan singkat ini.' }
 ];
 
+/* Dipakai saat staff KIM (authRole 'admin') sedang membuka halaman detail salah satu
+   customer (bukan di daftar utama). Sebelumnya tour selalu memakai TOUR_STEPS_ADMIN yang
+   menunjuk elemen-elemen di dalam #view-list — padahal saat itu #view-list sedang
+   disembunyikan (display:none), sehingga highlight/posisi tour jadi salah arah ("bug"). */
+const TOUR_STEPS_ADMIN_DETAIL = [
+  { sel: '#back-to-list-btn', title: 'Kembali ke Daftar', desc: 'Ketuk tombol ini untuk kembali melihat daftar seluruh customer.' },
+  { sel: '#view-detail .summary-strip', title: 'Ringkasan Saldo Customer', desc: 'Saldo awal, jumlah in, out, saldo akhir, dan info opname terakhir customer ini ditampilkan di sini.' },
+  { sel: '#legend-box-detail', title: 'Kode & Warna', desc: 'Ketuk bagian ini kapan saja untuk membaca penjelasan istilah RESET, OPNAM, IN, dan OUT.' },
+  { sel: '#view-detail .search-wrap', title: 'Cari Transaksi', desc: 'Cari transaksi berdasarkan nomor polisi atau tanggal.' },
+  { sel: '#d-month-filter', title: 'Filter per Bulan', desc: 'Pilih bulan tertentu di sini untuk melihat transaksi hanya pada bulan itu saja.' },
+  { sel: '#view-detail .table-wrap', title: 'Riwayat Transaksi', desc: 'Semua transaksi IN dan OUT pallet customer ini tercatat lengkap pada tabel ini.' },
+  { sel: '.theme-switch', title: 'Mode Gelap / Terang', desc: 'Ganti tampilan halaman sesuai kenyamanan mata Anda, bisa diubah kapan saja.' },
+  { sel: '#btn-help', title: 'Butuh Panduan Lagi?', desc: 'Ketuk tombol ini kapan pun untuk menampilkan ulang panduan singkat ini.' }
+];
+
 let tourSteps = [];
 let tourIndex = 0;
 let tourListenersBound = false;
@@ -1997,9 +2115,23 @@ function maybeStartTour(){
   setTimeout(startTour, 700);
 }
 
+/* Elemen dianggap valid jadi target tour hanya kalau benar-benar ada DAN sedang terlihat
+   (bukan sekadar ada di DOM tapi disembunyikan lewat display:none pada parent-nya). */
+function isTourTargetVisible(sel){
+  const el = document.querySelector(sel);
+  return !!(el && el.offsetParent !== null);
+}
+
 function startTour(){
-  const source = authRole === 'customer' ? TOUR_STEPS_CUSTOMER : TOUR_STEPS_ADMIN;
-  tourSteps = source.filter(s => document.querySelector(s.sel));
+  let source;
+  if (authRole === 'customer'){
+    source = TOUR_STEPS_CUSTOMER;
+  } else {
+    // Deteksi jendela mana yang sedang aktif untuk staff KIM: daftar utama atau detail customer.
+    const inDetailView = document.getElementById('view-detail').style.display !== 'none';
+    source = inDetailView ? TOUR_STEPS_ADMIN_DETAIL : TOUR_STEPS_ADMIN;
+  }
+  tourSteps = source.filter(s => isTourTargetVisible(s.sel));
   if (!tourSteps.length) return;
   tourIndex = 0;
   document.getElementById('tour-overlay').style.display = 'block';
