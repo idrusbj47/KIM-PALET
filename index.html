@@ -24,7 +24,7 @@
   --amber:#a06a08;--amber-bg:#faf0d7;
   --red:#a13a29;--red-bg:#f9e9e4;
   --reset-y:#a17f00;--reset-y-bg:#fff2b0;--reset-y-line:#e6c235;
-  --opnam-r:#ffffff;--opnam-r-bg:#c0392b;--opnam-r-line:#a13a29;
+  --opname-r:#ffffff;--opname-r-bg:#c0392b;--opname-r-line:#a13a29;
   --saldo-navy:#ffffff;--saldo-navy-bg:#1f3864;
   --gray:#6b7280;--gray-bg:#e7e8ea;
   --radius:10px;--radius-lg:16px;
@@ -39,7 +39,7 @@
   --amber:#e0b64c;--amber-bg:#332608;
   --red:#e28068;--red-bg:#341c15;
   --reset-y:#f2d675;--reset-y-bg:#3a3210;--reset-y-line:#6b551f;
-  --opnam-r:#ffffff;--opnam-r-bg:#7a2a20;--opnam-r-line:#a13a29;
+  --opname-r:#ffffff;--opname-r-bg:#7a2a20;--opname-r-line:#a13a29;
   --saldo-navy:#dbe6ff;--saldo-navy-bg:#1c2b47;
   --gray:#9aa1ab;--gray-bg:#2a2d33;
   --shadow:0 4px 28px rgba(0,0,0,.45);
@@ -291,14 +291,14 @@ tbody tr.data-row:hover td{background:var(--brass-bg)}
 .mh-cell.gray svg{color:var(--gray)}
 .mh-cell.red svg{color:var(--red)}
 
-/* ===== TAG RESET / OPNAM ===== */
-.tag-reset,.tag-opnam{display:inline-block;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;letter-spacing:.03em;padding:3px 9px;border-radius:6px;white-space:nowrap}
+/* ===== TAG RESET / OPNAME ===== */
+.tag-reset,.tag-opname{display:inline-block;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;letter-spacing:.03em;padding:3px 9px;border-radius:6px;white-space:nowrap}
 .tag-reset{background:var(--reset-y-bg);color:var(--reset-y);border:1px solid var(--reset-y-line)}
-.tag-opnam{background:var(--opnam-r-bg);color:var(--opnam-r);border:1px solid var(--opnam-r-line)}
+.tag-opname{background:var(--opname-r-bg);color:var(--opname-r);border:1px solid var(--opname-r-line)}
 tr.row-reset td{background:var(--reset-y-bg)!important}
-tr.row-opnam td{background:var(--opnam-r-bg)!important;color:var(--opnam-r)!important}
-tr.row-opnam td .num-cell,tr.row-opnam .num-cell{color:var(--opnam-r)!important}
-tr.row-opnam td span{color:var(--opnam-r)!important}
+tr.row-opname td{background:var(--opname-r-bg)!important;color:var(--opname-r)!important}
+tr.row-opname td .num-cell,tr.row-opname .num-cell{color:var(--opname-r)!important}
+tr.row-opname td span{color:var(--opname-r)!important}
 [data-theme="dark"] tr.row-reset td{background:var(--reset-y-bg)!important}
 
 /* ===== LEGEND / KODE & WARNA ===== */
@@ -311,7 +311,7 @@ tr.row-opnam td span{color:var(--opnam-r)!important}
 .legend-item{display:flex;gap:10px;align-items:flex-start}
 .legend-chip{flex-shrink:0;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;padding:3px 10px;border-radius:6px;white-space:nowrap;margin-top:1px}
 .legend-chip.reset{background:var(--reset-y-bg);color:var(--reset-y);border:1px solid var(--reset-y-line)}
-.legend-chip.opnam{background:var(--opnam-r-bg);color:var(--opnam-r);border:1px solid var(--opnam-r-line)}
+.legend-chip.opname{background:var(--opname-r-bg);color:var(--opname-r);border:1px solid var(--opname-r-line)}
 .legend-chip.in,.legend-chip.out{background:var(--green-bg);color:var(--green);border:1px solid var(--green-mid)}
 .legend-chip.saldo{background:var(--saldo-navy-bg);color:var(--saldo-navy)}
 .legend-item p{font-size:12px;color:var(--ink2);line-height:1.5}
@@ -369,7 +369,7 @@ tr.row-opnam td span{color:var(--opnam-r)!important}
 .adj-breakdown{display:none;flex-direction:column;gap:2px;margin-top:7px;padding-top:7px;border-top:1px dashed var(--border2)}
 .adj-breakdown .adj-line{display:flex;justify-content:space-between;gap:10px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--ink3)}
 .adj-breakdown .adj-line b{font-weight:600;color:var(--ink2)}
-.adj-breakdown .adj-line.opnam b{color:var(--red)}
+.adj-breakdown .adj-line.opname b{color:var(--red)}
 .adj-breakdown .adj-line.reset b{color:var(--reset-y)}
 @media(max-width:1000px){.summary-strip{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:700px){.summary-strip{grid-template-columns:repeat(2,1fr)}}
@@ -673,8 +673,8 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
           <p><b>RESET</b> dilakukan ketika saldo akhir menjadi negatif atau muncul tanda kurung, misal (20) dibaca min 20. Saldo dikembalikan ke 0 agar perhitungan transaksi berikutnya tetap akurat dan tidak membawa error dari data sebelumnya.</p>
         </div>
         <div class="legend-item">
-          <span class="legend-chip opnam">OPNAM</span>
-          <p><b>OPNAM</b> dilakukan ketika KIM dan customer menyamakan data saldo pallet berdasarkan hasil pengecekan lapangan / informasi valid. Data hasil opname dicatat sebagai dasar penyesuaian saldo (adjustment).</p>
+          <span class="legend-chip opname">OPNAME</span>
+          <p><b>OPNAME</b> dilakukan ketika KIM dan customer menyamakan data saldo pallet berdasarkan hasil pengecekan lapangan / informasi valid. Data hasil opname dicatat sebagai dasar penyesuaian saldo (adjustment).</p>
         </div>
         <div class="legend-item">
           <span class="legend-chip in">IN</span>
@@ -686,7 +686,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         </div>
         <div class="legend-item">
           <span class="legend-chip saldo">SALDO</span>
-          <p><b>Saldo</b> adalah jumlah pallet milik KIM yang tercatat berada di customer pada periode berjalan. Saldo berubah mengikuti transaksi IN, OUT, serta penyesuaian melalui OPNAM atau RESET bila diperlukan.</p>
+          <p><b>Saldo</b> adalah jumlah pallet milik KIM yang tercatat berada di customer pada periode berjalan. Saldo berubah mengikuti transaksi IN, OUT, serta penyesuaian melalui OPNAME atau RESET bila diperlukan.</p>
         </div>
 
         <div class="legend-divider"></div>
@@ -762,7 +762,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       <div class="sum-card in"><div class="l">Jumlah In</div><div class="v" id="d-in">—</div><div class="adj-breakdown" id="d-in-adj"></div></div>
       <div class="sum-card out"><div class="l">Jumlah Out</div><div class="v" id="d-out">—</div><div class="adj-breakdown" id="d-out-adj"></div></div>
       <div class="sum-card akhir"><div class="l">Saldo Akhir</div><div class="v" id="d-akhir">—</div></div>
-      <div class="sum-card opname"><div class="l">Opname Terakhir</div><div class="v" id="d-opnam-date">—</div><div class="sub" id="d-opnam-sub"></div></div>
+      <div class="sum-card opname"><div class="l">Opname Terakhir</div><div class="v" id="d-opname-date">—</div><div class="sub" id="d-opname-sub"></div></div>
     </div>
 
     <details class="legend-box" id="legend-box-detail">
@@ -778,8 +778,8 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
           <p><b>RESET</b> dilakukan ketika saldo akhir menjadi negatif atau muncul tanda kurung, misal (20) dibaca min 20. Saldo dikembalikan ke 0 agar perhitungan transaksi berikutnya tetap akurat.</p>
         </div>
         <div class="legend-item">
-          <span class="legend-chip opnam">OPNAM</span>
-          <p><b>OPNAM</b> dilakukan ketika KIM dan customer menyamakan data saldo pallet berdasarkan hasil pengecekan lapangan / informasi valid, sebagai dasar penyesuaian saldo (adjustment).</p>
+          <span class="legend-chip opname">OPNAME</span>
+          <p><b>OPNAME</b> dilakukan ketika KIM dan customer menyamakan data saldo pallet berdasarkan hasil pengecekan lapangan / informasi valid, sebagai dasar penyesuaian saldo (adjustment).</p>
         </div>
         <div class="legend-item">
           <span class="legend-chip in">IN</span>
@@ -984,7 +984,7 @@ function parseDateID(str){
 }
 
 // format tanggal opname pada kolom O (mis. "30/Sep/25") — dipisah "/" bukan "-"
-function parseDateOpnamID(str){
+function parseDateOpnameID(str){
   if (!str) return null;
   str = str.trim();
   const m = str.match(/^(\d{1,2})\/([A-Za-z]{3,4})\/(\d{2,4})$/);
@@ -1049,7 +1049,7 @@ function buildData(text){
   }
 
   // --- 1b. Tabel Tanggal Terakhir Opname (kolom M-P / index 12-15) ---
-  const opnamByCode = {};
+  const opnameByCode = {};
   for (let i = 0; i < rows.length; i++){
     const r = rows[i];
     if (!r || r.length < 16) continue;
@@ -1060,11 +1060,11 @@ function buildData(text){
     if (!code || code.toLowerCase() === 'c.code') continue;
     if (!name) continue;
     const norm = normCode(code);
-    if (!opnamByCode[norm]){
-      opnamByCode[norm] = {
+    if (!opnameByCode[norm]){
+      opnameByCode[norm] = {
         code: code, name: name,
         tglRaw: tglRaw,
-        tglDate: parseDateOpnamID(tglRaw),
+        tglDate: parseDateOpnameID(tglRaw),
         qty: qtyRaw
       };
     }
@@ -1099,11 +1099,14 @@ function buildData(text){
     cust.sumIn += inVal;
     cust.sumOut += outVal;
 
-    // deteksi kode khusus RESET / OPNAM pada kolom "No Mobil"
+    // deteksi kode khusus RESET / OPNAME pada kolom "No Mobil"
     const noPolUp = noPol.trim().toUpperCase();
     let marker = null;
     if (noPolUp === 'RESET') marker = 'reset';
-    else if (noPolUp === 'OPNAM') marker = 'opnam';
+    // Deteksi "OPNAME" (penulisan baru). "OPNAM" (tanpa E) tetap didukung sebagai jaring
+    // pengaman untuk baris data lama di spreadsheet yang mungkin belum sempat diperbarui,
+    // supaya kalkulasi saldo tidak tiba-tiba salah karena baris lama tidak lagi terdeteksi.
+    else if (noPolUp === 'OPNAME' || noPolUp === 'OPNAM') marker = 'opname';
 
     cust.trx.push({ date, noPol, inVal, outVal, marker, _idx: i });
 
@@ -1132,8 +1135,8 @@ function buildData(text){
     c.trx.forEach(t => {
       // OUT = pallet dikirim ke customer (menambah saldo di customer)
       // IN  = pallet dikembalikan dari customer (mengurangi saldo di customer)
-      // RESET & OPNAM tetap memakai rumus akumulasi biasa (saldo sebelumnya + out - in).
-      // Nilai yang ditulis di kolom IN/OUT pada baris RESET/OPNAM adalah angka penyesuaian
+      // RESET & OPNAME tetap memakai rumus akumulasi biasa (saldo sebelumnya + out - in).
+      // Nilai yang ditulis di kolom IN/OUT pada baris RESET/OPNAME adalah angka penyesuaian
       // yang sengaja diisi agar hasil akumulasi ini match dengan hasil fisik opname,
       // bukan nilai mutlak pengganti saldo.
       running += (t.outVal - t.inVal);
@@ -1162,7 +1165,7 @@ function buildData(text){
     else c.mhCategory = 'red';
 
     c.monthCount = c.trx.filter(t => t.date.getMonth() === reportDate.getMonth() && t.date.getFullYear() === reportDate.getFullYear()).length;
-    c.opnam = opnamByCode[norm] || null;
+    c.opname = opnameByCode[norm] || null;
     return c;
   }).filter(c => c.name && c.name.trim() !== ''); // sembunyikan customer yang tidak punya nama
 
@@ -1427,13 +1430,13 @@ function lastTrxSummaryHtml(c){
   if (!c.lastTrx) return 'Belum ada transaksi';
   const lastDateStr = c.lastTrx.date.toDateString();
   const sameDay = c.trx.filter(t => t.date.toDateString() === lastDateStr);
-  let sumIn = 0, sumOut = 0, hasReset = false, hasOpnamMarker = false;
+  let sumIn = 0, sumOut = 0, hasReset = false, hasOpnameMarker = false;
   const plates = [];
   sameDay.forEach(t => {
     sumIn += t.inVal;
     sumOut += t.outVal;
     if (t.marker === 'reset') hasReset = true;
-    else if (t.marker === 'opnam') hasOpnamMarker = true;
+    else if (t.marker === 'opname') hasOpnameMarker = true;
     else if (t.noPol && !plates.includes(t.noPol)) plates.push(t.noPol);
   });
   const parts = [];
@@ -1442,7 +1445,7 @@ function lastTrxSummaryHtml(c){
   const suffix = parts.length ? ' [' + parts.join(', ') + ']' : '';
   let tagHtml = '';
   if (hasReset) tagHtml += '<span class="tag-reset">RESET</span> ';
-  if (hasOpnamMarker) tagHtml += '<span class="tag-opnam">OPNAM</span> ';
+  if (hasOpnameMarker) tagHtml += '<span class="tag-opname">OPNAME</span> ';
   const plateText = plates.length ? plates.join(', ') : '';
   const result = `${tagHtml}${plateText}${suffix}`.trim();
   return result || '—';
@@ -1638,28 +1641,28 @@ function goList(){
   silentRefresh();
 }
 
-/* Hitung & tampilkan rincian "Asli" vs "Adj OPNAM" / "Adj RESET" pada card Jumlah In / Jumlah
-   Out. Hanya ditampilkan kalau memang ada baris OPNAM dan/atau RESET yang mengandung nilai
+/* Hitung & tampilkan rincian "Asli" vs "Adj OPNAME" / "Adj RESET" pada card Jumlah In / Jumlah
+   Out. Hanya ditampilkan kalau memang ada baris OPNAME dan/atau RESET yang mengandung nilai
    pada kolom terkait (in/out) di data yang sedang ditampilkan — kalau tidak ada, card kembali
    tampil polos seperti biasa (tanpa rincian). */
 function renderAdjBreakdown(elId, list, key){
   const el = document.getElementById(elId);
   if (!el) return;
-  let asli = 0, adjOpnam = 0, adjReset = 0;
+  let asli = 0, adjOpname = 0, adjReset = 0;
   (list || []).forEach(t => {
     const val = t[key] || 0;
     if (!val) return;
-    if (t.marker === 'opnam') adjOpnam += val;
+    if (t.marker === 'opname') adjOpname += val;
     else if (t.marker === 'reset') adjReset += val;
     else asli += val;
   });
-  if (!adjOpnam && !adjReset){
+  if (!adjOpname && !adjReset){
     el.style.display = 'none';
     el.innerHTML = '';
     return;
   }
   let html = `<div class="adj-line asli"><span>Asli</span><b>${fmtNum(asli)}</b></div>`;
-  if (adjOpnam) html += `<div class="adj-line opnam"><span>Adj OPNAM</span><b>${fmtNum(adjOpnam)}</b></div>`;
+  if (adjOpname) html += `<div class="adj-line opname"><span>Adj OPNAME</span><b>${fmtNum(adjOpname)}</b></div>`;
   if (adjReset) html += `<div class="adj-line reset"><span>Adj RESET</span><b>${fmtNum(adjReset)}</b></div>`;
   el.innerHTML = html;
   el.style.display = 'flex';
@@ -1709,7 +1712,7 @@ function renderDetail(){
   document.getElementById('d-akhir').textContent = fmtSaldo(periodAkhir);
 
   // Rincian Jumlah In / Jumlah Out: pisahkan porsi transaksi asli vs porsi penyesuaian
-  // (adjustment) yang berasal dari baris OPNAM / RESET, supaya kelihatan jelas kalau
+  // (adjustment) yang berasal dari baris OPNAME / RESET, supaya kelihatan jelas kalau
   // sebagian dari total In/Out itu bukan transaksi kendaraan biasa. Dihitung dari data
   // periode yang sama dengan yang dipakai untuk d-in/d-out (sebelum difilter kata kunci
   // pencarian), dan berlaku sama baik untuk tab Customer maupun Staff KIM karena keduanya
@@ -1717,10 +1720,10 @@ function renderDetail(){
   renderAdjBreakdown('d-in-adj', trxList, 'inVal');
   renderAdjBreakdown('d-out-adj', trxList, 'outVal');
 
-  // Card Opname Terakhir — diambil dari tabel "Tanggal Terahir Opnam" (kolom M-P) pada CSV
-  const opn = c.opnam;
-  const opDateEl = document.getElementById('d-opnam-date');
-  const opSubEl = document.getElementById('d-opnam-sub');
+  // Card Opname Terakhir — diambil dari tabel "Tanggal Terahir Opname" (kolom M-P) pada CSV
+  const opn = c.opname;
+  const opDateEl = document.getElementById('d-opname-date');
+  const opSubEl = document.getElementById('d-opname-sub');
   if (opn && opn.tglDate){
     const days = Math.round((reportDate - opn.tglDate) / 86400000);
     opDateEl.textContent = fmtDateShort(opn.tglDate);
@@ -1738,10 +1741,10 @@ function renderDetail(){
 
   let rows = `<tr class="awal-row"><td class="no-cell">—</td><td colspan="2" class="awal-label-cell">${awalLabel}</td><td class="num-cell">–</td><td class="num-cell">–</td><td class="num-cell">${fmtSaldoHTML(periodAwal)}</td></tr>`;
   rows += trxList.map((t, idx) => {
-    const rowClass = t.marker === 'reset' ? 'row-reset' : (t.marker === 'opnam' ? 'row-opnam' : '');
+    const rowClass = t.marker === 'reset' ? 'row-reset' : (t.marker === 'opname' ? 'row-opname' : '');
     let noPolCell;
     if (t.marker === 'reset') noPolCell = `<span class="tag-reset">RESET</span>`;
-    else if (t.marker === 'opnam') noPolCell = `<span class="tag-opnam">OPNAM</span>`;
+    else if (t.marker === 'opname') noPolCell = `<span class="tag-opname">OPNAME</span>`;
     else noPolCell = `<span class="code-tag" style="display:inline-block">${t.noPol || '—'}</span>`;
     return `<tr class="${rowClass}">
       <td class="no-cell">${idx+1}</td>
@@ -1875,7 +1878,7 @@ function buildAnalysisText(){
   lines.push('- Status SEHAT = saldo akhir ≤ 100% Saldo Max. PANTAU = 100–200% Saldo Max. PERLU PERHATIAN = > 200% Saldo Max (indikasi pallet mengendap/berlebih).');
   lines.push('- MH (Moving Health) = rata-rata pergerakan 3 bulan terakhir ÷ saldo akhir saat ini. Semakin tinggi = semakin cepat pallet berputar. > 4 sangat sehat, 2–4 cukup sehat, 1–2 kurang sehat, < 1 tidak sehat / berisiko pallet mengendap atau hilang.');
   lines.push('- RESET = penyesuaian saat saldo akhir hasil perhitungan menjadi negatif/minus, dikembalikan ke 0 agar perhitungan berikutnya tetap akurat.');
-  lines.push('- OPNAM = penyesuaian saldo berdasarkan hasil pengecekan fisik lapangan bersama customer (adjustment).');
+  lines.push('- OPNAME = penyesuaian saldo berdasarkan hasil pengecekan fisik lapangan bersama customer (adjustment).');
   lines.push('');
 
   const sorted = customers.slice().sort((a,b) => {
@@ -2074,7 +2077,7 @@ const TOUR_STEPS_ADMIN = [
   { sel: '#view-list .stats-grid', title: 'Ringkasan Saldo', desc: 'Total customer, saldo awal, mutasi in/out, dan saldo akhir bisa dilihat sekilas di sini.' },
   { sel: '#view-list .search-wrap', title: 'Cari & Filter', desc: 'Ketik nama atau kode customer untuk mencari, atau ketuk chip status (Perlu Perhatian / Pantau / Sehat) untuk menyaring daftar.' },
   { sel: '#list-month-filter', title: 'Filter per Bulan', desc: 'Pilih bulan tertentu di sini untuk melihat data saldo & mutasi hanya pada bulan itu saja, atau biarkan "Semua Bulan" untuk melihat keseluruhan periode.' },
-  { sel: '#legend-box', title: 'Kode & Warna', desc: 'Ketuk bagian ini kapan saja untuk membaca penjelasan istilah IN, OUT, RESET, OPNAM, serta arti warna status.' },
+  { sel: '#legend-box', title: 'Kode & Warna', desc: 'Ketuk bagian ini kapan saja untuk membaca penjelasan istilah IN, OUT, RESET, OPNAME, serta arti warna status.' },
   { sel: '#view-list .table-wrap', title: 'Daftar Customer', desc: 'Ketuk salah satu baris untuk membuka riwayat transaksinya. Tabel ini juga punya kolom MH (Moving Health) dengan panah warna dan status kesehatan saldo — di layar HP, geser tabel ke kiri/kanan agar kolom MH, indikator status, dan transaksi terakhir ikut terlihat.' },
   { sel: '#btn-analisa', title: 'Analisa AI', desc: 'Salin ringkasan data saldo pallet, lalu tempel ke AI favorit Anda untuk mendapat analisa dan rekomendasi otomatis.' },
   { sel: '.theme-switch', title: 'Mode Gelap / Terang', desc: 'Ganti tampilan halaman sesuai kenyamanan mata Anda, bisa diubah kapan saja.' },
@@ -2083,7 +2086,7 @@ const TOUR_STEPS_ADMIN = [
 
 const TOUR_STEPS_CUSTOMER = [
   { sel: '#view-detail .summary-strip', title: 'Ringkasan Saldo Anda', desc: 'Saldo awal, jumlah in, out, saldo akhir, dan info opname terakhir ditampilkan di sini.' },
-  { sel: '#legend-box-detail', title: 'Kode & Warna', desc: 'Ketuk bagian ini kapan saja untuk membaca penjelasan istilah RESET, OPNAM, IN, dan OUT.' },
+  { sel: '#legend-box-detail', title: 'Kode & Warna', desc: 'Ketuk bagian ini kapan saja untuk membaca penjelasan istilah RESET, OPNAME, IN, dan OUT.' },
   { sel: '#view-detail .search-wrap', title: 'Cari Transaksi', desc: 'Cari transaksi berdasarkan nomor polisi atau tanggal.' },
   { sel: '#d-month-filter', title: 'Filter per Bulan', desc: 'Pilih bulan tertentu di sini untuk melihat transaksi hanya pada bulan itu saja, atau biarkan "Semua Bulan" untuk melihat semua riwayat.' },
   { sel: '#view-detail .table-wrap', title: 'Riwayat Transaksi', desc: 'Semua transaksi IN dan OUT pallet perusahaan Anda tercatat lengkap pada tabel ini. Di layar HP, geser tabel ke kiri/kanan bila ada kolom yang belum terlihat.' },
@@ -2098,7 +2101,7 @@ const TOUR_STEPS_CUSTOMER = [
 const TOUR_STEPS_ADMIN_DETAIL = [
   { sel: '#back-to-list-btn', title: 'Kembali ke Daftar', desc: 'Ketuk tombol ini untuk kembali melihat daftar seluruh customer.' },
   { sel: '#view-detail .summary-strip', title: 'Ringkasan Saldo Customer', desc: 'Saldo awal, jumlah in, out, saldo akhir, dan info opname terakhir customer ini ditampilkan di sini.' },
-  { sel: '#legend-box-detail', title: 'Kode & Warna', desc: 'Ketuk bagian ini kapan saja untuk membaca penjelasan istilah RESET, OPNAM, IN, dan OUT.' },
+  { sel: '#legend-box-detail', title: 'Kode & Warna', desc: 'Ketuk bagian ini kapan saja untuk membaca penjelasan istilah RESET, OPNAME, IN, dan OUT.' },
   { sel: '#view-detail .search-wrap', title: 'Cari Transaksi', desc: 'Cari transaksi berdasarkan nomor polisi atau tanggal.' },
   { sel: '#d-month-filter', title: 'Filter per Bulan', desc: 'Pilih bulan tertentu di sini untuk melihat transaksi hanya pada bulan itu saja.' },
   { sel: '#view-detail .table-wrap', title: 'Riwayat Transaksi', desc: 'Semua transaksi IN dan OUT pallet customer ini tercatat lengkap pada tabel ini.' },
