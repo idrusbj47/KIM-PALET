@@ -366,6 +366,8 @@ tr.row-opname td span{color:var(--opname-r)!important}
 .sum-card.out .v{color:var(--red)}
 .sum-card.akhir .v{color:var(--brass)}
 .sum-card.opname .v{color:var(--reset-y)}
+.opname-doc-btn{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:5px 11px;border-radius:999px;border:1px solid var(--brass-line);background:var(--brass-bg);color:var(--brass);font-size:10.5px;font-weight:700;text-decoration:none;transition:all .18s;width:fit-content}
+.opname-doc-btn:hover{filter:brightness(0.95)}
 .adj-breakdown{display:none;flex-direction:column;gap:2px;margin-top:7px;padding-top:7px;border-top:1px dashed var(--border2)}
 .adj-breakdown .adj-line{display:flex;justify-content:space-between;gap:10px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--ink3)}
 .adj-breakdown .adj-line b{font-weight:600;color:var(--ink2)}
@@ -766,7 +768,15 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       <div class="sum-card in"><div class="l">Jumlah In</div><div class="v" id="d-in">—</div><div class="adj-breakdown" id="d-in-adj"></div></div>
       <div class="sum-card out"><div class="l">Jumlah Out</div><div class="v" id="d-out">—</div><div class="adj-breakdown" id="d-out-adj"></div></div>
       <div class="sum-card akhir"><div class="l">Saldo Akhir</div><div class="v" id="d-akhir">—</div></div>
-      <div class="sum-card opname"><div class="l">Opname Terakhir</div><div class="v" id="d-opname-date">—</div><div class="sub" id="d-opname-sub"></div></div>
+      <div class="sum-card opname">
+        <div class="l">Opname Terakhir</div>
+        <div class="v" id="d-opname-date">—</div>
+        <div class="sub" id="d-opname-sub"></div>
+        <a class="opname-doc-btn" id="d-opname-doc-btn" href="#" target="_blank" rel="noopener" style="display:none">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Lihat Dokumen
+        </a>
+      </div>
     </div>
 
     <details class="legend-box" id="legend-box-detail">
@@ -1053,7 +1063,7 @@ function buildData(text){
     }
   }
 
-  // --- 1b. Tabel Tanggal Terakhir Opname (kolom M-P / index 12-15) ---
+  // --- 1b. Tabel Tanggal Terakhir Opname (kolom M-Q / index 12-16) ---
   const opnameByCode = {};
   for (let i = 0; i < rows.length; i++){
     const r = rows[i];
@@ -1062,6 +1072,7 @@ function buildData(text){
     const name = (r[13] || '').trim();
     const tglRaw = (r[14] || '').trim();
     const qtyRaw = (r[15] || '').trim();
+    const linkRaw = (r.length > 16 ? (r[16] || '') : '').trim();
     if (!code || code.toLowerCase() === 'c.code') continue;
     if (!name) continue;
     const norm = normCode(code);
@@ -1070,7 +1081,8 @@ function buildData(text){
         code: code, name: name,
         tglRaw: tglRaw,
         tglDate: parseDateOpnameID(tglRaw),
-        qty: qtyRaw
+        qty: qtyRaw,
+        link: linkRaw
       };
     }
   }
@@ -1739,6 +1751,18 @@ function renderDetail(){
   } else {
     opDateEl.textContent = 'Belum ada data';
     opSubEl.textContent = '';
+  }
+
+  // Tombol "Lihat Dokumen" — hanya ditampilkan kalau kolom Q (link dokumen opname) di CSV
+  // memang terisi link yang valid. Kalau kosong, tombolnya juga tidak ditampilkan.
+  const opDocBtn = document.getElementById('d-opname-doc-btn');
+  const opLink = (opn && opn.link || '').trim();
+  if (opLink && /^https?:\/\//i.test(opLink)){
+    opDocBtn.href = opLink;
+    opDocBtn.style.display = 'inline-flex';
+  } else {
+    opDocBtn.removeAttribute('href');
+    opDocBtn.style.display = 'none';
   }
 
   const q = document.getElementById('d-search').value.trim().toLowerCase();
