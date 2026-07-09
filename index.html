@@ -507,6 +507,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       </div>
       <button class="login-btn" type="button" onclick="doAdminLogin()">Masuk sebagai Staff</button>
       <p class="login-error" id="login-error-admin"></p>
+      <button class="install-link" id="install-btn-login-admin" style="display:none" type="button" onclick="triggerInstall()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Instal Aplikasi ke HP / Laptop
+      </button>
     </div>
   </div>
 </div>
@@ -882,9 +886,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     <p class="modal-desc" id="install-modal-intro">Ikuti langkah berikut agar aplikasi ini muncul sebagai ikon di layar utama, dan bisa dibuka langsung tanpa membuka browser.</p>
     <div style="padding:6px 20px 20px">
       <div id="install-steps-ios" style="display:none">
-        <div class="install-step"><span class="num">1</span><p>Ketuk ikon <b>Bagikan</b> (kotak dengan panah ke atas) di bagian bawah/atas Safari.</p></div>
-        <div class="install-step"><span class="num">2</span><p>Geser ke bawah lalu pilih <b>"Tambah ke Layar Utama" (Add to Home Screen)</b>.</p></div>
-        <div class="install-step"><span class="num">3</span><p>Ketuk <b>"Tambah"</b> di pojok kanan atas. Ikon aplikasi akan muncul di layar utama HP Anda.</p></div>
+        <div class="install-step"><span class="num">1</span><p>Ketuk ikon <b>Share / Bagikan</b> (kotak dengan panah ke atas) di bar bawah/atas Safari.</p></div>
+        <div class="install-step"><span class="num">2</span><p>Pilih <b>Add to Home Screen / Tambah ke Layar Utama</b>, lalu pastikan tombol <b>"Buka sebagai Aplikasi Web / Open as Web App"</b> dalam keadaan aktif (swipe hijau) — bila tersedia di perangkat Anda.</p></div>
+        <div class="install-step"><span class="num">3</span><p>Tunggu sebentar sampai <b>ikon / gambar menu berubah menjadi logo KIM Pallet</b> (jangan langsung tekan Add saat masih tampil huruf awal saja), agar tampilan ikon di layar utama lebih bagus.</p></div>
+        <div class="install-step"><span class="num">4</span><p>Ketuk <b>Add / Tambah</b> di pojok kanan atas. Ikon aplikasi akan muncul di layar utama HP/iPad Anda.</p></div>
       </div>
       <div id="install-steps-generic">
         <div class="install-step"><span class="num">1</span><p>Buka menu browser (biasanya ikon titik tiga <b>⋮</b> di pojok kanan atas).</p></div>
@@ -1960,14 +1965,18 @@ function isIOSDevice(){
 function showInstallButtons(){
   if (isStandaloneMode()) return; // sudah terinstal, tidak perlu tampilkan tombol
   const b1 = document.getElementById('install-btn-login');
+  const b1admin = document.getElementById('install-btn-login-admin');
   const b2 = document.getElementById('install-btn-header');
   if (b1) b1.style.display = 'inline-flex';
+  if (b1admin) b1admin.style.display = 'inline-flex';
   if (b2) b2.style.display = 'inline-flex';
 }
 function hideInstallButtons(){
   const b1 = document.getElementById('install-btn-login');
+  const b1admin = document.getElementById('install-btn-login-admin');
   const b2 = document.getElementById('install-btn-header');
   if (b1) b1.style.display = 'none';
+  if (b1admin) b1admin.style.display = 'none';
   if (b2) b2.style.display = 'none';
 }
 
