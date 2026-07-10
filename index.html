@@ -262,6 +262,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .chip.on{background:linear-gradient(135deg,var(--brass-bg),var(--brass-bg));border-color:var(--brass-line);color:var(--brass);font-weight:600}
 .chip .dot-sm{width:7px;height:7px;border-radius:50%}
 .sort-select{height:38px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--ink2);font-size:12px;font-family:inherit;padding:0 10px;cursor:pointer;outline:none}
+.btn-camera{height:38px;padding:0 15px;border-radius:999px;border:1px solid var(--brass-line);background:var(--brass);color:#fff;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;transition:filter .15s,transform .1s}
+.btn-camera:hover{filter:brightness(1.08)}
+.btn-camera:active{transform:scale(.97)}
+.btn-camera:disabled{opacity:.65;cursor:default;filter:none;transform:none}
+.btn-camera .spinner-sm{width:13px;height:13px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:spin .7s linear infinite;display:inline-block}
 
 /* ===== TABLE ===== */
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow-x:auto;-webkit-overflow-scrolling:touch;box-shadow:var(--shadow)}
@@ -715,6 +720,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <option value="akhir-asc">Saldo Akhir Terkecil</option>
         <option value="stale">Paling Lama Tidak Aktif</option>
       </select>
+      <button class="btn-camera" id="btn-screenshot" onclick="exportListImage()" title="Buat gambar daftar customer untuk dibagikan">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span>Screenshot</span>
+      </button>
     </div>
 
     <details class="legend-box" id="legend-box">
@@ -1660,6 +1669,186 @@ function render(){
     }).join('');
   }
   document.getElementById('foot-count').textContent = `Menampilkan ${list.length} dari ${customers.length} customer`;
+}
+
+/* ============================================================
+   EXPORT: SCREENSHOT DAFTAR CUSTOMER (untuk dibagikan ke WA dll)
+   ============================================================ */
+let _h2cLoadPromise = null;
+function loadHtml2Canvas(){
+  if (window.html2canvas) return Promise.resolve();
+  if (_h2cLoadPromise) return _h2cLoadPromise;
+  _h2cLoadPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Gagal memuat pustaka gambar'));
+    document.head.appendChild(s);
+  });
+  return _h2cLoadPromise;
+}
+
+const EXPORT_STATUS_COLOR = { green:'#2c8a63', amber:'#a06a08', red:'#a13a29', gray:'#6b7280' };
+
+/* Versi ringkasan transaksi terakhir yang aman dipakai di luar tampilan utama (styling inline, bukan class CSS aplikasi) */
+function lastTrxSummaryExport(c){
+  if (!c.lastTrx) return 'Belum ada transaksi';
+  const lastDateStr = c.lastTrx.date.toDateString();
+  const sameDay = c.trx.filter(t => t.date.toDateString() === lastDateStr);
+  let sumIn = 0, sumOut = 0, hasReset = false, hasOpname = false;
+  const plates = [];
+  sameDay.forEach(t => {
+    sumIn += t.inVal; sumOut += t.outVal;
+    if (t.marker === 'reset') hasReset = true;
+    else if (t.marker === 'opname') hasOpname = true;
+    else if (t.noPol && !plates.includes(t.noPol)) plates.push(t.noPol);
+  });
+  const parts = [];
+  if (sumIn) parts.push('In:' + fmtNum(sumIn));
+  if (sumOut) parts.push('Out:' + fmtNum(sumOut));
+  const suffix = parts.length ? ' [' + parts.join(', ') + ']' : '';
+  let tag = '';
+  if (hasReset) tag += '<b style="color:#a13a29">RESET</b> ';
+  if (hasOpname) tag += '<b style="color:#a06a08">OPNAME</b> ';
+  const plateText = plates.length ? plates.join(', ') : '';
+  return (tag + plateText + suffix).trim() || '—';
+}
+
+function exportRowsHtml(list){
+  return list.map((c, idx) => {
+    const zebra = idx % 2 === 1 ? '#eef6ef' : '#ffffff';
+    const dotColor = EXPORT_STATUS_COLOR[c.status] || '#6b7280';
+    const mhColor = EXPORT_STATUS_COLOR[c.mhCategory] || '#6b7280';
+    const arrowDeg = MH_ROTATE[c.mhCategory] ?? 0;
+    const lastInfo = lastTrxSummaryExport(c);
+    return `<tr style="background:${zebra}">
+      <td style="padding:8px;text-align:center;border:1px solid #d9d1bd;font-size:13px;color:#1b1a17;">${idx+1}</td>
+      <td style="padding:8px;border:1px solid #d9d1bd;font-size:13px;color:#1b1a17;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${c.code}</td>
+      <td style="padding:8px 10px;border:1px solid #d9d1bd;font-size:13.5px;color:#1b1a17;font-weight:600;white-space:nowrap;">${c.name}</td>
+      <td style="padding:8px 10px;border:1px solid #d9d1bd;font-size:13px;color:#1b1a17;text-align:right;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${fmtSaldo(c._pAwal)}</td>
+      <td style="padding:8px 10px;border:1px solid #d9d1bd;font-size:13px;color:#1f6e50;text-align:right;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${c._pIn ? fmtNum(c._pIn) : '–'}</td>
+      <td style="padding:8px 10px;border:1px solid #d9d1bd;font-size:13px;color:#a13a29;text-align:right;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${c._pOut ? fmtNum(c._pOut) : '–'}</td>
+      <td style="padding:8px 10px;border:1px solid #d9d1bd;font-size:13.5px;color:#1b1a17;text-align:right;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};margin-right:6px;vertical-align:middle;"></span>${fmtSaldo(c._pAkhir)}
+      </td>
+      <td style="padding:8px;border:1px solid #d9d1bd;font-size:12.5px;color:${mhColor};text-align:right;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;">
+        <span style="display:inline-block;transform:rotate(${arrowDeg}deg);margin-right:2px;">▲</span>${isFinite(c.mh) ? c.mh.toFixed(1) : '∞'}
+      </td>
+      <td style="padding:8px 10px;border:1px solid #d9d1bd;font-size:11.5px;color:#5f5b52;white-space:nowrap;">${c.lastTrx ? fmtDateShort(c.lastTrx.date) : '—'}<br><span style="color:#9a9488;font-size:10.5px;">${lastInfo}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function exportListImage(){
+  const btn = document.getElementById('btn-screenshot');
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-sm"></span><span>Membuat gambar…</span>';
+
+  try{
+    await loadHtml2Canvas();
+
+    // Ambil daftar sesuai filter/pencarian/urutan yang sedang aktif di layar
+    const monthFilter = document.getElementById('list-month-filter').value;
+    const q = document.getElementById('search').value.trim().toLowerCase();
+    const sortMode = document.getElementById('sort-select').value;
+    let list = customers.slice();
+    if (currentFilter !== 'all') list = list.filter(c => c.status === currentFilter);
+    if (q) list = list.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
+    if (sortMode === 'name') list.sort((a,b) => a.name.localeCompare(b.name));
+    else if (sortMode === 'akhir-desc') list.sort((a,b) => b._pAkhir - a._pAkhir);
+    else if (sortMode === 'akhir-asc') list.sort((a,b) => a._pAkhir - b._pAkhir);
+    else if (sortMode === 'stale') list.sort((a,b) => (b.daysSinceLast===Infinity?99999:b.daysSinceLast) - (a.daysSinceLast===Infinity?99999:a.daysSinceLast));
+
+    if (!list.length){
+      alert('Tidak ada customer yang cocok dengan filter/pencarian saat ini, jadi belum ada yang bisa di-screenshot.');
+      return;
+    }
+
+    let totalAwal = 0, totalIn = 0, totalOut = 0, totalAkhir = 0;
+    list.forEach(c => { totalAwal += c._pAwal; totalIn += c._pIn; totalOut += c._pOut; totalAkhir += c._pAkhir; });
+
+    let periodeText;
+    if (monthFilter && monthFilter !== 'all'){
+      const parts = monthFilter.split('-');
+      periodeText = `${MONTH_ID_LONG[Number(parts[1]) - 1].toUpperCase()} ${parts[0]}`;
+    } else {
+      periodeText = `SEMUA BULAN — per ${fmtDateLong(new Date())}`;
+    }
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;top:0;left:-100000px;width:1100px;background:#ffffff;padding:26px 30px 22px;font-family:Inter,Arial,sans-serif;box-sizing:border-box;';
+    wrap.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid #1b1a17;padding-bottom:10px;margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:800;letter-spacing:.03em;color:#1b1a17;">PT. KARYA INDAH MULTIGUNA</div>
+      </div>
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:700;font-size:23px;text-decoration:underline;color:#1b1a17;">Daftar Saldo Pallet Di Customer</div>
+        <div style="font-size:12.5px;color:#5f5b52;margin-top:5px;letter-spacing:.03em;">Periode : ${periodeText}</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#1b1a17;">
+            <th style="padding:9px 8px;color:#fff;font-size:11.5px;text-align:center;border:1px solid #1b1a17;">No</th>
+            <th style="padding:9px 8px;color:#fff;font-size:11.5px;text-align:left;border:1px solid #1b1a17;">C.code</th>
+            <th style="padding:9px 8px;color:#fff;font-size:11.5px;text-align:left;border:1px solid #1b1a17;">Customer</th>
+            <th style="padding:9px 8px;color:#fff;font-size:11.5px;text-align:right;border:1px solid #1b1a17;">Saldo Awal</th>
+            <th style="padding:9px 8px;color:#fff;font-size:11.5px;text-align:right;border:1px solid #1b1a17;">IN</th>
+            <th style="padding:9px 8px;color:#fff;font-size:11.5px;text-align:right;border:1px solid #1b1a17;">Out</th>
+            <th style="padding:9px 8px;color:#fff;font-size:11.5px;text-align:right;border:1px solid #1b1a17;">Saldo Akhir</th>
+            <th style="padding:9px 8px;color:#fff;font-size:11.5px;text-align:right;border:1px solid #1b1a17;">MH</th>
+            <th style="padding:9px 8px;color:#fff;font-size:11.5px;text-align:left;border:1px solid #1b1a17;">Transaksi Terakhir</th>
+          </tr>
+        </thead>
+        <tbody>${exportRowsHtml(list)}</tbody>
+        <tfoot>
+          <tr style="background:#f6ecd2;font-weight:800;">
+            <td colspan="3" style="padding:10px;border:1px solid #d9b96b;text-align:right;font-size:13.5px;color:#1b1a17;">Jumlah</td>
+            <td style="padding:10px;border:1px solid #d9b96b;text-align:right;font-size:13.5px;color:#1b1a17;font-family:'JetBrains Mono',monospace;">${fmtSaldo(totalAwal)}</td>
+            <td style="padding:10px;border:1px solid #d9b96b;text-align:right;font-size:13.5px;color:#1f6e50;font-family:'JetBrains Mono',monospace;">${fmtNum(totalIn)}</td>
+            <td style="padding:10px;border:1px solid #d9b96b;text-align:right;font-size:13.5px;color:#a13a29;font-family:'JetBrains Mono',monospace;">${fmtNum(totalOut)}</td>
+            <td style="padding:10px;border:1px solid #d9b96b;text-align:right;font-size:13.5px;color:#1b1a17;font-family:'JetBrains Mono',monospace;">${fmtSaldo(totalAkhir)}</td>
+            <td colspan="2" style="padding:10px;border:1px solid #d9b96b;"></td>
+          </tr>
+        </tfoot>
+      </table>
+      <div style="margin-top:12px;font-size:10.5px;color:#9a9488;text-align:right;">Diekspor dari Sistem Saldo Pallet KIM • ${fmtDateLong(new Date())}</div>
+    `;
+    document.body.appendChild(wrap);
+
+    let canvas;
+    try{
+      canvas = await window.html2canvas(wrap, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+    } finally {
+      document.body.removeChild(wrap);
+    }
+
+    canvas.toBlob(async (blob) => {
+      if (!blob){ alert('Gagal membuat gambar. Coba lagi.'); return; }
+      const fileTag = (monthFilter && monthFilter !== 'all') ? monthFilter : 'semua-bulan';
+      const fileName = `Saldo-Pallet-${fileTag}-${Date.now()}.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })){
+        try{
+          await navigator.share({ files: [file], title: 'Saldo Pallet Customer', text: `Daftar Saldo Pallet — Periode ${periodeText}` });
+        }catch(e){ /* dibatalkan user, tidak apa-apa */ }
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      }
+    }, 'image/png');
+
+  } catch(err){
+    console.error(err);
+    alert('Gagal membuat gambar screenshot. Pastikan koneksi internet aktif lalu coba lagi.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
 }
 
 /* ============================================================
