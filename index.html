@@ -93,6 +93,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .icon-btn:hover{border-color:var(--brass-line);color:var(--brass)}
 .icon-btn svg{flex-shrink:0}
 .icon-btn.spinning svg{animation:spin .8s linear infinite}
+.icon-btn:disabled{opacity:.6;cursor:default;pointer-events:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 .icon-btn.primary{background:linear-gradient(135deg,var(--brass-mid),var(--brass));color:#fff;border-color:var(--brass)}
 .icon-btn.primary:hover{filter:brightness(1.06);color:#fff}
@@ -262,11 +263,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .chip.on{background:linear-gradient(135deg,var(--brass-bg),var(--brass-bg));border-color:var(--brass-line);color:var(--brass);font-weight:600}
 .chip .dot-sm{width:7px;height:7px;border-radius:50%}
 .sort-select{height:38px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--ink2);font-size:12px;font-family:inherit;padding:0 10px;cursor:pointer;outline:none}
-.btn-camera{height:38px;padding:0 15px;border-radius:999px;border:1px solid var(--brass-line);background:var(--brass);color:#fff;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;transition:filter .15s,transform .1s}
-.btn-camera:hover{filter:brightness(1.08)}
-.btn-camera:active{transform:scale(.97)}
-.btn-camera:disabled{opacity:.65;cursor:default;filter:none;transform:none}
-.btn-camera .spinner-sm{width:13px;height:13px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:spin .7s linear infinite;display:inline-block}
 
 /* ===== TABLE ===== */
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow-x:auto;-webkit-overflow-scrolling:touch;box-shadow:var(--shadow)}
@@ -616,6 +612,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="0.5"/></svg>
         <span class="lbl">Cetak</span>
       </button>
+      <button class="icon-btn" id="btn-screenshot" onclick="exportListImage()" title="Buat gambar daftar customer untuk dibagikan">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span class="lbl">Screenshot</span>
+      </button>
     </div>
 
     <span class="hdr-divider" id="hdr-divider-logout" aria-hidden="true" style="display:none"></span>
@@ -720,10 +720,6 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <option value="akhir-asc">Saldo Akhir Terkecil</option>
         <option value="stale">Paling Lama Tidak Aktif</option>
       </select>
-      <button class="btn-camera" id="btn-screenshot" onclick="exportListImage()" title="Buat gambar daftar customer untuk dibagikan">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        <span>Screenshot</span>
-      </button>
     </div>
 
     <details class="legend-box" id="legend-box">
@@ -1450,6 +1446,8 @@ function enterApp(){
 function applyRoleUI(){
   const isCustomer = authRole === 'customer';
   document.getElementById('btn-analisa').style.display = isCustomer ? 'none' : '';
+  const btnSs = document.getElementById('btn-screenshot');
+  if (btnSs) btnSs.style.display = isCustomer ? 'none' : '';
   document.getElementById('btn-logout').style.display = 'inline-flex';
   const logoutDivider = document.getElementById('hdr-divider-logout');
   if (logoutDivider) logoutDivider.style.display = '';
@@ -1692,7 +1690,7 @@ const EXPORT_STATUS_COLOR = { green:'#2c8a63', amber:'#a06a08', red:'#a13a29', g
 
 /* Versi ringkasan transaksi terakhir yang aman dipakai di luar tampilan utama (styling inline, bukan class CSS aplikasi) */
 function lastTrxSummaryExport(c){
-  if (!c.lastTrx) return 'Belum ada transaksi';
+  if (!c.lastTrx) return '';
   const lastDateStr = c.lastTrx.date.toDateString();
   const sameDay = c.trx.filter(t => t.date.toDateString() === lastDateStr);
   let sumIn = 0, sumOut = 0, hasReset = false, hasOpname = false;
@@ -1708,10 +1706,10 @@ function lastTrxSummaryExport(c){
   if (sumOut) parts.push('Out:' + fmtNum(sumOut));
   const suffix = parts.length ? ' [' + parts.join(', ') + ']' : '';
   let tag = '';
-  if (hasReset) tag += '<b style="color:#a13a29">RESET</b> ';
-  if (hasOpname) tag += '<b style="color:#a06a08">OPNAME</b> ';
+  if (hasReset) tag += '<span style="display:inline-block;background:#fff2b0;color:#a17f00;border:1px solid #e6c235;font-weight:700;font-size:9.5px;padding:1px 6px;border-radius:5px;margin-right:4px;">RESET</span>';
+  if (hasOpname) tag += '<span style="display:inline-block;background:#c0392b;color:#ffffff;border:1px solid #a13a29;font-weight:700;font-size:9.5px;padding:1px 6px;border-radius:5px;margin-right:4px;">OPNAME</span>';
   const plateText = plates.length ? plates.join(', ') : '';
-  return (tag + plateText + suffix).trim() || '—';
+  return (tag + plateText + suffix).trim();
 }
 
 function exportRowsHtml(list){
@@ -1720,7 +1718,16 @@ function exportRowsHtml(list){
     const dotColor = EXPORT_STATUS_COLOR[c.status] || '#6b7280';
     const mhColor = EXPORT_STATUS_COLOR[c.mhCategory] || '#6b7280';
     const arrowDeg = MH_ROTATE[c.mhCategory] ?? 0;
-    const lastInfo = lastTrxSummaryExport(c);
+
+    // status keterlambatan transaksi terakhir — sama seperti tampilan utama (warn/severe)
+    const isSevere = c.daysSinceLast > 60 || !c.lastTrx;
+    const isWarn = !isSevere && c.daysSinceLast > 7;
+    const dateColor = isSevere ? '#a13a29' : (isWarn ? '#a06a08' : '#1b1a17');
+    const metaColor = isSevere ? '#a13a29' : (isWarn ? '#a06a08' : '#9a9488');
+    const warnIcon = (isSevere || isWarn) ? ' \u26A0' : '';
+    const dateText = c.lastTrx ? fmtDateShort(c.lastTrx.date) : '—';
+    const metaText = c.lastTrx ? lastTrxSummaryExport(c) : 'Belum ada transaksi';
+
     return `<tr style="background:${zebra}">
       <td style="padding:8px;text-align:center;border:1px solid #d9d1bd;font-size:13px;color:#1b1a17;">${idx+1}</td>
       <td style="padding:8px;border:1px solid #d9d1bd;font-size:13px;color:#1b1a17;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${c.code}</td>
@@ -1734,7 +1741,10 @@ function exportRowsHtml(list){
       <td style="padding:8px;border:1px solid #d9d1bd;font-size:12.5px;color:${mhColor};text-align:right;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;">
         <span style="display:inline-block;transform:rotate(${arrowDeg}deg);margin-right:2px;">▲</span>${isFinite(c.mh) ? c.mh.toFixed(1) : '∞'}
       </td>
-      <td style="padding:8px 10px;border:1px solid #d9d1bd;font-size:11.5px;color:#5f5b52;white-space:nowrap;">${c.lastTrx ? fmtDateShort(c.lastTrx.date) : '—'}<br><span style="color:#9a9488;font-size:10.5px;">${lastInfo}</span></td>
+      <td style="padding:8px 10px;border:1px solid #d9d1bd;font-size:11.5px;white-space:nowrap;">
+        <div style="color:${dateColor};font-weight:600;line-height:1.4;">${dateText}${warnIcon}</div>
+        <div style="color:${metaColor};font-size:10.5px;font-family:'JetBrains Mono',monospace;line-height:1.4;margin-top:2px;">${metaText}</div>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -1864,6 +1874,8 @@ function showDetail(code){
   location.hash = 'c/' + encodeURIComponent(code);
   document.getElementById('view-list').style.display = 'none';
   document.getElementById('view-detail').style.display = 'block';
+  const btnSsD = document.getElementById('btn-screenshot');
+  if (btnSsD) btnSsD.style.display = 'none';
   document.getElementById('d-search').value = '';
   populateMonthFilter(custByCode[currentDetailCode]);
   renderDetail();
@@ -1893,6 +1905,8 @@ function goList(){
   location.hash = '';
   document.getElementById('view-detail').style.display = 'none';
   document.getElementById('view-list').style.display = 'block';
+  const btnSsL = document.getElementById('btn-screenshot');
+  if (btnSsL && authRole !== 'customer') btnSsL.style.display = '';
   window.scrollTo({top:0, behavior:'smooth'});
   silentRefresh();
 }
