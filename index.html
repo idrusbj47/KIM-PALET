@@ -2187,9 +2187,10 @@ function buildAnalysisText(){
   lines.push('RINGKASAN GLOBAL (seluruh customer, seluruh periode)');
   lines.push(`- Jumlah customer terdaftar: ${globalStats.totalCust}`);
   lines.push(`- Total Saldo Awal: ${fmtSaldo(globalStats.totalAwal)} pallet`);
-  lines.push(`- Total Pallet Masuk (IN): ${fmtNum(globalStats.totalIn)} pallet`);
-  lines.push(`- Total Pallet Keluar (OUT): ${fmtNum(globalStats.totalOut)} pallet`);
+  lines.push(`- Total Pallet Masuk (IN) tercatat di pembukuan: ${fmtNum(globalStats.totalIn)} pallet`);
+  lines.push(`- Total Pallet Keluar (OUT) tercatat di pembukuan: ${fmtNum(globalStats.totalOut)} pallet`);
   lines.push(`- Total Saldo Akhir saat ini: ${fmtSaldo(globalStats.totalAkhir)} pallet`);
+  lines.push(`  Catatan: total IN/OUT di atas adalah angka pembukuan gabungan (termasuk penyesuaian OPNAME/RESET). Lihat tabel per customer di bawah untuk rincian mana yang transaksi fisik asli dan mana yang penyesuaian.`);
   lines.push('');
   lines.push('PENJELASAN ISTILAH UNTUK KONTEKS ANALISA');
   lines.push('- IN = pallet yang diterima kembali dari customer (mengurangi saldo di customer tsb).');
@@ -2198,8 +2199,8 @@ function buildAnalysisText(){
   lines.push('- Saldo Max = rata-rata pergerakan pallet (IN+OUT) 3 bulan kalender terakhir × 50%; jadi ambang batas kewajaran saldo akhir.');
   lines.push('- Status SEHAT = saldo akhir ≤ 100% Saldo Max. PANTAU = 100–200% Saldo Max. PERLU PERHATIAN = > 200% Saldo Max (indikasi pallet mengendap/berlebih).');
   lines.push('- MH (Moving Health) = rata-rata pergerakan 3 bulan terakhir ÷ saldo akhir saat ini. Semakin tinggi = semakin cepat pallet berputar. > 4 sangat sehat, 2–4 cukup sehat, 1–2 kurang sehat, < 1 tidak sehat / berisiko pallet mengendap atau hilang.');
-  lines.push('- RESET = penyesuaian saat saldo akhir hasil perhitungan menjadi negatif/minus, dikembalikan ke 0 agar perhitungan berikutnya tetap akurat.');
-  lines.push('- OPNAME = penyesuaian saldo berdasarkan hasil pengecekan fisik lapangan bersama customer (adjustment).');
+  lines.push('- RESET = penyesuaian PEMBUKUAN saat saldo akhir hasil perhitungan menjadi negatif/minus, dikembalikan ke 0 agar perhitungan berikutnya tetap akurat. Angka pada baris RESET adalah angka koreksi, BUKAN pallet yang benar-benar bergerak.');
+  lines.push('- OPNAME = penyesuaian PEMBUKUAN berdasarkan hasil pengecekan fisik lapangan bersama customer. Angka pada baris OPNAME (baik di kolom IN maupun OUT) adalah angka koreksi supaya saldo pembukuan cocok dengan hasil hitung fisik — BUKAN pallet yang benar-benar dikirim/dikembalikan saat itu. PENTING: jangan membaca In(Adj)/Out(Adj) di tabel bawah sebagai pengiriman/pengembalian fisik sungguhan.');
   lines.push('');
 
   const sorted = customers.slice().sort((a,b) => {
@@ -2208,20 +2209,28 @@ function buildAnalysisText(){
   });
 
   lines.push(`DATA PER CUSTOMER (${sorted.length} customer, diurutkan dari yang paling berisiko/tinggi saldonya)`);
-  lines.push('Format: Kode | Nama | Saldo Awal | In | Out | Saldo Akhir | Status | MH | Transaksi Terakhir | Hari Sejak Transaksi Terakhir');
+  lines.push('In/Out dipisah jadi "Asli" (transaksi fisik asli) dan "Adj" (penyesuaian pembukuan OPNAME/RESET).');
+  lines.push('Format: Kode | Nama | Saldo Awal | In-Asli | In-Adj | Out-Asli | Out-Adj | Saldo Akhir | Status | MH | Transaksi Terakhir | Hari Sejak Transaksi Terakhir');
   sorted.forEach(c => {
     const statusLbl = c.status === 'red' ? 'PERLU PERHATIAN' : (c.status === 'amber' ? 'PANTAU' : 'SEHAT');
     const mhVal = isFinite(c.mh) ? c.mh.toFixed(2) : 'tak terhingga';
     const lastDate = c.lastTrx ? fmtDateShort(c.lastTrx.date) : 'belum ada transaksi';
     const days = c.daysSinceLast === Infinity ? '-' : c.daysSinceLast;
-    lines.push(`${c.code} | ${c.name} | ${fmtSaldo(c.saldoAwal)} | ${fmtNum(c.sumIn)} | ${fmtNum(c.sumOut)} | ${fmtSaldo(c.saldoAkhir)} | ${statusLbl} | ${mhVal} | ${lastDate} | ${days} hari`);
+    let asliIn = 0, asliOut = 0, adjIn = 0, adjOut = 0;
+    c.trx.forEach(t => {
+      const isAdj = t.marker === 'opname' || t.marker === 'reset';
+      if (t.inVal){ if (isAdj) adjIn += t.inVal; else asliIn += t.inVal; }
+      if (t.outVal){ if (isAdj) adjOut += t.outVal; else asliOut += t.outVal; }
+    });
+    lines.push(`${c.code} | ${c.name} | ${fmtSaldo(c.saldoAwal)} | ${fmtNum(asliIn)} | ${fmtNum(adjIn)} | ${fmtNum(asliOut)} | ${fmtNum(adjOut)} | ${fmtSaldo(c.saldoAkhir)} | ${statusLbl} | ${mhVal} | ${lastDate} | ${days} hari`);
   });
 
   lines.push('');
   lines.push('PERMINTAAN ANALISA UNTUK AI:');
+  lines.push('PENTING: kolom In-Adj/Out-Adj adalah angka koreksi pembukuan OPNAME/RESET, BUKAN pallet yang benar-benar dikirim/dikembalikan secara fisik. Saat menilai kecepatan pengembalian atau pola transaksi, gunakan kolom In-Asli/Out-Asli, bukan kolom Adj.');
   lines.push('Berdasarkan data di atas, tolong analisa kondisi saldo pallet perusahaan saat ini secara keseluruhan. Sebutkan:');
   lines.push('1. Customer mana saja yang paling berisiko (saldo mengendap/berlebih atau lama tidak ada transaksi) dan kenapa.');
-  lines.push('2. Pola atau kejanggalan yang terlihat dari data (mis. saldo naik terus tanpa pengembalian, transaksi berhenti tiba-tiba, dsb).');
+  lines.push('2. Pola atau kejanggalan yang terlihat dari data (mis. saldo naik terus tanpa pengembalian, transaksi berhenti tiba-tiba, dsb) — berdasarkan transaksi fisik asli.');
   lines.push('3. Kemungkinan penyebab atau risiko yang perlu diwaspadai (pallet hilang, tertahan lama, dsb).');
   lines.push('4. Rekomendasi tindak lanjut yang bisa dilakukan tim untuk masing-masing kondisi tsb.');
 
@@ -2234,22 +2243,51 @@ function buildAnalysisText(){
    ============================================================ */
 function buildAnalysisTextCustomer(c){
   const lines = [];
-  lines.push(`=== RINGKASAN SALDO PALLET ANDA — ${c.name} (${c.code}) ===`);
-  lines.push(`PT. KARYA INDAH MULTIGUNA — data per ${fmtDateLong(reportDate)}`);
+  lines.push(`=== RINGKASAN SALDO PALLET — ASET PT. KARYA INDAH MULTIGUNA (KIM) YANG DIPEGANG OLEH: ${c.name} (${c.code}) ===`);
+  lines.push(`Catatan konteks penting: KIM adalah pemilik/pemasok pallet. Pallet yang dibahas di bawah ini BUKAN milik customer — melainkan aset milik KIM yang saat ini sedang dipinjamkan/dititipkan ke lokasi customer, dan wajib dikembalikan ke KIM sesuai kesepakatan.`);
+  lines.push(`Data per ${fmtDateLong(reportDate)}`);
   lines.push('');
+
+  lines.push('PENJELASAN ISTILAH UNTUK KONTEKS ANALISA');
+  lines.push('- IN = pallet yang secara fisik dikembalikan customer ke KIM (mengurangi saldo pallet KIM yang ada di lokasi customer).');
+  lines.push('- OUT = pallet yang secara fisik dikirim KIM ke customer (menambah saldo pallet KIM yang ada di lokasi customer).');
+  lines.push('- Saldo Akhir = jumlah pallet milik KIM yang saat ini tercatat masih berada di lokasi customer (belum dikembalikan).');
+  lines.push('- OPNAME = penyesuaian PEMBUKUAN saat KIM & customer mencocokkan catatan dengan hasil hitung fisik di lapangan. PENTING: angka yang tercatat pada baris OPNAME (di kolom IN maupun OUT) adalah angka KOREksi supaya saldo pembukuan sama dengan hasil hitung fisik — BUKAN jumlah pallet yang benar-benar bergerak/dikirim/dikembalikan saat itu.');
+  lines.push('- RESET = penyesuaian pembukuan saat hasil perhitungan saldo sempat menjadi negatif, dikembalikan ke 0 agar perhitungan berikutnya tetap akurat. Sama seperti OPNAME, ini juga angka koreksi pembukuan, bukan pergerakan fisik pallet.');
+  lines.push('');
+
+  // Pisahkan transaksi ASLI (fisik nyata) dari penyesuaian OPNAME/RESET, supaya AI tidak salah
+  // membaca angka koreksi OPNAME/RESET seolah-olah itu jumlah pallet yang benar-benar dikirim/dikembalikan.
+  let asliIn = 0, asliOut = 0, adjOpnameIn = 0, adjOpnameOut = 0, adjResetIn = 0, adjResetOut = 0;
+  c.trx.forEach(t => {
+    if (t.inVal){
+      if (t.marker === 'opname') adjOpnameIn += t.inVal;
+      else if (t.marker === 'reset') adjResetIn += t.inVal;
+      else asliIn += t.inVal;
+    }
+    if (t.outVal){
+      if (t.marker === 'opname') adjOpnameOut += t.outVal;
+      else if (t.marker === 'reset') adjResetOut += t.outVal;
+      else asliOut += t.outVal;
+    }
+  });
+  const adjIn = adjOpnameIn + adjResetIn;
+  const adjOut = adjOpnameOut + adjResetOut;
 
   lines.push('1) SALDO SAAT INI');
   lines.push(`- Saldo Awal periode: ${fmtSaldo(c.saldoAwal)} pallet`);
-  lines.push(`- Pallet Masuk (dikembalikan ke KIM): ${fmtNum(c.sumIn)} pallet`);
-  lines.push(`- Pallet Keluar (dikirim dari KIM): ${fmtNum(c.sumOut)} pallet`);
-  lines.push(`- Saldo Akhir saat ini: ${fmtSaldo(c.saldoAkhir)} pallet`);
+  lines.push(`- Pallet Masuk — transaksi fisik asli (benar-benar dikembalikan ke KIM): ${fmtNum(asliIn)} pallet`);
+  if (adjIn) lines.push(`  (+) Penyesuaian pembukuan OPNAME/RESET pada kolom masuk: ${fmtNum(adjIn)} pallet — ANGKA KOREKSI, BUKAN pengembalian fisik sungguhan.`);
+  lines.push(`- Pallet Keluar — transaksi fisik asli (benar-benar dikirim dari KIM): ${fmtNum(asliOut)} pallet`);
+  if (adjOut) lines.push(`  (+) Penyesuaian pembukuan OPNAME/RESET pada kolom keluar: ${fmtNum(adjOut)} pallet — ANGKA KOREKSI, BUKAN pengiriman fisik baru.`);
+  lines.push(`- Saldo Akhir saat ini (hasil setelah transaksi fisik asli ditambah penyesuaian pembukuan di atas): ${fmtSaldo(c.saldoAkhir)} pallet`);
   lines.push(`- Transaksi terakhir: ${c.lastTrx ? fmtDateLong(c.lastTrx.date) : 'belum ada transaksi'}${c.daysSinceLast!==Infinity ? ` (${c.daysSinceLast} hari lalu)` : ''}`);
   lines.push('');
 
   lines.push('2) KESEHATAN SIRKULASI PALLET (seberapa cepat pallet Anda berputar kembali)');
   const mhLabelFriendly = { green:'Sangat lancar', amber:'Cukup lancar', gray:'Agak lambat', red:'Perlu dipercepat' }[c.mhCategory] || '-';
   lines.push(`- Kategori sirkulasi: ${mhLabelFriendly}`);
-  lines.push(`- Rata-rata pergerakan (in+out) 3 bulan terakhir: ${fmtNum(Math.round(c.avgMovement3))} pallet/bulan`);
+  lines.push(`- Rata-rata pergerakan fisik (in+out) 3 bulan terakhir: ${fmtNum(Math.round(c.avgMovement3))} pallet/bulan`);
   lines.push(`- Skor MH (rata-rata pergerakan ÷ saldo akhir): ${isFinite(c.mh) ? c.mh.toFixed(2) : 'tak terhingga (saldo akhir 0)'} — semakin tinggi berarti semakin cepat pallet berputar kembali.`);
   lines.push('');
 
@@ -2259,27 +2297,29 @@ function buildAnalysisTextCustomer(c){
   lines.push(`- Saldo akhir Anda saat ini setara ${pct} dari perkiraan saldo wajar tsb.`);
   if (c.saldoMaxRatio > 1){
     const kelebihan = Math.max(0, Math.round(c.saldoAkhir - c.saldoMax));
-    lines.push(`- Sebagai gambaran saja, sekitar ${fmtNum(kelebihan)} pallet berada di atas perkiraan kebutuhan wajar. Ini bisa jadi pertimbangan untuk pengembalian bertahap kalau memang sudah tidak terpakai, tapi bukan berarti ada masalah — hanya sekadar acuan.`);
+    lines.push(`- Sebagai gambaran saja, sekitar ${fmtNum(kelebihan)} pallet berada di atas perkiraan kebutuhan wajar. Ini bisa jadi pertimbangan untuk pengembalian bertahap ke KIM kalau memang sudah tidak terpakai, tapi bukan berarti ada masalah — hanya sekadar acuan.`);
   } else {
     lines.push(`- Saldo ini masih dalam rentang wajar dibanding pemakaian, jadi tidak perlu ada tindakan khusus untuk saat ini.`);
   }
   lines.push('');
 
-  lines.push('4) RIWAYAT PENYESUAIAN SALDO (RESET / OPNAME)');
+  lines.push('4) RIWAYAT PENYESUAIAN PEMBUKUAN (RESET / OPNAME) — bukan pergerakan fisik baru');
   const adjustments = c.trx.filter(t => t.marker === 'reset' || t.marker === 'opname');
   if (adjustments.length){
     adjustments.forEach(t => {
       const label = t.marker === 'reset' ? 'RESET' : 'OPNAME';
-      lines.push(`- ${fmtDateShort(t.date)} | ${label} | Saldo setelah penyesuaian: ${fmtSaldo(t.saldo)} pallet`);
+      const valDesc = t.inVal ? `angka koreksi di kolom IN: ${fmtNum(t.inVal)}` : (t.outVal ? `angka koreksi di kolom OUT: ${fmtNum(t.outVal)}` : 'tidak ada nilai tercatat');
+      lines.push(`- ${fmtDateShort(t.date)} | ${label} | ${valDesc} | Saldo pembukuan setelah disesuaikan: ${fmtSaldo(t.saldo)} pallet (angka koreksi, bukan pengiriman/pengembalian fisik baru)`);
     });
   } else {
-    lines.push('- Tidak ada riwayat penyesuaian khusus (RESET/OPNAME) pada data Anda saat ini.');
+    lines.push('- Tidak ada riwayat penyesuaian pembukuan (RESET/OPNAME) pada data Anda saat ini — seluruh angka IN/OUT di atas adalah transaksi fisik asli.');
   }
   lines.push('');
 
-  lines.push('5) POLA TRANSAKSI PER BULAN (6 bulan terakhir yang ada datanya)');
+  lines.push('5) POLA TRANSAKSI PER BULAN (6 bulan terakhir yang ada datanya, transaksi fisik asli saja — di luar penyesuaian OPNAME/RESET)');
   const byMonth = {};
   c.trx.forEach(t => {
+    if (t.marker === 'opname' || t.marker === 'reset') return; // jangan campur angka koreksi ke pola bulanan
     const key = `${t.date.getFullYear()}-${String(t.date.getMonth()+1).padStart(2,'0')}`;
     if (!byMonth[key]) byMonth[key] = { y: t.date.getFullYear(), m: t.date.getMonth(), count: 0, inSum: 0, outSum: 0 };
     byMonth[key].count++;
@@ -2293,16 +2333,17 @@ function buildAnalysisTextCustomer(c){
       lines.push(`- ${MONTH_ID_LONG[mo.m]} ${mo.y}: ${mo.count} transaksi (In ${fmtNum(mo.inSum)}, Out ${fmtNum(mo.outSum)})`);
     });
   } else {
-    lines.push('- Belum ada cukup data transaksi untuk melihat pola bulanan.');
+    lines.push('- Belum ada cukup data transaksi fisik untuk melihat pola bulanan.');
   }
 
   lines.push('');
   lines.push('PERMINTAAN ANALISA UNTUK AI:');
-  lines.push('Tolong buatkan ringkasan dengan bahasa yang ramah, mudah dipahami, dan menenangkan (bukan menuduh atau terkesan menyalahkan), yang menjelaskan ke saya selaku pelanggan:');
-  lines.push('1. Bagaimana kondisi sirkulasi pallet saya saat ini (cepat/lambat berputarnya).');
-  lines.push('2. Apakah saldo saya saat ini tergolong wajar, dan kalau ada kelebihan, berapa kira-kira yang bisa dipertimbangkan untuk dikembalikan secara bertahap.');
-  lines.push('3. Kalau ada riwayat penyesuaian (RESET/OPNAME), jelaskan maknanya secara sederhana buat saya.');
-  lines.push('4. Bagaimana pola pemakaian pallet saya dari bulan ke bulan — apakah rutin/konsisten.');
+  lines.push('PENTING: jangan pernah membaca angka penyesuaian OPNAME/RESET sebagai pengiriman atau pengembalian pallet fisik yang sungguhan terjadi — itu murni angka koreksi pembukuan. Gunakan hanya angka "transaksi fisik asli" untuk membahas kecepatan/pola pengembalian pallet.');
+  lines.push('Tolong buatkan ringkasan dengan bahasa yang ramah, mudah dipahami, dan menenangkan (bukan menuduh atau terkesan menyalahkan), yang menjelaskan ke saya selaku pelanggan (peminjam pallet dari KIM):');
+  lines.push('1. Bagaimana kondisi sirkulasi pallet saya saat ini (cepat/lambat berputarnya), berdasarkan transaksi fisik asli saja.');
+  lines.push('2. Apakah saldo saya saat ini tergolong wajar, dan kalau ada kelebihan, berapa kira-kira yang bisa dipertimbangkan untuk dikembalikan secara bertahap ke KIM.');
+  lines.push('3. Kalau ada riwayat penyesuaian pembukuan (RESET/OPNAME), jelaskan maknanya secara sederhana buat saya — dan tegaskan itu bukan pengiriman/pengembalian fisik baru.');
+  lines.push('4. Bagaimana pola pemakaian pallet saya dari bulan ke bulan (berdasarkan transaksi fisik asli) — apakah rutin/konsisten.');
   lines.push('5. Saran praktis yang bisa saya lakukan supaya sirkulasi pallet saya tetap lancar ke depannya.');
 
   return lines.join('\n');
