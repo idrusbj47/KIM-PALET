@@ -925,13 +925,13 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 <div id="analysis-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this) closeAnalysisModal()">
   <div class="modal-box">
     <div class="modal-head">
-      <h3>
+      <h3 id="analysis-modal-title">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M19 15l.7 1.6L21.3 17.3l-1.6.7L19 19.6l-.7-1.6L16.7 17.3l1.6-.7L19 15z"/></svg>
-        Analisa Kondisi Pallet dengan AI
+        <span>Analisa Kondisi Pallet dengan AI</span>
       </h3>
       <button class="modal-close" onclick="closeAnalysisModal()" aria-label="Tutup">&times;</button>
     </div>
-    <p class="modal-desc">Data di bawah ini sudah dirangkum khusus agar mudah dibaca oleh AI. Tekan <b>Salin Data</b>, lalu tempel (paste) ke AI yang Anda gunakan (ChatGPT, Claude, Gemini, dll.) dan biarkan AI tersebut menganalisa kondisi saldo pallet saat ini beserta kemungkinan risiko dan rekomendasinya.</p>
+    <p class="modal-desc" id="analysis-modal-desc">Data di bawah ini sudah dirangkum khusus agar mudah dibaca oleh AI. Tekan <b>Salin Data</b>, lalu tempel (paste) ke AI yang Anda gunakan (ChatGPT, Claude, Gemini, dll.) dan biarkan AI tersebut menganalisa kondisi saldo pallet saat ini beserta kemungkinan risiko dan rekomendasinya.</p>
     <textarea id="analysis-text" class="analysis-textarea" readonly onclick="this.select()"></textarea>
     <div class="modal-actions">
       <button class="icon-btn primary" onclick="copyAnalysisText()">
@@ -1461,7 +1461,8 @@ function enterApp(){
 /* Sesuaikan elemen UI yang boleh/tidak boleh diakses berdasarkan role */
 function applyRoleUI(){
   const isCustomer = authRole === 'customer';
-  document.getElementById('btn-analisa').style.display = isCustomer ? 'none' : '';
+  document.getElementById('btn-analisa').style.display = '';
+  document.getElementById('btn-analisa').title = isCustomer ? 'Salin ringkasan saldo pallet Anda untuk dianalisa AI' : 'Salin data untuk dianalisa AI';
   const btnSs = document.getElementById('btn-screenshot');
   if (btnSs) btnSs.style.display = isCustomer ? 'none' : '';
   document.getElementById('btn-logout').style.display = 'inline-flex';
@@ -2227,8 +2228,99 @@ function buildAnalysisText(){
   return lines.join('\n');
 }
 
+/* ============================================================
+   ANALISA AI KHUSUS CUSTOMER: ringkasan ramah untuk 1 customer saja
+   (tidak menyertakan data customer lain / agregat perusahaan)
+   ============================================================ */
+function buildAnalysisTextCustomer(c){
+  const lines = [];
+  lines.push(`=== RINGKASAN SALDO PALLET ANDA — ${c.name} (${c.code}) ===`);
+  lines.push(`PT. KARYA INDAH MULTIGUNA — data per ${fmtDateLong(reportDate)}`);
+  lines.push('');
+
+  lines.push('1) SALDO SAAT INI');
+  lines.push(`- Saldo Awal periode: ${fmtSaldo(c.saldoAwal)} pallet`);
+  lines.push(`- Pallet Masuk (dikembalikan ke KIM): ${fmtNum(c.sumIn)} pallet`);
+  lines.push(`- Pallet Keluar (dikirim dari KIM): ${fmtNum(c.sumOut)} pallet`);
+  lines.push(`- Saldo Akhir saat ini: ${fmtSaldo(c.saldoAkhir)} pallet`);
+  lines.push(`- Transaksi terakhir: ${c.lastTrx ? fmtDateLong(c.lastTrx.date) : 'belum ada transaksi'}${c.daysSinceLast!==Infinity ? ` (${c.daysSinceLast} hari lalu)` : ''}`);
+  lines.push('');
+
+  lines.push('2) KESEHATAN SIRKULASI PALLET (seberapa cepat pallet Anda berputar kembali)');
+  const mhLabelFriendly = { green:'Sangat lancar', amber:'Cukup lancar', gray:'Agak lambat', red:'Perlu dipercepat' }[c.mhCategory] || '-';
+  lines.push(`- Kategori sirkulasi: ${mhLabelFriendly}`);
+  lines.push(`- Rata-rata pergerakan (in+out) 3 bulan terakhir: ${fmtNum(Math.round(c.avgMovement3))} pallet/bulan`);
+  lines.push(`- Skor MH (rata-rata pergerakan ÷ saldo akhir): ${isFinite(c.mh) ? c.mh.toFixed(2) : 'tak terhingga (saldo akhir 0)'} — semakin tinggi berarti semakin cepat pallet berputar kembali.`);
+  lines.push('');
+
+  lines.push('3) SALDO SAAT INI DIBANDING SALDO WAJAR');
+  const pct = isFinite(c.saldoMaxRatio) ? Math.round(c.saldoMaxRatio * 100) + '%' : '∞';
+  lines.push(`- Perkiraan saldo wajar (berdasarkan rata-rata pemakaian 3 bulan terakhir): ${fmtNum(Math.round(c.saldoMax))} pallet`);
+  lines.push(`- Saldo akhir Anda saat ini setara ${pct} dari perkiraan saldo wajar tsb.`);
+  if (c.saldoMaxRatio > 1){
+    const kelebihan = Math.max(0, Math.round(c.saldoAkhir - c.saldoMax));
+    lines.push(`- Sebagai gambaran saja, sekitar ${fmtNum(kelebihan)} pallet berada di atas perkiraan kebutuhan wajar. Ini bisa jadi pertimbangan untuk pengembalian bertahap kalau memang sudah tidak terpakai, tapi bukan berarti ada masalah — hanya sekadar acuan.`);
+  } else {
+    lines.push(`- Saldo ini masih dalam rentang wajar dibanding pemakaian, jadi tidak perlu ada tindakan khusus untuk saat ini.`);
+  }
+  lines.push('');
+
+  lines.push('4) RIWAYAT PENYESUAIAN SALDO (RESET / OPNAME)');
+  const adjustments = c.trx.filter(t => t.marker === 'reset' || t.marker === 'opname');
+  if (adjustments.length){
+    adjustments.forEach(t => {
+      const label = t.marker === 'reset' ? 'RESET' : 'OPNAME';
+      lines.push(`- ${fmtDateShort(t.date)} | ${label} | Saldo setelah penyesuaian: ${fmtSaldo(t.saldo)} pallet`);
+    });
+  } else {
+    lines.push('- Tidak ada riwayat penyesuaian khusus (RESET/OPNAME) pada data Anda saat ini.');
+  }
+  lines.push('');
+
+  lines.push('5) POLA TRANSAKSI PER BULAN (6 bulan terakhir yang ada datanya)');
+  const byMonth = {};
+  c.trx.forEach(t => {
+    const key = `${t.date.getFullYear()}-${String(t.date.getMonth()+1).padStart(2,'0')}`;
+    if (!byMonth[key]) byMonth[key] = { y: t.date.getFullYear(), m: t.date.getMonth(), count: 0, inSum: 0, outSum: 0 };
+    byMonth[key].count++;
+    byMonth[key].inSum += t.inVal;
+    byMonth[key].outSum += t.outVal;
+  });
+  const monthKeys = Object.keys(byMonth).sort().slice(-6);
+  if (monthKeys.length){
+    monthKeys.forEach(k => {
+      const mo = byMonth[k];
+      lines.push(`- ${MONTH_ID_LONG[mo.m]} ${mo.y}: ${mo.count} transaksi (In ${fmtNum(mo.inSum)}, Out ${fmtNum(mo.outSum)})`);
+    });
+  } else {
+    lines.push('- Belum ada cukup data transaksi untuk melihat pola bulanan.');
+  }
+
+  lines.push('');
+  lines.push('PERMINTAAN ANALISA UNTUK AI:');
+  lines.push('Tolong buatkan ringkasan dengan bahasa yang ramah, mudah dipahami, dan menenangkan (bukan menuduh atau terkesan menyalahkan), yang menjelaskan ke saya selaku pelanggan:');
+  lines.push('1. Bagaimana kondisi sirkulasi pallet saya saat ini (cepat/lambat berputarnya).');
+  lines.push('2. Apakah saldo saya saat ini tergolong wajar, dan kalau ada kelebihan, berapa kira-kira yang bisa dipertimbangkan untuk dikembalikan secara bertahap.');
+  lines.push('3. Kalau ada riwayat penyesuaian (RESET/OPNAME), jelaskan maknanya secara sederhana buat saya.');
+  lines.push('4. Bagaimana pola pemakaian pallet saya dari bulan ke bulan — apakah rutin/konsisten.');
+  lines.push('5. Saran praktis yang bisa saya lakukan supaya sirkulasi pallet saya tetap lancar ke depannya.');
+
+  return lines.join('\n');
+}
+
 function openAnalysisModal(){
-  document.getElementById('analysis-text').value = buildAnalysisText();
+  const isCustomer = authRole === 'customer';
+  const titleEl = document.getElementById('analysis-modal-title').querySelector('span');
+  const descEl = document.getElementById('analysis-modal-desc');
+  if (isCustomer){
+    titleEl.textContent = 'Analisa Saldo Pallet Anda dengan AI';
+    descEl.innerHTML = 'Data di bawah ini adalah ringkasan saldo pallet milik Anda sendiri, dirangkum khusus agar mudah dibaca oleh AI. Tekan <b>Salin Data</b>, lalu tempel (paste) ke AI yang Anda gunakan (ChatGPT, Claude, Gemini, dll.) untuk mendapat penjelasan dan saran yang mudah dipahami.';
+    document.getElementById('analysis-text').value = buildAnalysisTextCustomer(custByCode[authCode]);
+  } else {
+    titleEl.textContent = 'Analisa Kondisi Pallet dengan AI';
+    descEl.innerHTML = 'Data di bawah ini sudah dirangkum khusus agar mudah dibaca oleh AI. Tekan <b>Salin Data</b>, lalu tempel (paste) ke AI yang Anda gunakan (ChatGPT, Claude, Gemini, dll.) dan biarkan AI tersebut menganalisa kondisi saldo pallet saat ini beserta kemungkinan risiko dan rekomendasinya.';
+    document.getElementById('analysis-text').value = buildAnalysisText();
+  }
   document.getElementById('analysis-modal').style.display = 'flex';
   document.getElementById('copy-feedback').classList.remove('show');
 }
@@ -2420,6 +2512,7 @@ const TOUR_STEPS_ADMIN = [
 
 const TOUR_STEPS_CUSTOMER = [
   { sel: '#view-detail .summary-strip', title: 'Ringkasan Saldo Anda', desc: 'Saldo awal, jumlah in, out, saldo akhir, dan info opname terakhir ditampilkan di sini.' },
+  { sel: '#btn-analisa', title: 'Analisa AI', desc: 'Salin ringkasan saldo pallet Anda, lalu tempel ke AI favorit Anda (ChatGPT, Claude, Gemini, dll.) untuk mendapat penjelasan dan saran yang mudah dipahami.' },
   { sel: '#legend-box-detail', title: 'Kode & Warna', desc: 'Ketuk bagian ini kapan saja untuk membaca penjelasan istilah RESET, OPNAME, IN, dan OUT.' },
   { sel: '#view-detail .search-wrap', title: 'Cari Transaksi', desc: 'Cari transaksi berdasarkan nomor polisi atau tanggal.' },
   { sel: '#d-month-filter', title: 'Filter per Bulan', desc: 'Pilih bulan tertentu di sini untuk melihat transaksi hanya pada bulan itu saja, atau biarkan "Semua Bulan" untuk melihat semua riwayat.' },
