@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8"/>
-<script>try{if(localStorage.getItem('pallet-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}</script>
+<meta name="color-scheme" id="color-scheme-meta" content="light">
+<script>try{if(localStorage.getItem('pallet-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.style.colorScheme='dark';document.getElementById('color-scheme-meta').setAttribute('content','dark')}}catch(e){}</script>
 <meta name="viewport" id="viewport-meta" content="width=device-width, initial-scale=1.0"/>
 <title>Laporan Saldo Pallet — PT. Karya Indah Multiguna</title>
 <link rel="icon" type="image/png" href="logop1.png"/>
@@ -20,6 +21,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
+  color-scheme:light;
   --ink:#1b1a17;--ink2:#5f5b52;--ink3:#9a9488;
   --bg:#f6f3ec;--surface:#ffffff;--border:#e7e1d3;--border2:#d9d1bd;
   --surface-glass:rgba(255,255,255,.62);--border-glass:rgba(231,225,211,.7);
@@ -35,6 +37,7 @@
   --shadow:0 2px 18px rgba(30,26,16,.06);
 }
 [data-theme="dark"]{
+  color-scheme:dark;
   --ink:#ece7db;--ink2:#b6afa0;--ink3:#726b5c;
   --bg:#14130f;--surface:#1d1b16;--border:#332f25;--border2:#453f30;
   --surface-glass:rgba(29,27,22,.55);--border-glass:rgba(51,47,37,.7);
@@ -461,6 +464,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 .install-step b{color:var(--ink)}
 
 /* ===== PRINT ===== */
+.print-time-tag{display:none}
 @media print{
   @page{margin:10mm}
   .theme-switch,.icon-btn,.filter-row,.back-btn,.chip{display:none!important}
@@ -468,6 +472,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
   .header{position:static!important;box-shadow:none!important;border-bottom:1.5px solid #ccc!important}
   .table-wrap{box-shadow:none!important;overflow:visible!important;border:1px solid #ccc}
   table{min-width:0!important;font-size:10px}
+  .print-time-tag{display:inline}
 }
 </style>
 </head>
@@ -810,11 +815,11 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     <div class="detail-head">
       <div class="detail-title">
         <h2 id="d-name">—</h2>
-        <p><span id="d-code">—</span> · Laporan per <span id="d-reportdate">—</span></p>
+        <p><span id="d-code">—</span> · Laporan per <span id="d-reportdate">—</span><span id="d-print-time" class="print-time-tag"></span></p>
       </div>
       <div class="detail-side">
         <div class="side-box" id="side-cust-count-box"><div class="n" id="d-cust-count">—</div><div class="l">Σ Customer</div></div>
-        <div class="side-box"><div class="n" id="d-trx-count">—</div><div class="l">Σ Transaksi</div></div>
+        <div class="side-box" id="side-trx-count-box"><div class="n" id="d-trx-count">—</div><div class="l">Σ Transaksi</div></div>
         <div class="side-box"><div class="n" id="d-month-count">—</div><div class="l">Input Bln Ini</div></div>
       </div>
     </div>
@@ -1080,6 +1085,17 @@ function fmtDateLong(d){
 function fmtNum(n){
   return (n || 0).toLocaleString('id-ID');
 }
+/* Menampilkan jam saat tombol Cetak ditekan, khusus tercetak di kertas — muncul di
+   samping "Laporan per [tanggal]" pada halaman detail customer. */
+function updatePrintTimeTag(){
+  const el = document.getElementById('d-print-time');
+  if (!el) return;
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  el.textContent = ` [${hh}.${mm} wib]`;
+}
+window.addEventListener('beforeprint', updatePrintTimeTag);
 // format saldo: nilai negatif ditampilkan dalam tanda kurung, mis. (20) = min 20, sesuai konvensi pada spreadsheet
 function fmtSaldo(n){
   n = n || 0;
@@ -1455,6 +1471,8 @@ function applyRoleUI(){
   if (backBtn) backBtn.style.display = isCustomer ? 'none' : '';
   const custCountBox = document.getElementById('side-cust-count-box');
   if (custCountBox) custCountBox.style.display = isCustomer ? 'none' : '';
+  const trxCountBox = document.getElementById('side-trx-count-box');
+  if (trxCountBox) trxCountBox.style.display = isCustomer ? 'none' : '';
 
   const badge = document.getElementById('role-badge');
   const badgeText = document.getElementById('role-badge-text');
@@ -2343,12 +2361,21 @@ function scrollToTop(){
 /* ============================================================
    TEMA GELAP / TERANG
    ============================================================ */
+/* Sinkronkan meta/CSS color-scheme dengan tema aktif. Tanpa ini, browser/OS bisa
+   memaksakan penyesuaian warna otomatis (auto-dark) di atas tema terang aplikasi,
+   yang membuat font judul ikut "dibalik" jadi putih saat di-screenshot. */
+function syncColorScheme(theme){
+  const meta = document.getElementById('color-scheme-meta');
+  if (meta) meta.setAttribute('content', theme);
+  document.documentElement.style.colorScheme = theme;
+}
 function toggleTheme(){
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const next = isDark ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   document.getElementById('switch-track').classList.toggle('on', next === 'dark');
   localStorage.setItem('pallet-theme', next);
+  syncColorScheme(next);
 }
 (function(){
   const saved = localStorage.getItem('pallet-theme');
@@ -2356,6 +2383,7 @@ function toggleTheme(){
     document.documentElement.setAttribute('data-theme','dark');
     document.getElementById('switch-track').classList.add('on');
   }
+  syncColorScheme(saved === 'dark' ? 'dark' : 'light');
 })();
 
 /* ============================================================
