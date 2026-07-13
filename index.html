@@ -1472,8 +1472,10 @@ function applyRoleUI(){
   if (backBtn) backBtn.style.display = isCustomer ? 'none' : '';
   const custCountBox = document.getElementById('side-cust-count-box');
   if (custCountBox) custCountBox.style.display = isCustomer ? 'none' : '';
+  // Σ Transaksi tetap ditampilkan untuk customer karena nilainya sudah spesifik
+  // menghitung transaksi milik customer tsb saja (c.trx.length), bukan total global.
   const trxCountBox = document.getElementById('side-trx-count-box');
-  if (trxCountBox) trxCountBox.style.display = isCustomer ? 'none' : '';
+  if (trxCountBox) trxCountBox.style.display = '';
 
   const badge = document.getElementById('role-badge');
   const badgeText = document.getElementById('role-badge-text');
