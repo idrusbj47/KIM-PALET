@@ -272,11 +272,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .table-scroll-shell{position:relative}
 .hscroll-hint{display:none}
 @media(max-width:760px){
-  .hscroll-hint{position:absolute;right:14px;bottom:14px;display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;background:rgba(27,26,23,.85);color:#fff;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;letter-spacing:.02em;pointer-events:none;z-index:5;opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .35s ease,visibility .35s ease,transform .35s ease;box-shadow:0 6px 16px rgba(0,0,0,.25)}
-  .hscroll-hint.show{opacity:1;visibility:visible;transform:translateY(0)}
-  .hscroll-hint svg{animation:hscrollNudge 1.1s ease-in-out infinite;flex-shrink:0}
+  .hscroll-hint{position:absolute;right:10px;bottom:14px;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--surface-glass);backdrop-filter:blur(10px) saturate(1.5);-webkit-backdrop-filter:blur(10px) saturate(1.5);border:1px solid var(--border-glass);color:var(--brass);pointer-events:none;z-index:5;opacity:0;visibility:hidden;transform:scale(.82);transition:opacity .45s ease,visibility .45s ease,transform .45s ease;box-shadow:0 4px 14px rgba(30,26,16,.14)}
+  .hscroll-hint.show{opacity:1;visibility:visible;transform:scale(1)}
+  .hscroll-hint svg{flex-shrink:0;animation:hscrollNudge 1.15s ease-in-out infinite}
 }
-@keyframes hscrollNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+@keyframes hscrollNudge{0%,50%,100%{transform:translateX(0);opacity:.55}25%{transform:translateX(4px);opacity:1}}
 @media print{.hscroll-hint{display:none!important}}
 table{width:100%;border-collapse:collapse;font-size:12.8px;min-width:900px}
 thead th{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 14px;text-align:left;font-size:10.2px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
@@ -832,8 +832,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       </div>
     </div>
     <div class="hscroll-hint" id="list-hscroll-hint" aria-hidden="true">
-      Geser
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
     </div>
     </div>
   </div>
@@ -1485,7 +1484,7 @@ function enterApp(){
     }
     document.getElementById('view-list').style.display = 'block';
     render();
-    showListScrollHint();
+    initListScrollHint();
   }
 
   maybeStartTour();
@@ -1983,7 +1982,7 @@ function goList(){
   if (btnSsL && authRole !== 'customer') btnSsL.style.display = '';
   window.scrollTo({top:0, behavior:'smooth'});
   silentRefresh();
-  showListScrollHint();
+  initListScrollHint();
 }
 
 /* Hitung & tampilkan rincian "Asli" vs "Adj OPNAME" / "Adj RESET" pada card Jumlah In / Jumlah
@@ -2516,26 +2515,31 @@ init();
 
 /* ============================================================
    PETUNJUK GESER HORIZONTAL (tabel daftar customer di HP)
-   Muncul singkat saat daftar customer pertama kali tampil di layar
-   sempit, supaya user sadar tabelnya bisa digeser ke kiri/kanan
-   untuk melihat kolom MH, status, dan transaksi terakhir. Otomatis
-   hilang begitu user menggeser tabel, dan hanya tampil sekali per sesi.
+   Panah tetap tampil selama tabel daftar customer masih bisa digeser
+   ke kanan (belum mentok), supaya user sadar ada kolom MH, status,
+   dan transaksi terakhir yang belum terlihat. Panah otomatis hilang
+   begitu tabel digeser sampai mentok di ujung kanan, dan muncul lagi
+   kalau user menggeser balik ke kiri.
    ============================================================ */
-function showListScrollHint(){
-  if (!window.matchMedia('(max-width:760px)').matches) return;
-  try{ if (sessionStorage.getItem('hscrollHintShown')) return; }catch(e){}
+function initListScrollHint(){
   const wrap = document.getElementById('list-table-wrap');
   const hint = document.getElementById('list-hscroll-hint');
   if (!wrap || !hint) return;
-  setTimeout(() => {
-    if (wrap.scrollWidth <= wrap.clientWidth + 4) return; // tabel muat penuh, tak perlu digeser
-    hint.classList.add('show');
-    try{ sessionStorage.setItem('hscrollHintShown', '1'); }catch(e){}
-    const hide = () => hint.classList.remove('show');
-    const hideOnScroll = () => { hide(); wrap.removeEventListener('scroll', hideOnScroll); };
-    wrap.addEventListener('scroll', hideOnScroll, { passive: true });
-    setTimeout(hide, 4000);
-  }, 700);
+  updateListScrollHint();
+  if (wrap.dataset.hintBound) return; // listener sudah terpasang, tak perlu dobel
+  wrap.dataset.hintBound = '1';
+  wrap.addEventListener('scroll', updateListScrollHint, { passive: true });
+  window.addEventListener('resize', updateListScrollHint);
+}
+function updateListScrollHint(){
+  const wrap = document.getElementById('list-table-wrap');
+  const hint = document.getElementById('list-hscroll-hint');
+  if (!wrap || !hint) return;
+  if (!window.matchMedia('(max-width:760px)').matches){ hint.classList.remove('show'); return; }
+  const maxScroll = wrap.scrollWidth - wrap.clientWidth;
+  const needsScroll = maxScroll > 4;
+  const atEnd = wrap.scrollLeft >= maxScroll - 4;
+  hint.classList.toggle('show', needsScroll && !atEnd);
 }
 
 /* ============================================================
