@@ -269,6 +269,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 
 /* ===== TABLE ===== */
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow-x:auto;-webkit-overflow-scrolling:touch;box-shadow:var(--shadow)}
+.table-scroll-shell{position:relative}
+.hscroll-hint{display:none}
+@media(max-width:760px){
+  .hscroll-hint{position:absolute;right:14px;bottom:14px;display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;background:rgba(27,26,23,.85);color:#fff;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;letter-spacing:.02em;pointer-events:none;z-index:5;opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .35s ease,visibility .35s ease,transform .35s ease;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+  .hscroll-hint.show{opacity:1;visibility:visible;transform:translateY(0)}
+  .hscroll-hint svg{animation:hscrollNudge 1.1s ease-in-out infinite;flex-shrink:0}
+}
+@keyframes hscrollNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+@media print{.hscroll-hint{display:none!important}}
 table{width:100%;border-collapse:collapse;font-size:12.8px;min-width:900px}
 thead th{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 14px;text-align:left;font-size:10.2px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
 tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--ink)}
@@ -391,7 +400,6 @@ tr.row-opname td span{color:var(--opname-r)!important}
 .sum-card.opname .v{color:var(--reset-y)}
 .opname-doc-btn{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:5px 11px;border-radius:999px;border:1px solid var(--brass-line);background:var(--brass-bg);color:var(--brass);font-size:10.5px;font-weight:700;text-decoration:none;transition:all .18s;width:fit-content}
 .opname-doc-btn:hover{filter:brightness(0.95)}
-.opname-doc-url{display:none}
 .adj-breakdown{display:none;flex-direction:column;gap:2px;margin-top:7px;padding-top:7px;border-top:1px dashed var(--border2)}
 .adj-breakdown .adj-line{display:flex;justify-content:space-between;gap:10px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--ink3)}
 .adj-breakdown .adj-line b{font-weight:600;color:var(--ink2)}
@@ -491,13 +499,6 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
      tanpa teks nama yang panjang, supaya header tetap ringkas & rapi saat dicetak. */
   .role-badge{display:inline-flex!important;width:26px;height:26px;padding:0!important;border-radius:50%;justify-content:center;gap:0!important}
   .role-badge span.rb-full{display:none!important}
-
-  /* Link "Lihat Dokumen" opname: di sebagian browser HP, saat disimpan ke PDF,
-     tautan aktifnya hilang (keterbatasan mesin cetak-ke-PDF di HP, bukan dari
-     halaman ini) — jadi alamat aslinya ditampilkan sebagai teks polos supaya
-     tetap terbaca & biasanya tetap bisa diketuk otomatis oleh aplikasi pembaca
-     PDF (mis. Files/Adobe/Drive) yang mengenali teks berupa URL. */
-  .opname-doc-url{display:block!important;margin-top:4px;font-size:8.5px;color:var(--ink3);word-break:break-all;font-family:'JetBrains Mono',monospace}
 }
 </style>
 </head>
@@ -806,7 +807,8 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       </div>
     </details>
 
-    <div class="table-wrap">
+    <div class="table-scroll-shell">
+    <div class="table-wrap" id="list-table-wrap">
       <table class="list-table">
         <thead>
           <tr>
@@ -828,6 +830,11 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <span id="foot-count"></span>
         <span id="foot-note">MH = rata-rata pergerakan (IN+OUT) 3 bulan terakhir ÷ saldo akhir saat ini</span>
       </div>
+    </div>
+    <div class="hscroll-hint" id="list-hscroll-hint" aria-hidden="true">
+      Geser
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+    </div>
     </div>
   </div>
 
@@ -862,7 +869,6 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Lihat Dokumen
         </a>
-        <span class="opname-doc-url" id="d-opname-doc-url"></span>
       </div>
     </div>
 
@@ -1479,6 +1485,7 @@ function enterApp(){
     }
     document.getElementById('view-list').style.display = 'block';
     render();
+    showListScrollHint();
   }
 
   maybeStartTour();
@@ -1976,6 +1983,7 @@ function goList(){
   if (btnSsL && authRole !== 'customer') btnSsL.style.display = '';
   window.scrollTo({top:0, behavior:'smooth'});
   silentRefresh();
+  showListScrollHint();
 }
 
 /* Hitung & tampilkan rincian "Asli" vs "Adj OPNAME" / "Adj RESET" pada card Jumlah In / Jumlah
@@ -2076,16 +2084,13 @@ function renderDetail(){
   // Tombol "Lihat Dokumen" — hanya ditampilkan kalau kolom Q (link dokumen opname) di CSV
   // memang terisi link yang valid. Kalau kosong, tombolnya juga tidak ditampilkan.
   const opDocBtn = document.getElementById('d-opname-doc-btn');
-  const opDocUrl = document.getElementById('d-opname-doc-url');
   const opLink = (opn && opn.link || '').trim();
   if (opLink && /^https?:\/\//i.test(opLink)){
     opDocBtn.href = opLink;
     opDocBtn.style.display = 'inline-flex';
-    if (opDocUrl) opDocUrl.textContent = opLink;
   } else {
     opDocBtn.removeAttribute('href');
     opDocBtn.style.display = 'none';
-    if (opDocUrl) opDocUrl.textContent = '';
   }
 
   const q = document.getElementById('d-search').value.trim().toLowerCase();
@@ -2510,6 +2515,30 @@ init();
 })();
 
 /* ============================================================
+   PETUNJUK GESER HORIZONTAL (tabel daftar customer di HP)
+   Muncul singkat saat daftar customer pertama kali tampil di layar
+   sempit, supaya user sadar tabelnya bisa digeser ke kiri/kanan
+   untuk melihat kolom MH, status, dan transaksi terakhir. Otomatis
+   hilang begitu user menggeser tabel, dan hanya tampil sekali per sesi.
+   ============================================================ */
+function showListScrollHint(){
+  if (!window.matchMedia('(max-width:760px)').matches) return;
+  try{ if (sessionStorage.getItem('hscrollHintShown')) return; }catch(e){}
+  const wrap = document.getElementById('list-table-wrap');
+  const hint = document.getElementById('list-hscroll-hint');
+  if (!wrap || !hint) return;
+  setTimeout(() => {
+    if (wrap.scrollWidth <= wrap.clientWidth + 4) return; // tabel muat penuh, tak perlu digeser
+    hint.classList.add('show');
+    try{ sessionStorage.setItem('hscrollHintShown', '1'); }catch(e){}
+    const hide = () => hint.classList.remove('show');
+    const hideOnScroll = () => { hide(); wrap.removeEventListener('scroll', hideOnScroll); };
+    wrap.addEventListener('scroll', hideOnScroll, { passive: true });
+    setTimeout(hide, 4000);
+  }, 700);
+}
+
+/* ============================================================
    SCROLL TO TOP
    ============================================================ */
 function scrollToTop(){
@@ -2534,8 +2563,10 @@ function scrollToTop(){
 (function(){
   let savedTitle = null;
   let savedUrl = null;
+  let fallbackTimer = null;
 
   function beforePrint(){
+    if (savedTitle !== null) return; // sudah aktif, jangan tumpuk
     savedTitle = document.title;
     savedUrl = location.pathname + location.search + location.hash;
     document.title = 'Lap. Saldo Pallet - PT.KIM';
@@ -2545,24 +2576,34 @@ function scrollToTop(){
     }catch(e){}
   }
   function afterPrint(){
-    if (savedTitle !== null) document.title = savedTitle;
-    if (savedUrl !== null){
-      try{ history.replaceState(null, '', savedUrl); }catch(e){}
-    }
+    if (savedTitle === null) return;
+    document.title = savedTitle;
+    try{ history.replaceState(null, '', savedUrl); }catch(e){}
     savedTitle = null;
     savedUrl = null;
+    if (fallbackTimer){ clearTimeout(fallbackTimer); fallbackTimer = null; }
   }
 
   window.addEventListener('beforeprint', beforePrint);
   window.addEventListener('afterprint', afterPrint);
+  // Di HP, dialog "Simpan sebagai PDF" (share sheet) bukan dialog cetak biasa,
+  // jadi window tetap dianggap fokus & "afterprint" bisa tidak langsung terpicu
+  // saat masih di layar share sheet. Kembalikan judul/URL begitu user kembali
+  // ke halaman (fokus balik ke tab) — ini momen paling akurat, baik di desktop
+  // maupun HP, karena berarti dialog cetak/share sudah ditutup.
+  window.addEventListener('focus', afterPrint);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') afterPrint();
+  });
 
-  // Fallback untuk browser (mis. sebagian Safari) yang tidak konsisten
-  // memicu afterprint: kembalikan otomatis beberapa saat setelah window.print().
+  // Fallback terakhir kalau semua event di atas tidak terpicu (mis. tab tidak
+  // pernah kehilangan fokus). Waktunya dibuat longgar (30 detik) supaya tidak
+  // keburu mengembalikan judul/URL saat user masih memilih nama file di HP.
   const origPrint = window.print;
   window.print = function(){
     beforePrint();
     origPrint.call(window);
-    setTimeout(afterPrint, 1000);
+    fallbackTimer = setTimeout(afterPrint, 30000);
   };
 })();
 
