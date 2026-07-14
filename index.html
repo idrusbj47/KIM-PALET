@@ -391,6 +391,7 @@ tr.row-opname td span{color:var(--opname-r)!important}
 .sum-card.opname .v{color:var(--reset-y)}
 .opname-doc-btn{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:5px 11px;border-radius:999px;border:1px solid var(--brass-line);background:var(--brass-bg);color:var(--brass);font-size:10.5px;font-weight:700;text-decoration:none;transition:all .18s;width:fit-content}
 .opname-doc-btn:hover{filter:brightness(0.95)}
+.opname-doc-url{display:none}
 .adj-breakdown{display:none;flex-direction:column;gap:2px;margin-top:7px;padding-top:7px;border-top:1px dashed var(--border2)}
 .adj-breakdown .adj-line{display:flex;justify-content:space-between;gap:10px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--ink3)}
 .adj-breakdown .adj-line b{font-weight:600;color:var(--ink2)}
@@ -479,9 +480,24 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
      sehingga breakpoint mobile ikut aktif dan tampilan jadi berbeda dari komputer). */
   .container{max-width:1240px!important;padding:1.2rem 1.2rem 2rem!important}
   .stats-grid,.summary-strip{grid-template-columns:repeat(5,1fr)!important}
-  .header{flex-wrap:nowrap!important}
-  .hdr-divider{display:block!important}
-  .role-badge span.rb-full{display:inline!important}
+  .header{flex-wrap:nowrap!important;align-items:center!important}
+  .brand-text h1{white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis}
+
+  /* Garis pemisah header dibuang saat cetak: tombol-tombol di sekitarnya sudah
+     disembunyikan, jadi garisnya jadi nyangkut tanpa fungsi. */
+  .hdr-divider{display:none!important}
+
+  /* Badge nama customer/staff cukup tampil sebagai avatar bulat (ikon saja),
+     tanpa teks nama yang panjang, supaya header tetap ringkas & rapi saat dicetak. */
+  .role-badge{display:inline-flex!important;width:26px;height:26px;padding:0!important;border-radius:50%;justify-content:center;gap:0!important}
+  .role-badge span.rb-full{display:none!important}
+
+  /* Link "Lihat Dokumen" opname: di sebagian browser HP, saat disimpan ke PDF,
+     tautan aktifnya hilang (keterbatasan mesin cetak-ke-PDF di HP, bukan dari
+     halaman ini) — jadi alamat aslinya ditampilkan sebagai teks polos supaya
+     tetap terbaca & biasanya tetap bisa diketuk otomatis oleh aplikasi pembaca
+     PDF (mis. Files/Adobe/Drive) yang mengenali teks berupa URL. */
+  .opname-doc-url{display:block!important;margin-top:4px;font-size:8.5px;color:var(--ink3);word-break:break-all;font-family:'JetBrains Mono',monospace}
 }
 </style>
 </head>
@@ -846,6 +862,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Lihat Dokumen
         </a>
+        <span class="opname-doc-url" id="d-opname-doc-url"></span>
       </div>
     </div>
 
@@ -2059,13 +2076,16 @@ function renderDetail(){
   // Tombol "Lihat Dokumen" — hanya ditampilkan kalau kolom Q (link dokumen opname) di CSV
   // memang terisi link yang valid. Kalau kosong, tombolnya juga tidak ditampilkan.
   const opDocBtn = document.getElementById('d-opname-doc-btn');
+  const opDocUrl = document.getElementById('d-opname-doc-url');
   const opLink = (opn && opn.link || '').trim();
   if (opLink && /^https?:\/\//i.test(opLink)){
     opDocBtn.href = opLink;
     opDocBtn.style.display = 'inline-flex';
+    if (opDocUrl) opDocUrl.textContent = opLink;
   } else {
     opDocBtn.removeAttribute('href');
     opDocBtn.style.display = 'none';
+    if (opDocUrl) opDocUrl.textContent = '';
   }
 
   const q = document.getElementById('d-search').value.trim().toLowerCase();
