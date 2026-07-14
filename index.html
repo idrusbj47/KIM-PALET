@@ -272,7 +272,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .table-scroll-shell{position:relative}
 .hscroll-hint{display:none}
 @media(max-width:760px){
-  .hscroll-hint{position:fixed;right:14px;top:70px;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--surface-glass);backdrop-filter:blur(10px) saturate(1.5);-webkit-backdrop-filter:blur(10px) saturate(1.5);border:1px solid var(--border-glass);color:var(--brass);pointer-events:none;z-index:90;opacity:0;visibility:hidden;transform:scale(.82) translateY(-4px);transition:opacity .4s ease,visibility .4s ease,transform .4s ease;box-shadow:0 4px 16px rgba(30,26,16,.18)}
+  .hscroll-hint{position:fixed;right:19px;bottom:72px;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--surface-glass);backdrop-filter:blur(10px) saturate(1.5);-webkit-backdrop-filter:blur(10px) saturate(1.5);border:1px solid var(--border-glass);color:var(--brass);pointer-events:none;z-index:90;opacity:0;visibility:hidden;transform:scale(.82) translateY(4px);transition:opacity .4s ease,visibility .4s ease,transform .4s ease;box-shadow:0 4px 16px rgba(30,26,16,.18)}
   .hscroll-hint.show{opacity:1;visibility:visible;transform:scale(1) translateY(0)}
   .hscroll-hint svg{flex-shrink:0;animation:hscrollNudge 1.15s ease-in-out infinite}
 }
@@ -2515,13 +2515,14 @@ init();
 
 /* ============================================================
    PETUNJUK GESER HORIZONTAL (tabel daftar customer di HP)
-   Panah melayang (fixed) tepat di bawah header, dan hanya tampil ketika:
+   Panah melayang (fixed), diposisikan tepat di atas tombol "kembali ke
+   atas" supaya tidak mengganggu dan tetap terasa alami. Hanya tampil
+   ketika:
    1) area tabel daftar customer sedang terlihat di layar (dipantau via
       IntersectionObserver pada .table-scroll-shell), DAN
    2) tabel itu masih bisa digeser ke kanan (belum mentok).
    Begitu user scroll melewati tabel (naik/turun), atau tabel sudah
-   digeser mentok ke kanan, panah otomatis hilang. Posisinya mengikuti
-   tinggi header supaya tidak tertutup.
+   digeser mentok ke kanan, panah otomatis hilang.
    ============================================================ */
 function initListScrollHint(){
   const wrap = document.getElementById('list-table-wrap');
@@ -2531,12 +2532,6 @@ function initListScrollHint(){
 
   let shellInView = false;
 
-  function positionHint(){
-    const hdr = document.getElementById('header');
-    const hdrH = hdr ? hdr.getBoundingClientRect().height : 60;
-    hint.style.top = (hdrH + 14) + 'px';
-  }
-
   function updateVisibility(){
     if (!window.matchMedia('(max-width:760px)').matches){ hint.classList.remove('show'); return; }
     const maxScroll = wrap.scrollWidth - wrap.clientWidth;
@@ -2545,7 +2540,6 @@ function initListScrollHint(){
     hint.classList.toggle('show', shellInView && needsScroll && !atEnd);
   }
 
-  positionHint();
   updateVisibility();
 
   if (wrap.dataset.hintBound) return; // listener sudah terpasang, tak perlu dobel
@@ -2562,7 +2556,7 @@ function initListScrollHint(){
   }
 
   wrap.addEventListener('scroll', updateVisibility, { passive: true });
-  window.addEventListener('resize', () => { positionHint(); updateVisibility(); });
+  window.addEventListener('resize', updateVisibility);
 }
 
 /* ============================================================
