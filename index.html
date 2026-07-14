@@ -467,12 +467,21 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 .print-time-tag{display:none}
 @media print{
   @page{margin:10mm}
-  .theme-switch,.icon-btn,.filter-row,.back-btn,.chip{display:none!important}
+  .theme-switch,.icon-btn,.filter-row,.back-btn,.chip,.scroll-top-btn{display:none!important}
   body{background:#fff}
   .header{position:static!important;box-shadow:none!important;border-bottom:1.5px solid #ccc!important}
   .table-wrap{box-shadow:none!important;overflow:visible!important;border:1px solid #ccc}
   table{min-width:0!important;font-size:10px}
   .print-time-tag{display:inline}
+
+  /* Paksa layout tetap seperti tampilan desktop, meski dicetak dari HP
+     (sebagian browser mobile memakai lebar layar utk media query saat print,
+     sehingga breakpoint mobile ikut aktif dan tampilan jadi berbeda dari komputer). */
+  .container{max-width:1240px!important;padding:1.2rem 1.2rem 2rem!important}
+  .stats-grid,.summary-strip{grid-template-columns:repeat(5,1fr)!important}
+  .header{flex-wrap:nowrap!important}
+  .hdr-divider{display:block!important}
+  .role-badge span.rb-full{display:inline!important}
 }
 </style>
 </head>
@@ -2491,6 +2500,50 @@ function scrollToTop(){
   window.addEventListener('scroll', () => {
     btn.classList.toggle('show', window.scrollY > 320);
   }, { passive: true });
+})();
+
+/* ============================================================
+   PENYESUAIAN SAAT CETAK / SIMPAN PDF
+   - Judul tab dipendekkan sesaat, supaya nama file default saat
+     "Simpan sebagai PDF" menjadi "Lap. Saldo Pallet - PT.KIM"
+   - Alamat URL yang tampil di footer cetakan disederhanakan jadi
+     domain saja (mis. https://kim-pallet.id/), tanpa /index.html
+     atau #c/... . Setelah selesai cetak, judul & URL dikembalikan
+     seperti semula agar navigasi & tautan dalam app tetap normal.
+   ============================================================ */
+(function(){
+  let savedTitle = null;
+  let savedUrl = null;
+
+  function beforePrint(){
+    savedTitle = document.title;
+    savedUrl = location.pathname + location.search + location.hash;
+    document.title = 'Lap. Saldo Pallet - PT.KIM';
+    try{
+      const cleanUrl = location.protocol + '//' + location.host + '/';
+      history.replaceState(null, '', cleanUrl);
+    }catch(e){}
+  }
+  function afterPrint(){
+    if (savedTitle !== null) document.title = savedTitle;
+    if (savedUrl !== null){
+      try{ history.replaceState(null, '', savedUrl); }catch(e){}
+    }
+    savedTitle = null;
+    savedUrl = null;
+  }
+
+  window.addEventListener('beforeprint', beforePrint);
+  window.addEventListener('afterprint', afterPrint);
+
+  // Fallback untuk browser (mis. sebagian Safari) yang tidak konsisten
+  // memicu afterprint: kembalikan otomatis beberapa saat setelah window.print().
+  const origPrint = window.print;
+  window.print = function(){
+    beforePrint();
+    origPrint.call(window);
+    setTimeout(afterPrint, 1000);
+  };
 })();
 
 /* ============================================================
