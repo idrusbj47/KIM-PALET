@@ -272,11 +272,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .table-scroll-shell{position:relative}
 .hscroll-hint{display:none}
 @media(max-width:760px){
-  .hscroll-hint{position:fixed;right:19px;bottom:72px;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--surface-glass);backdrop-filter:blur(10px) saturate(1.5);-webkit-backdrop-filter:blur(10px) saturate(1.5);border:1px solid var(--border-glass);color:var(--brass);pointer-events:none;z-index:90;opacity:0;visibility:hidden;transform:scale(.82) translateY(4px);transition:opacity .4s ease,visibility .4s ease,transform .4s ease;box-shadow:0 4px 16px rgba(30,26,16,.18)}
+  .hscroll-hint{position:fixed;right:19px;bottom:72px;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:rgba(22,19,14,.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.18);color:#f5ead0;pointer-events:none;z-index:90;opacity:0;visibility:hidden;transform:scale(.82) translateY(4px);transition:opacity .4s ease,visibility .4s ease,transform .4s ease;box-shadow:0 6px 18px rgba(0,0,0,.4),0 0 0 3px rgba(217,181,99,.18)}
   .hscroll-hint.show{opacity:1;visibility:visible;transform:scale(1) translateY(0)}
   .hscroll-hint svg{flex-shrink:0;animation:hscrollNudge 1.15s ease-in-out infinite}
 }
-@keyframes hscrollNudge{0%,50%,100%{transform:translateX(0);opacity:.55}25%{transform:translateX(4px);opacity:1}}
+@keyframes hscrollNudge{0%,50%,100%{transform:translateX(0);opacity:.6}25%{transform:translateX(4px);opacity:1}}
 @media print{.hscroll-hint{display:none!important}}
 table{width:100%;border-collapse:collapse;font-size:12.8px;min-width:900px}
 thead th{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 14px;text-align:left;font-size:10.2px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
@@ -832,7 +832,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       </div>
     </div>
     <div class="hscroll-hint" id="list-hscroll-hint" aria-hidden="true">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
     </div>
     </div>
   </div>
