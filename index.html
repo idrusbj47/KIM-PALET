@@ -1684,7 +1684,7 @@ function render(){
     tbody.innerHTML = `<tr class="empty-row"><td colspan="10">Tidak ada customer yang cocok dengan pencarian/filter.</td></tr>`;
   } else {
     tbody.innerHTML = list.map((c, idx) => {
-      const warn = c.daysSinceLast > 60 ? 'severe' : (c.daysSinceLast > 7 ? 'warn' : '');
+      const warn = c.daysSinceLast > 60 ? 'severe' : (c.daysSinceLast > 30 ? 'warn' : '');
       const warnIcon = warn ? ' ⚠' : '';
       let lastPolInfo = c.lastTrx ? lastTrxSummaryHtml(c) : 'Belum ada transaksi';
       return `<tr class="data-row" onclick="showDetail('${c.code.replace(/'/g,"\\'")}')">
@@ -1775,7 +1775,7 @@ function exportRowsHtml(list){
     // status keterlambatan transaksi terakhir — sama seperti tampilan utama (warn/severe),
     // tapi dibuat lebih kontras dengan badge warna solid karena background gambar selalu putih
     const isSevere = c.daysSinceLast > 60 || !c.lastTrx;
-    const isWarn = !isSevere && c.daysSinceLast > 7;
+    const isWarn = !isSevere && c.daysSinceLast > 30;
     const badgeBg = isSevere ? '#f7d9d2' : (isWarn ? '#fbe7b8' : 'transparent');
     const badgeBorder = isSevere ? '#c0392b' : (isWarn ? '#b8860b' : 'transparent');
     const dateColor = isSevere ? '#a13214' : (isWarn ? '#8a5a00' : '#1b1a17');
