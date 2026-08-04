@@ -102,6 +102,23 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .icon-btn.primary:hover{filter:brightness(1.06);color:#fff}
 .icon-btn.icon-only{width:34px;padding:0;justify-content:center;gap:0}
 
+/* Pulse lembut untuk menarik perhatian ke tombol tertentu (mis. Gudang KIM), tanpa berkedip cepat/menyilaukan */
+.icon-btn.btn-pulse-attn{position:relative;border-color:var(--brass-line);color:var(--brass)}
+.icon-btn.btn-pulse-attn::after{content:'';position:absolute;inset:0;border-radius:999px;box-shadow:0 0 0 0 rgba(184,145,47,.45);animation:btnPulseGlow 2.6s cubic-bezier(.4,0,.5,1) infinite;pointer-events:none}
+[data-theme="dark"] .icon-btn.btn-pulse-attn::after{box-shadow:0 0 0 0 rgba(217,181,99,.4)}
+@keyframes btnPulseGlow{
+  0%{box-shadow:0 0 0 0 rgba(184,145,47,.4)}
+  70%{box-shadow:0 0 0 9px rgba(184,145,47,0)}
+  100%{box-shadow:0 0 0 0 rgba(184,145,47,0)}
+}
+[data-theme="dark"] .icon-btn.btn-pulse-attn::after{animation-name:btnPulseGlowDark}
+@keyframes btnPulseGlowDark{
+  0%{box-shadow:0 0 0 0 rgba(217,181,99,.35)}
+  70%{box-shadow:0 0 0 9px rgba(217,181,99,0)}
+  100%{box-shadow:0 0 0 0 rgba(217,181,99,0)}
+}
+@media(prefers-reduced-motion:reduce){.icon-btn.btn-pulse-attn::after{animation:none}}
+
 /* theme switch: pill with sun/moon icon riding inside the sliding knob */
 .theme-switch{display:inline-flex;align-items:center;padding:4px;border-radius:999px;border:1px solid var(--border2);background:var(--surface);height:34px;cursor:pointer}
 .switch-track{width:44px;height:24px;border-radius:999px;background:linear-gradient(135deg,#dfe6ee,#eef2f6);position:relative;cursor:pointer;transition:background .4s;flex-shrink:0;overflow:hidden}
@@ -647,7 +664,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         <span class="lbl">Screenshot</span>
       </button>
-      <a class="icon-btn" id="btn-stock-kim" href="stock-kim.html" style="display:none" title="Cek stock gudang pallet KIM (khusus Staff KIM)">
+      <a class="icon-btn" id="btn-stock-kim" href="stock-kim.html" style="display:none" title="Cek stock gudang pallet KIM (khusus Staff KIM)" onclick="try{localStorage.setItem('stock-kim-btn-last-seen', new Date().toDateString())}catch(e){}">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/><path d="M9 21v-6h6v6"/><path d="M9 13h.01M15 13h.01M9 9h.01M15 9h.01"/></svg>
         <span class="lbl">Gudang KIM</span>
       </a>
@@ -1414,7 +1431,7 @@ function doCustomerLogin(){
   authCode = normSelected;
   sessionStorage.setItem('pallet-auth-role', 'customer');
   sessionStorage.setItem('pallet-auth-code', normSelected);
-  enterApp();
+  location.reload();
 }
 
 async function doAdminLogin(){
@@ -1437,7 +1454,7 @@ async function doAdminLogin(){
   authCode = null;
   sessionStorage.setItem('pallet-auth-role', 'admin');
   sessionStorage.removeItem('pallet-auth-code');
-  enterApp();
+  location.reload();
 }
 
 function doLogout(){
@@ -1503,7 +1520,13 @@ function applyRoleUI(){
   if (btnSs) btnSs.style.display = isCustomer ? 'none' : '';
   // Tombol "Gudang KIM" (stock-kim.html) hanya untuk Staff KIM, tidak untuk customer.
   const btnStockKim = document.getElementById('btn-stock-kim');
-  if (btnStockKim) btnStockKim.style.display = isCustomer ? 'none' : '';
+  if (btnStockKim) {
+    btnStockKim.style.display = isCustomer ? 'none' : '';
+    // Beri denyut lembut supaya menarik perhatian, setiap hari selama belum dibuka hari itu.
+    let openedToday = false;
+    try { openedToday = localStorage.getItem('stock-kim-btn-last-seen') === new Date().toDateString(); } catch(e){}
+    btnStockKim.classList.toggle('btn-pulse-attn', !isCustomer && !openedToday);
+  }
   document.getElementById('btn-logout').style.display = 'inline-flex';
   const logoutDivider = document.getElementById('hdr-divider-logout');
   if (logoutDivider) logoutDivider.style.display = '';
