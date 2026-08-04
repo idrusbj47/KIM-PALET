@@ -103,7 +103,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .page-sub{font-size:13px;color:var(--ink3);margin-bottom:1.5rem}
 
 /* ===== STAT CARDS ===== */
-.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.5rem}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;position:relative;overflow:hidden}
 .stat-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
 .stat-card.neutral::before{background:var(--border2)}
@@ -133,7 +133,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 /* ===== CATEGORY SECTIONS ===== */
 .cat-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:1.1rem;overflow:hidden;box-shadow:var(--shadow)}
 .cat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--bg)}
-.cat-head-left{display:flex;align-items:center;gap:10px;min-width:0}
+.cat-head-left{display:flex;align-items:center;gap:12px;min-width:0}
+.cat-badge{width:38px;height:38px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:16.5px;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05)}
+.cat-badge::after{content:'';position:absolute;inset:3px;border-radius:7px;border:1px dashed currentColor;opacity:.28;pointer-events:none}
 .cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .cat-title{font-family:'Fraunces',serif;font-size:15.5px;font-weight:600;color:var(--ink);letter-spacing:.01em}
 .cat-title .num{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--ink3);margin-right:7px}
@@ -263,11 +265,6 @@ footer.credit .thanks{display:block;margin-top:4px;font-size:12px;color:var(--br
         <div class="value" id="s-item">—</div>
         <div class="sub">item tercatat</div>
       </div>
-      <div class="stat-card brass">
-        <div class="label">Σ Customer Terisi</div>
-        <div class="value" id="s-cust">—</div>
-        <div class="sub">baris dgn nama PT</div>
-      </div>
       <div class="stat-card green">
         <div class="label">Total Pallet</div>
         <div class="value" id="s-plt">—</div>
@@ -305,10 +302,10 @@ footer.credit .thanks{display:block;margin-top:4px;font-size:12px;color:var(--br
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOztkmLk-rw432O6NHD6JIR2iLRN1RthLhiMO7a0Yg1fRLufvG45DUJF0mZH_cGa957OPZHMZm_lLH/pub?gid=1771975855&single=true&output=csv";
 
 const CAT_META = {
-  '1': {color:'--gray',   key:'produksi', title:'Pallet Produksi Merah'},
-  '2': {color:'--brass-mid', key:'kayu',   title:'Pallet Kayu Hitam'},
-  '3': {color:'--green-mid', key:'plastik', title:'Pallet Plastik'},
-  '4': {color:'--amber',  key:'upper',    title:'Upper'}
+  '1': {color:'--gray',   bg:'--gray-bg',   key:'produksi', title:'Pallet Produksi Merah'},
+  '2': {color:'--brass',  bg:'--brass-bg',  key:'kayu',   title:'Pallet Kayu Hitam'},
+  '3': {color:'--green',  bg:'--green-bg',  key:'plastik', title:'Pallet Plastik'},
+  '4': {color:'--amber',  bg:'--amber-bg',  key:'upper',    title:'Upper'}
 };
 const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
@@ -510,13 +507,13 @@ function render(){
         const custText = it.customer || 'Belum ada nama customer';
         const codeText = it.code ? `<span class="code-tag">${it.code}</span>` : '<span class="code-tag" style="opacity:.5">—</span>';
         const qtyText = (it.qty !== null && it.qty !== undefined)
-          ? `${it.qty.toLocaleString('id-ID')}<span class="unit-tag">${unitLabel(it.unit)}</span>`
+          ? it.qty.toLocaleString('id-ID')
           : '—';
         rowsHtml += `<tr>
           <td class="no-cell">${idx+1}</td>
-          <td class="desc-cell">${it.label}</td>
           <td>${codeText}</td>
           <td class="${custClass}">${custText}</td>
+          <td class="desc-cell">${it.label}</td>
           <td class="num-cell">${qtyText}</td>
         </tr>`;
       });
@@ -525,8 +522,8 @@ function render(){
     section.innerHTML = `
       <div class="cat-head">
         <div class="cat-head-left">
-          <span class="cat-dot" style="background:var(${meta.color})"></span>
-          <span class="cat-title"><span class="num">${cat.number}</span>${meta.title || cat.title}</span>
+          <div class="cat-badge" style="background:var(${meta.bg});color:var(${meta.color})">${cat.number}</div>
+          <span class="cat-title">${meta.title || cat.title}</span>
         </div>
         <div class="cat-meta">${metaHtml}</div>
       </div>
@@ -535,10 +532,10 @@ function render(){
           <thead>
             <tr>
               <th style="width:36px">No</th>
-              <th style="width:160px">Ukuran</th>
               <th style="width:110px">C.Code</th>
               <th>Nama Customer</th>
-              <th style="text-align:right;width:110px">Jumlah</th>
+              <th style="width:160px">Ukuran</th>
+              <th style="text-align:right;width:100px">Jumlah</th>
             </tr>
           </thead>
           <tbody>${rowsHtml}</tbody>
@@ -581,7 +578,6 @@ async function loadData(){
     const stats = computeStats(DATA.categories);
     document.getElementById('s-cat').textContent = stats.totalCat;
     document.getElementById('s-item').textContent = stats.totalItems;
-    document.getElementById('s-cust').textContent = stats.totalCust;
     document.getElementById('s-plt').textContent = stats.totalPlt.toLocaleString('id-ID');
     document.getElementById('s-lbr').textContent = stats.totalLbr.toLocaleString('id-ID');
 
