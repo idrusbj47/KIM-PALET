@@ -2,6 +2,22 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8"/>
+<!-- ===== PENJAGA AKSES =====
+     Halaman ini khusus Staff KIM. Jika belum login sebagai admin/staff lewat index.html
+     (sesi tersimpan di sessionStorage oleh index.html), langsung alihkan ke index.html
+     agar user harus mengisi password di sana dulu, tidak bisa buka halaman ini secara langsung. -->
+<script>
+(function(){
+  try {
+    var role = sessionStorage.getItem('pallet-auth-role');
+    if (role !== 'admin') {
+      location.replace('index.html');
+    }
+  } catch (e) {
+    location.replace('index.html');
+  }
+})();
+</script>
 <meta name="color-scheme" id="color-scheme-meta" content="light">
 <script>try{if(localStorage.getItem('pallet-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.style.colorScheme='dark';document.getElementById('color-scheme-meta').setAttribute('content','dark')}}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
