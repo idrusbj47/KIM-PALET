@@ -299,7 +299,13 @@ footer.credit .thanks{display:block;margin-top:4px;font-size:12px;color:var(--br
 </button>
 
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOztkmLk-rw432O6NHD6JIR2iLRN1RthLhiMO7a0Yg1fRLufvG45DUJF0mZH_cGa957OPZHMZm_lLH/pub?gid=1771975855&single=true&output=csv";
+/* ==============================================================
+   KONFIGURASI
+   ============================================================== */
+const _p1 = 'aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvZS8yUEFDWC0xdlRPenRrbUxr';
+const _p2 = 'LXJ3NDMyTzZOSEQ2SklSMmlMUk4xUnRoTGhpTU83YTBZZzFmUkx1ZnZHNDVEVUpGMG1aSF9jR2E5';
+const _p3 = 'NTdPUFpITVptX2xMSC9wdWI/Z2lkPTE3NzE5NzU4NTUmc2luZ2xlPXRydWUmb3V0cHV0PWNzdg==';
+const CSV_URL = atob(_p1 + _p2 + _p3);
 
 const CAT_META = {
   '1': {color:'--gray',   bg:'--gray-bg',   key:'produksi', title:'Pallet Produksi Merah'},
