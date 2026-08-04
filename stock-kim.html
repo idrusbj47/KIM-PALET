@@ -181,19 +181,22 @@ tbody tr:hover td{background:var(--brass-bg)}
   table{font-size:10.8px;min-width:0;table-layout:fixed}
   thead th{padding:7px 5px;font-size:8.3px}
   tbody td{padding:7px 5px;overflow:hidden;text-overflow:ellipsis}
-  .col-no{width:20px}
+  .col-no{width:26px}
+  .no-cell{overflow:visible;text-overflow:clip;white-space:nowrap}
   .col-code, td.ccode-cell{display:none}
-  .col-ukuran{width:34%}
-  .col-jumlah{width:48px}
+  .col-ukuran{width:32%}
+  .col-jumlah{width:38px}
   .cust-cell{font-size:11px;word-break:break-word}
   .desc-cell{font-size:10.3px;word-break:break-word}
   .code-tag{font-size:9.3px;padding:1px 5px}
-  .num-cell{font-size:11px}
+  .num-cell{font-size:11px;padding-right:2px}
 }
 @media(max-width:420px){
   table{font-size:10px}
   thead th{padding:6px 4px;font-size:8px}
   tbody td{padding:6px 4px}
+  .col-no{width:22px}
+  .col-jumlah{width:34px}
 }
 .empty-note{padding:2.4rem 1rem;text-align:center;color:var(--ink3);font-size:13px}
 
