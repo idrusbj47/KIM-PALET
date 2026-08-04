@@ -305,10 +305,10 @@ footer.credit .thanks{display:block;margin-top:4px;font-size:12px;color:var(--br
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOztkmLk-rw432O6NHD6JIR2iLRN1RthLhiMO7a0Yg1fRLufvG45DUJF0mZH_cGa957OPZHMZm_lLH/pub?gid=1771975855&single=true&output=csv";
 
 const CAT_META = {
-  '1': {color:'--gray',   key:'produksi'},
-  '2': {color:'--brass-mid', key:'kayu'},
-  '3': {color:'--green-mid', key:'plastik'},
-  '4': {color:'--amber',  key:'upper'}
+  '1': {color:'--gray',   key:'produksi', title:'Pallet Produksi Merah'},
+  '2': {color:'--brass-mid', key:'kayu',   title:'Pallet Kayu Hitam'},
+  '3': {color:'--green-mid', key:'plastik', title:'Pallet Plastik'},
+  '4': {color:'--amber',  key:'upper',    title:'Upper'}
 };
 const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
@@ -326,6 +326,16 @@ function extractQty(text){
 function cap(text){
   if(!text) return text;
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// Ambil hanya bagian ukuran (mis. "100x120", "130x130/1500ml") dari sebuah teks,
+// membuang nama merek/pallet/upper di depannya. Jika tidak ada pola ukuran,
+// fallback membuang kata "palet/pallet/plt/upper" di awal teks.
+function extractSize(text){
+  const m = text.match(/(\d+\s*[x×X]\s*\d+.*)$/);
+  if(m) return m[1].trim();
+  const cleaned = text.replace(/^(palet|pallet|plt)\.?\s*/i, '').trim();
+  return cleaned || text.trim();
 }
 
 function parseData(text){
@@ -359,7 +369,8 @@ function parseData(text){
       currentGroup = null;
       const q = extractQty(colA);
       if(q){
-        currentCat.items.push({ label: cap(title) || `Kategori ${num}`, code: colK, customer: colL, qty: q.qty, unit: q.unit });
+        // Baris kategori 1 sekaligus berfungsi sebagai item stock produksi umum
+        currentCat.items.push({ label: 'Produksi', code: colK, customer: colL, qty: q.qty, unit: q.unit });
       }
       return;
     }
@@ -369,24 +380,23 @@ function parseData(text){
     const letterMatch = colA.match(/^([A-Z])\.\s*(.*)$/);
     if(letterMatch){
       const rest = letterMatch[2];
-      const label = stripQty(rest);
       const q = extractQty(colA);
       if(q){
+        const label = extractSize(stripQty(rest));
         currentCat.items.push({ label: cap(label), code: colK, customer: colL, qty: q.qty, unit: q.unit });
         currentGroup = null;
       } else {
-        currentGroup = { label: letterMatch[1] + '. ' + cap(label) };
+        currentGroup = { label: letterMatch[1] };
       }
       return;
     }
 
     const dashMatch = colA.match(/^-\s*(.+)$/);
     if(dashMatch){
-      const label = stripQty(dashMatch[1]);
       const q = extractQty(colA);
-      const parentLabel = currentGroup ? currentGroup.label : '';
+      const label = extractSize(stripQty(dashMatch[1]));
       currentCat.items.push({
-        label: parentLabel ? (parentLabel + ' — ' + label) : cap(label),
+        label: cap(label),
         code: colK, customer: colL,
         qty: q ? q.qty : null, unit: q ? q.unit : '',
         isChild: true
@@ -395,11 +405,10 @@ function parseData(text){
     }
 
     // baris lanjutan tanpa awalan huruf/dash (mis. "multimas 120x120= 78 plt")
-    const label = stripQty(colA);
     const q = extractQty(colA);
-    const parentLabel = currentGroup ? currentGroup.label : '';
+    const label = extractSize(stripQty(colA));
     currentCat.items.push({
-      label: parentLabel ? (parentLabel + ' — ' + cap(label)) : cap(label),
+      label: cap(label),
       code: colK, customer: colL,
       qty: q ? q.qty : null, unit: q ? q.unit : '',
       isChild: true
@@ -441,7 +450,7 @@ function buildFilterChips(categories){
     chip.className = 'chip';
     chip.dataset.cat = cat.number;
     chip.onclick = () => setFilter(cat.number);
-    chip.innerHTML = `<span class="dot-sm" style="background:var(${meta.color})"></span>Kat. ${cat.number}`;
+    chip.innerHTML = `<span class="dot-sm" style="background:var(${meta.color})"></span>${meta.title || ('Kat. ' + cat.number)}`;
     wrap.appendChild(chip);
   });
 }
@@ -517,7 +526,7 @@ function render(){
       <div class="cat-head">
         <div class="cat-head-left">
           <span class="cat-dot" style="background:var(${meta.color})"></span>
-          <span class="cat-title"><span class="num">${cat.number}</span>${cat.title}</span>
+          <span class="cat-title"><span class="num">${cat.number}</span>${meta.title || cat.title}</span>
         </div>
         <div class="cat-meta">${metaHtml}</div>
       </div>
@@ -526,7 +535,7 @@ function render(){
           <thead>
             <tr>
               <th style="width:36px">No</th>
-              <th>Deskripsi Pallet / Upper</th>
+              <th style="width:160px">Ukuran</th>
               <th style="width:110px">C.Code</th>
               <th>Nama Customer</th>
               <th style="text-align:right;width:110px">Jumlah</th>
