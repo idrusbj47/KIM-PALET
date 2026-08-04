@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="color-scheme" id="color-scheme-meta" content="light">
+<script>try{if(localStorage.getItem('pallet-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.style.colorScheme='dark';document.getElementById('color-scheme-meta').setAttribute('content','dark')}}catch(e){}</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Laporan Stock Pallet — PT. Karya Indah Multiguna</title>
+<link rel="icon" type="image/png" href="logop1.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/></noscript>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  color-scheme:light;
+  --ink:#1b1a17;--ink2:#5f5b52;--ink3:#9a9488;
+  --bg:#f6f3ec;--surface:#ffffff;--border:#e7e1d3;--border2:#d9d1bd;
+  --surface-glass:rgba(255,255,255,.62);--border-glass:rgba(231,225,211,.7);
+  --brass:#96741f;--brass-mid:#b8912f;--brass-bg:#f6ecd2;--brass-line:#d9b96b;
+  --green:#1f6e50;--green-bg:#e5f1e9;--green-mid:#2c8a63;
+  --amber:#a06a08;--amber-bg:#faf0d7;
+  --red:#a13a29;--red-bg:#f9e9e4;
+  --gray:#6b7280;--gray-bg:#e7e8ea;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 2px 18px rgba(30,26,16,.06);
+}
+[data-theme="dark"]{
+  color-scheme:dark;
+  --ink:#ece7db;--ink2:#b6afa0;--ink3:#726b5c;
+  --bg:#14130f;--surface:#1d1b16;--border:#332f25;--border2:#453f30;
+  --surface-glass:rgba(29,27,22,.55);--border-glass:rgba(51,47,37,.7);
+  --brass:#d9b563;--brass-mid:#e0c27c;--brass-bg:#2c260f;--brass-line:#6b551f;
+  --green:#4cbd8e;--green-bg:#123024;--green-mid:#4cbd8e;
+  --amber:#e0b64c;--amber-bg:#332608;
+  --red:#e28068;--red-bg:#341c15;
+  --gray:#9aa1ab;--gray-bg:#2a2d33;
+  --shadow:0 4px 28px rgba(0,0,0,.45);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;transition:background .3s,color .3s}
+.mono{font-family:'JetBrains Mono',monospace}
+.serif{font-family:'Fraunces',serif}
+
+/* ===== HEADER ===== */
+.header{background:var(--surface-glass);border-bottom:1px solid var(--border-glass);padding:1.1rem 1.6rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;position:sticky;top:0;z-index:100;transition:background .3s,border-color .3s,box-shadow .3s;backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6)}
+.header.scrolled{box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:13px}
+.logo-circle{width:46px;height:46px;border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1.5px solid var(--brass-line);padding:4px;overflow:hidden;box-shadow:0 0 0 3px var(--brass-bg)}
+.logo-circle img{width:100%;height:100%;object-fit:contain;border-radius:6px}
+.logo-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--brass);font-size:20px}
+.brand-text h1{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--ink);line-height:1.2;letter-spacing:.01em}
+.brand-text p{font-size:11.5px;color:var(--ink3);margin-top:1px;font-family:'JetBrains Mono',monospace}
+.header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hdr-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hdr-divider{width:1px;align-self:stretch;min-height:22px;background:var(--border2);flex-shrink:0}
+@media(max-width:760px){.hdr-divider{display:none}}
+.period-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:999px;background:var(--brass-bg);border:1px solid var(--brass-line);font-size:11.5px;color:var(--brass);font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--green-mid);position:relative;flex-shrink:0}
+.pulse-dot::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:var(--green-mid);opacity:.35;animation:pulse 1.8s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.7);opacity:.4}70%{transform:scale(1.7);opacity:0}100%{transform:scale(1.7);opacity:0}}
+.icon-btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px;border-radius:999px;border:1px solid var(--border2);background:var(--surface);color:var(--ink2);font-size:12.5px;font-family:inherit;font-weight:500;cursor:pointer;transition:all .18s;text-decoration:none}
+.icon-btn:hover{border-color:var(--brass-line);color:var(--brass)}
+.icon-btn svg{flex-shrink:0}
+.icon-btn.spinning svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.icon-btn.primary{background:linear-gradient(135deg,var(--brass-mid),var(--brass));color:#fff;border-color:var(--brass)}
+.icon-btn.primary:hover{filter:brightness(1.06);color:#fff}
+.icon-btn.icon-only{width:34px;padding:0;justify-content:center;gap:0}
+@media(max-width:760px){
+  .header{padding:.9rem 1rem}
+  .brand-text p{display:none}
+  .period-badge .pb-label{display:none}
+  .icon-btn .lbl{display:none}
+  .icon-btn{padding:0 10px}
+}
+.theme-switch{display:inline-flex;align-items:center;padding:4px;border-radius:999px;border:1px solid var(--border2);background:var(--surface);height:34px;cursor:pointer}
+.switch-track{width:44px;height:24px;border-radius:999px;background:linear-gradient(135deg,#dfe6ee,#eef2f6);position:relative;cursor:pointer;transition:background .4s;flex-shrink:0;overflow:hidden}
+.switch-track.on{background:linear-gradient(135deg,#1c2b47,#0f1a2e)}
+.switch-thumb{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 1px 3px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;overflow:visible}
+.switch-track.on .switch-thumb{left:22px}
+.switch-thumb svg{position:absolute;transition:opacity .3s,transform .4s}
+.icon-sun{color:#e0a530;opacity:1;transform:rotate(0deg) scale(1)}
+.icon-moon{color:#5b6b8c;opacity:0;transform:rotate(-90deg) scale(.4)}
+.switch-track.on .icon-sun{opacity:0;transform:rotate(90deg) scale(.4)}
+.switch-track.on .icon-moon{opacity:1;transform:rotate(0deg) scale(1)}
+.sun-rays{transform-box:fill-box;transform-origin:center;animation:sunSpin 7s linear infinite}
+@keyframes sunSpin{to{transform:rotate(360deg)}}
+
+/* ===== SCROLL TO TOP ===== */
+.scroll-top-btn{position:fixed;bottom:26px;right:26px;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--brass-mid),var(--brass));color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(30,26,16,.28);opacity:0;visibility:hidden;transform:translateY(12px);transition:opacity .25s ease,transform .25s ease,visibility .25s,filter .18s;z-index:200}
+.scroll-top-btn.show{opacity:1;visibility:visible;transform:translateY(0)}
+.scroll-top-btn:hover{filter:brightness(1.08)}
+@media(max-width:760px){.scroll-top-btn{bottom:18px;right:18px;width:42px;height:42px}}
+
+/* ===== LAYOUT ===== */
+.container{max-width:1240px;margin:0 auto;padding:1.75rem 1.6rem 4rem}
+@media(max-width:760px){.container{padding:1.2rem 1rem 3rem}}
+.eyebrow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--brass);font-weight:600;margin-bottom:6px;font-family:'JetBrains Mono',monospace}
+.page-title{font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--ink3);margin-bottom:1.5rem}
+
+/* ===== STAT CARDS ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.stat-card.neutral::before{background:var(--border2)}
+.stat-card.brass::before{background:var(--brass-mid)}
+.stat-card.green::before{background:var(--green-mid)}
+.stat-card.amber::before{background:var(--amber)}
+.stat-card .label{font-size:10.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:9px;font-weight:600}
+.stat-card .value{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:600;color:var(--ink);line-height:1}
+.stat-card.brass .value{color:var(--brass)}
+.stat-card.green .value{color:var(--green)}
+.stat-card.amber .value{color:var(--amber)}
+.stat-card .sub{font-size:11px;color:var(--ink3);margin-top:5px}
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* ===== FILTER ROW ===== */
+.filter-row{display:flex;gap:8px;margin-bottom:1.3rem;flex-wrap:wrap;align-items:center}
+.search-wrap{position:relative;flex:1;min-width:220px}
+.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink3)}
+.search-wrap input{width:100%;height:38px;border:1px solid var(--border2);border-radius:var(--radius);padding:0 12px 0 34px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink);outline:none;transition:border .15s}
+.search-wrap input:focus{border-color:var(--brass-mid)}
+.chip{padding:0 13px;height:38px;border-radius:999px;border:1px solid var(--border2);background:var(--surface);font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink2);font-weight:500;transition:all .18s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.chip:hover{background:var(--bg)}
+.chip.on{background:var(--brass-bg);border-color:var(--brass-line);color:var(--brass);font-weight:600}
+.chip .dot-sm{width:7px;height:7px;border-radius:50%}
+
+/* ===== CATEGORY SECTIONS ===== */
+.cat-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:1.1rem;overflow:hidden;box-shadow:var(--shadow)}
+.cat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--bg)}
+.cat-head-left{display:flex;align-items:center;gap:10px;min-width:0}
+.cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.cat-title{font-family:'Fraunces',serif;font-size:15.5px;font-weight:600;color:var(--ink);letter-spacing:.01em}
+.cat-title .num{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--ink3);margin-right:7px}
+.cat-meta{display:flex;gap:14px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)}
+.cat-meta b{color:var(--ink2);font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:12.8px;min-width:640px}
+thead th{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;text-align:left;font-size:10.2px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--ink)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--brass-bg)}
+[data-theme="dark"] tbody tr:hover td{background:rgba(217,181,99,.10)}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.no-cell{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)}
+.desc-cell{font-weight:500}
+.desc-cell .child-tag{font-size:10px;color:var(--brass);font-family:'JetBrains Mono',monospace;margin-right:4px}
+.code-tag{font-family:'JetBrains Mono',monospace;font-size:10.8px;background:var(--surface);border:1px solid var(--border);padding:2px 8px;border-radius:6px;color:var(--ink2);white-space:nowrap}
+.cust-cell{font-weight:600;font-size:12.5px}
+.cust-cell.empty{color:var(--ink3);font-weight:400;font-style:italic}
+.num-cell{font-family:'JetBrains Mono',monospace;text-align:right;white-space:nowrap;font-weight:600}
+.unit-tag{font-size:10px;color:var(--ink3);font-weight:400;margin-left:3px}
+@media(max-width:760px){
+  table{font-size:11.5px}
+  thead th{padding:8px 8px;font-size:9px}
+  tbody td{padding:8px 8px}
+}
+.empty-note{padding:2.4rem 1rem;text-align:center;color:var(--ink3);font-size:13px}
+
+/* ===== STATE BOXES ===== */
+.state-box{text-align:center;padding:4rem 1rem;color:var(--ink3)}
+.spinner{display:inline-block;width:26px;height:26px;border:2.5px solid var(--border2);border-top-color:var(--brass-mid);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:14px}
+.state-box p{font-size:13.5px}
+.err-box{background:var(--red-bg);border:1px solid var(--red);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;font-size:13px;color:var(--red)}
+footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--ink3);font-family:'JetBrains Mono',monospace}
+footer.credit .thanks{display:block;margin-top:4px;font-size:12px;color:var(--brass)}
+
+/* ===== PRINT ===== */
+@media print{
+  @page{margin:10mm}
+  .theme-switch,.icon-btn,.filter-row,.scroll-top-btn{display:none!important}
+  body{background:#fff}
+  .header{position:static!important;box-shadow:none!important;border-bottom:1.5px solid #ccc!important}
+  .cat-section{box-shadow:none!important;border:1px solid #ccc;break-inside:avoid}
+  table{font-size:10px}
+}
+</style>
+</head>
+<body>
+
+<div class="header" id="header">
+  <div class="brand">
+    <div class="logo-circle" id="logo-wrap">
+      <img src="logop1.png" alt="Logo" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='flex'"/>
+      <div class="logo-fallback" id="logo-fallback" style="display:none">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg>
+      </div>
+    </div>
+    <div class="brand-text">
+      <h1>Laporan Stock Pallet</h1>
+      <p>PT. KARYA INDAH MULTIGUNA · GUDANG &amp; TITIPAN CUSTOMER</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="hdr-group">
+      <span class="period-badge" id="period-badge" style="display:none">
+        <span class="pulse-dot"></span>
+        <span class="pb-label">Update:</span>
+        <span id="report-date-value">—</span>
+      </span>
+    </div>
+    <span class="hdr-divider" aria-hidden="true"></span>
+    <div class="hdr-group">
+      <button class="icon-btn icon-only" id="btn-refresh" onclick="refreshData()" title="Perbarui data" aria-label="Perbarui data">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
+      </button>
+      <button class="icon-btn primary" onclick="window.print()" title="Cetak laporan">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="0.5"/></svg>
+        <span class="lbl">Cetak</span>
+      </button>
+      <a class="icon-btn" href="index.html" title="Kembali ke Laporan Saldo Pallet">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span class="lbl">Laporan Saldo</span>
+      </a>
+    </div>
+    <span class="hdr-divider" aria-hidden="true"></span>
+    <div class="theme-switch" onclick="toggleTheme()" role="button" aria-label="Ganti tema">
+      <div class="switch-track" id="switch-track">
+        <div class="switch-thumb">
+          <svg class="icon-sun" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <g class="sun-rays">
+              <line x1="12" y1="1.5" x2="12" y2="3.2"/><line x1="12" y1="20.8" x2="12" y2="22.5"/>
+              <line x1="4.22" y1="4.22" x2="5.4" y2="5.4"/><line x1="18.6" y1="18.6" x2="19.78" y2="19.78"/>
+              <line x1="1.5" y1="12" x2="3.2" y2="12"/><line x1="20.8" y1="12" x2="22.5" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.4" y2="18.6"/><line x1="18.6" y1="5.4" x2="19.78" y2="4.22"/>
+            </g>
+            <circle cx="12" cy="12" r="4.3" fill="currentColor" stroke="none"/>
+          </svg>
+          <svg class="icon-moon" width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div id="err-box" class="err-box" style="display:none"></div>
+
+  <div id="loading" class="state-box">
+    <div class="spinner"></div>
+    <p>Mengambil data stock pallet dari spreadsheet…</p>
+  </div>
+
+  <div id="view-report" style="display:none">
+    <div class="eyebrow">Laporan Internal · Staff KIM</div>
+    <div class="page-title">Stock Pallet, Upper &amp; Titipan Customer</div>
+    <div class="page-sub" id="page-sub">Rincian stock pallet kayu, plastik, dan upper — dikelompokkan per kategori beserta PT / customer terkait.</div>
+
+    <div class="stats-grid">
+      <div class="stat-card neutral">
+        <div class="label">Σ Kategori</div>
+        <div class="value" id="s-cat">—</div>
+        <div class="sub">kelompok stock</div>
+      </div>
+      <div class="stat-card neutral">
+        <div class="label">Σ Baris Item</div>
+        <div class="value" id="s-item">—</div>
+        <div class="sub">item tercatat</div>
+      </div>
+      <div class="stat-card brass">
+        <div class="label">Σ Customer Terisi</div>
+        <div class="value" id="s-cust">—</div>
+        <div class="sub">baris dgn nama PT</div>
+      </div>
+      <div class="stat-card green">
+        <div class="label">Total Pallet</div>
+        <div class="value" id="s-plt">—</div>
+        <div class="sub">satuan plt</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="label">Total Upper</div>
+        <div class="value" id="s-lbr">—</div>
+        <div class="sub">satuan lbr</div>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search" placeholder="Cari nama customer, kode, atau jenis pallet..." oninput="render()"/>
+      </div>
+      <button class="chip on" data-cat="all" onclick="setFilter('all')">Semua</button>
+    </div>
+
+    <div id="cat-container"></div>
+  </div>
+
+  <footer class="credit">
+    ©Admin Pallet · PT. Karya Indah Multiguna
+    <span class="thanks" id="footer-thanks"></span>
+  </footer>
+</div>
+
+<button id="scroll-top-btn" class="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Kembali ke atas" title="Kembali ke atas">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+</button>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOztkmLk-rw432O6NHD6JIR2iLRN1RthLhiMO7a0Yg1fRLufvG45DUJF0mZH_cGa957OPZHMZm_lLH/pub?gid=1771975855&single=true&output=csv";
+
+const CAT_META = {
+  '1': {color:'--gray',   key:'produksi'},
+  '2': {color:'--brass-mid', key:'kayu'},
+  '3': {color:'--green-mid', key:'plastik'},
+  '4': {color:'--amber',  key:'upper'}
+};
+const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+let DATA = {reportDate:'', categories:[]};
+let activeCat = 'all';
+
+function stripQty(text){
+  return text.replace(/\s*=\s*[\d.,]+\s*(plt|lbr)\b.*$/i,'').trim();
+}
+function extractQty(text){
+  const m = text.match(/=\s*([\d.,]+)\s*(plt|lbr)/i);
+  if(!m) return null;
+  return { qty: parseFloat(m[1].replace(',','.')) || 0, unit: m[2].toLowerCase() };
+}
+function cap(text){
+  if(!text) return text;
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function parseData(text){
+  const parsed = Papa.parse(text.trim(), {skipEmptyLines:false});
+  const rows = parsed.data;
+  let reportDate = '';
+  const categories = [];
+  let currentCat = null;
+  let currentGroup = null;
+
+  rows.forEach((row, i) => {
+    if(i === 0){
+      const raw = (row[0]||'').toString();
+      const m = raw.match(/tgl\s*([\d\s\/]+)/i);
+      if(m) reportDate = m[1].replace(/\s+/g,'').trim();
+      return;
+    }
+    const colA = (row[0]||'').toString().trim();
+    const colK = (row[10]||'').toString().trim();
+    const colL = (row[11]||'').toString().trim();
+
+    if(!colA) return;
+    if(/terima kasih/i.test(colA)) return;
+
+    const catMatch = colA.match(/^(\d+)\.\s*(.+)$/);
+    if(catMatch){
+      const num = catMatch[1];
+      const title = stripQty(catMatch[2]);
+      currentCat = { number: num, title: title || catMatch[2], items: [] };
+      categories.push(currentCat);
+      currentGroup = null;
+      const q = extractQty(colA);
+      if(q){
+        currentCat.items.push({ label: cap(title) || `Kategori ${num}`, code: colK, customer: colL, qty: q.qty, unit: q.unit });
+      }
+      return;
+    }
+
+    if(!currentCat) return;
+
+    const letterMatch = colA.match(/^([A-Z])\.\s*(.*)$/);
+    if(letterMatch){
+      const rest = letterMatch[2];
+      const label = stripQty(rest);
+      const q = extractQty(colA);
+      if(q){
+        currentCat.items.push({ label: cap(label), code: colK, customer: colL, qty: q.qty, unit: q.unit });
+        currentGroup = null;
+      } else {
+        currentGroup = { label: letterMatch[1] + '. ' + cap(label) };
+      }
+      return;
+    }
+
+    const dashMatch = colA.match(/^-\s*(.+)$/);
+    if(dashMatch){
+      const label = stripQty(dashMatch[1]);
+      const q = extractQty(colA);
+      const parentLabel = currentGroup ? currentGroup.label : '';
+      currentCat.items.push({
+        label: parentLabel ? (parentLabel + ' — ' + label) : cap(label),
+        code: colK, customer: colL,
+        qty: q ? q.qty : null, unit: q ? q.unit : '',
+        isChild: true
+      });
+      return;
+    }
+
+    // baris lanjutan tanpa awalan huruf/dash (mis. "multimas 120x120= 78 plt")
+    const label = stripQty(colA);
+    const q = extractQty(colA);
+    const parentLabel = currentGroup ? currentGroup.label : '';
+    currentCat.items.push({
+      label: parentLabel ? (parentLabel + ' — ' + cap(label)) : cap(label),
+      code: colK, customer: colL,
+      qty: q ? q.qty : null, unit: q ? q.unit : '',
+      isChild: true
+    });
+  });
+
+  return { reportDate, categories };
+}
+
+function formatDateID(raw){
+  if(!raw) return '—';
+  const parts = raw.split('/');
+  if(parts.length !== 3) return raw;
+  const [d, mo, y] = parts.map(p => parseInt(p, 10));
+  if(!d || !mo || !y) return raw;
+  const monthName = MONTHS_ID[mo-1] || mo;
+  return `${d} ${monthName} ${y}`;
+}
+
+function computeStats(categories){
+  let totalItems = 0, totalCust = 0, totalPlt = 0, totalLbr = 0;
+  categories.forEach(cat => {
+    cat.items.forEach(it => {
+      totalItems++;
+      if(it.customer) totalCust++;
+      if(it.unit === 'plt') totalPlt += (it.qty || 0);
+      if(it.unit === 'lbr') totalLbr += (it.qty || 0);
+    });
+  });
+  return { totalCat: categories.length, totalItems, totalCust, totalPlt, totalLbr };
+}
+
+function buildFilterChips(categories){
+  const wrap = document.querySelector('.filter-row');
+  document.querySelectorAll('.chip[data-cat]:not([data-cat="all"])').forEach(el => el.remove());
+  categories.forEach(cat => {
+    const meta = CAT_META[cat.number] || { color:'--ink3' };
+    const chip = document.createElement('button');
+    chip.className = 'chip';
+    chip.dataset.cat = cat.number;
+    chip.onclick = () => setFilter(cat.number);
+    chip.innerHTML = `<span class="dot-sm" style="background:var(${meta.color})"></span>Kat. ${cat.number}`;
+    wrap.appendChild(chip);
+  });
+}
+
+function setFilter(cat){
+  activeCat = cat;
+  document.querySelectorAll('.chip[data-cat]').forEach(el => {
+    el.classList.toggle('on', el.dataset.cat === String(cat));
+  });
+  render();
+}
+
+function unitLabel(unit){
+  if(unit === 'plt') return 'Pallet';
+  if(unit === 'lbr') return 'Lembar';
+  return '';
+}
+
+function render(){
+  const q = (document.getElementById('search').value || '').toLowerCase().trim();
+  const container = document.getElementById('cat-container');
+  container.innerHTML = '';
+
+  let anyVisible = false;
+
+  DATA.categories.forEach(cat => {
+    if(activeCat !== 'all' && String(activeCat) !== cat.number) return;
+
+    const filteredItems = cat.items.filter(it => {
+      if(!q) return true;
+      return (it.label||'').toLowerCase().includes(q)
+        || (it.customer||'').toLowerCase().includes(q)
+        || (it.code||'').toLowerCase().includes(q);
+    });
+
+    if(q && filteredItems.length === 0) return;
+    anyVisible = true;
+
+    const meta = CAT_META[cat.number] || { color:'--ink3' };
+    const custCount = filteredItems.filter(it => it.customer).length;
+    const pltSum = filteredItems.filter(it=>it.unit==='plt').reduce((a,b)=>a+(b.qty||0),0);
+    const lbrSum = filteredItems.filter(it=>it.unit==='lbr').reduce((a,b)=>a+(b.qty||0),0);
+
+    const section = document.createElement('div');
+    section.className = 'cat-section';
+
+    let metaHtml = `<span><b>${filteredItems.length}</b> item</span><span><b>${custCount}</b> customer</span>`;
+    if(pltSum > 0) metaHtml += `<span><b>${pltSum.toLocaleString('id-ID')}</b> plt</span>`;
+    if(lbrSum > 0) metaHtml += `<span><b>${lbrSum.toLocaleString('id-ID')}</b> lbr</span>`;
+
+    let rowsHtml = '';
+    if(filteredItems.length === 0){
+      rowsHtml = `<tr><td colspan="5" class="empty-note">Tidak ada item pada kategori ini.</td></tr>`;
+    } else {
+      filteredItems.forEach((it, idx) => {
+        const custClass = it.customer ? 'cust-cell' : 'cust-cell empty';
+        const custText = it.customer || 'Belum ada nama customer';
+        const codeText = it.code ? `<span class="code-tag">${it.code}</span>` : '<span class="code-tag" style="opacity:.5">—</span>';
+        const qtyText = (it.qty !== null && it.qty !== undefined)
+          ? `${it.qty.toLocaleString('id-ID')}<span class="unit-tag">${unitLabel(it.unit)}</span>`
+          : '—';
+        rowsHtml += `<tr>
+          <td class="no-cell">${idx+1}</td>
+          <td class="desc-cell">${it.label}</td>
+          <td>${codeText}</td>
+          <td class="${custClass}">${custText}</td>
+          <td class="num-cell">${qtyText}</td>
+        </tr>`;
+      });
+    }
+
+    section.innerHTML = `
+      <div class="cat-head">
+        <div class="cat-head-left">
+          <span class="cat-dot" style="background:var(${meta.color})"></span>
+          <span class="cat-title"><span class="num">${cat.number}</span>${cat.title}</span>
+        </div>
+        <div class="cat-meta">${metaHtml}</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:36px">No</th>
+              <th>Deskripsi Pallet / Upper</th>
+              <th style="width:110px">C.Code</th>
+              <th>Nama Customer</th>
+              <th style="text-align:right;width:110px">Jumlah</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+    `;
+    container.appendChild(section);
+  });
+
+  if(!anyVisible){
+    container.innerHTML = `<div class="cat-section"><div class="empty-note">Tidak ada data yang cocok dengan pencarian "${q}".</div></div>`;
+  }
+}
+
+function refreshData(){
+  const btn = document.getElementById('btn-refresh');
+  btn.classList.add('spinning');
+  loadData().finally(() => btn.classList.remove('spinning'));
+}
+
+async function loadData(){
+  const errBox = document.getElementById('err-box');
+  errBox.style.display = 'none';
+  try{
+    const res = await fetch(CSV_URL + '&cachebust=' + Date.now());
+    if(!res.ok) throw new Error('Gagal mengambil data (status ' + res.status + ')');
+    const text = await res.text();
+    DATA = parseData(text);
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('view-report').style.display = 'block';
+
+    const dateFormatted = formatDateID(DATA.reportDate);
+    document.getElementById('report-date-value').textContent = dateFormatted;
+    document.getElementById('period-badge').style.display = 'inline-flex';
+    document.getElementById('page-sub').textContent =
+      `Rincian stock pallet kayu, plastik, dan upper per ${dateFormatted} — dikelompokkan per kategori beserta PT / customer terkait.`;
+    document.getElementById('footer-thanks').textContent = '🙏 Terima kasih';
+
+    const stats = computeStats(DATA.categories);
+    document.getElementById('s-cat').textContent = stats.totalCat;
+    document.getElementById('s-item').textContent = stats.totalItems;
+    document.getElementById('s-cust').textContent = stats.totalCust;
+    document.getElementById('s-plt').textContent = stats.totalPlt.toLocaleString('id-ID');
+    document.getElementById('s-lbr').textContent = stats.totalLbr.toLocaleString('id-ID');
+
+    buildFilterChips(DATA.categories);
+    activeCat = 'all';
+    render();
+  } catch(err){
+    document.getElementById('loading').style.display = 'none';
+    errBox.style.display = 'block';
+    errBox.textContent = 'Gagal memuat data: ' + err.message + '. Coba tekan tombol perbarui data di kanan atas.';
+    document.getElementById('view-report').style.display = 'block';
+  }
+}
+
+function toggleTheme(){
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if(isDark){
+    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.style.colorScheme = 'light';
+    localStorage.setItem('pallet-theme', 'light');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.style.colorScheme = 'dark';
+    localStorage.setItem('pallet-theme', 'dark');
+  }
+  syncThemeSwitch();
+}
+function syncThemeSwitch(){
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.getElementById('switch-track').classList.toggle('on', isDark);
+}
+
+window.addEventListener('scroll', () => {
+  document.getElementById('header').classList.toggle('scrolled', window.scrollY > 8);
+  document.getElementById('scroll-top-btn').classList.toggle('show', window.scrollY > 400);
+});
+
+syncThemeSwitch();
+loadData();
+</script>
+</body>
+</html>
