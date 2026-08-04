@@ -647,6 +647,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         <span class="lbl">Screenshot</span>
       </button>
+      <a class="icon-btn" id="btn-stock-kim" href="stock-kim.html" style="display:none" title="Cek stock gudang pallet KIM (khusus Staff KIM)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/><path d="M9 21v-6h6v6"/><path d="M9 13h.01M15 13h.01M9 9h.01M15 9h.01"/></svg>
+        <span class="lbl">Gudang KIM</span>
+      </a>
     </div>
 
     <span class="hdr-divider" id="hdr-divider-logout" aria-hidden="true" style="display:none"></span>
@@ -1497,6 +1501,9 @@ function applyRoleUI(){
   document.getElementById('btn-analisa').title = isCustomer ? 'Salin ringkasan saldo pallet Anda untuk dianalisa AI' : 'Salin data untuk dianalisa AI';
   const btnSs = document.getElementById('btn-screenshot');
   if (btnSs) btnSs.style.display = isCustomer ? 'none' : '';
+  // Tombol "Gudang KIM" (stock-kim.html) hanya untuk Staff KIM, tidak untuk customer.
+  const btnStockKim = document.getElementById('btn-stock-kim');
+  if (btnStockKim) btnStockKim.style.display = isCustomer ? 'none' : '';
   document.getElementById('btn-logout').style.display = 'inline-flex';
   const logoutDivider = document.getElementById('hdr-divider-logout');
   if (logoutDivider) logoutDivider.style.display = '';
