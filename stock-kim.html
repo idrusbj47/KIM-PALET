@@ -172,10 +172,28 @@ tbody tr:hover td{background:var(--brass-bg)}
 .cust-cell.empty{color:var(--ink3);font-weight:400;font-style:italic}
 .num-cell{font-family:'JetBrains Mono',monospace;text-align:right;white-space:nowrap;font-weight:600}
 .unit-tag{font-size:10px;color:var(--ink3);font-weight:400;margin-left:3px}
+.col-no{width:36px}
+.col-code{width:110px}
+.col-ukuran{width:160px}
+.col-jumlah{width:100px}
 @media(max-width:760px){
-  table{font-size:11.5px}
-  thead th{padding:8px 8px;font-size:9px}
-  tbody td{padding:8px 8px}
+  /* Di HP: kolom C.Code disembunyikan dan tabel dibuat pas 1 layar (tanpa scroll ke samping). */
+  table{font-size:10.8px;min-width:0;table-layout:fixed}
+  thead th{padding:7px 5px;font-size:8.3px}
+  tbody td{padding:7px 5px;overflow:hidden;text-overflow:ellipsis}
+  .col-no{width:20px}
+  .col-code, td.ccode-cell{display:none}
+  .col-ukuran{width:34%}
+  .col-jumlah{width:48px}
+  .cust-cell{font-size:11px;word-break:break-word}
+  .desc-cell{font-size:10.3px;word-break:break-word}
+  .code-tag{font-size:9.3px;padding:1px 5px}
+  .num-cell{font-size:11px}
+}
+@media(max-width:420px){
+  table{font-size:10px}
+  thead th{padding:6px 4px;font-size:8px}
+  tbody td{padding:6px 4px}
 }
 .empty-note{padding:2.4rem 1rem;text-align:center;color:var(--ink3);font-size:13px}
 
@@ -533,7 +551,7 @@ function render(){
           : '—';
         rowsHtml += `<tr>
           <td class="no-cell">${idx+1}</td>
-          <td>${codeText}</td>
+          <td class="ccode-cell">${codeText}</td>
           <td class="${custClass}">${custText}</td>
           <td class="desc-cell">${it.label}</td>
           <td class="num-cell">${qtyText}</td>
@@ -553,11 +571,11 @@ function render(){
         <table>
           <thead>
             <tr>
-              <th style="width:36px">No</th>
-              <th style="width:110px">C.Code</th>
+              <th class="col-no">No</th>
+              <th class="col-code">C.Code</th>
               <th>Nama Customer</th>
-              <th style="width:160px">Ukuran</th>
-              <th style="text-align:right;width:100px">Jumlah</th>
+              <th class="col-ukuran">Ukuran</th>
+              <th class="col-jumlah" style="text-align:right">Jumlah</th>
             </tr>
           </thead>
           <tbody>${rowsHtml}</tbody>
