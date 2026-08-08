@@ -536,13 +536,15 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
   var MAX_SHOW = 4000;  // batas maksimal jaga-jaga kalau koneksi lambat
   var start = Date.now();
   var hidden = false;
+
+  // Splash dibiarkan tetap ada di DOM (tidak dihapus) supaya bisa dipakai ulang, misalnya
+  // saat tombol refresh ditekan — cukup tampilkan/sembunyikan lewat class "hide".
   function hideSplash(){
     if (hidden) return;
     hidden = true;
     var el = document.getElementById('app-splash');
     if (!el) return;
     el.classList.add('hide');
-    setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 500);
   }
   function trigger(){
     var elapsed = Date.now() - start;
@@ -551,6 +553,27 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
   }
   window.addEventListener('load', trigger);
   setTimeout(hideSplash, MAX_SHOW);
+
+  // ===== Helper global: dipakai untuk menampilkan ulang splash screen, mis. saat tombol
+  // refresh ditekan, supaya ada indikasi visual "sedang memuat" yang jelas ke pengguna. =====
+  var reshowTimer = null, reshowMinTimer = null;
+  window.showAppSplash = function(){
+    var el = document.getElementById('app-splash');
+    if (!el) return;
+    hidden = false;
+    if (reshowTimer) clearTimeout(reshowTimer);
+    if (reshowMinTimer) clearTimeout(reshowMinTimer);
+    el.classList.remove('hide');
+  };
+  window.hideAppSplash = function(minShowMs){
+    var el = document.getElementById('app-splash');
+    if (!el) return;
+    var wait = typeof minShowMs === 'number' ? minShowMs : 0;
+    reshowMinTimer = setTimeout(function(){
+      hidden = true;
+      el.classList.add('hide');
+    }, wait);
+  };
 })();
 </script>
 
@@ -877,7 +900,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     </div>
 
     <div class="summary-strip">
-      <div class="sum-card awal"><div class="l">Saldo Awal</div><div class="v" id="d-awal">—</div></div>
+      <div class="sum-card awal"><div class="l" id="d-awal-label">Saldo Awal</div><div class="v" id="d-awal">—</div></div>
       <div class="sum-card in"><div class="l">Jumlah In</div><div class="v" id="d-in">—</div><div class="adj-breakdown" id="d-in-adj"></div></div>
       <div class="sum-card out"><div class="l">Jumlah Out</div><div class="v" id="d-out">—</div><div class="adj-breakdown" id="d-out-adj"></div></div>
       <div class="sum-card akhir"><div class="l">Saldo Akhir</div><div class="v" id="d-akhir">—</div></div>
@@ -1091,7 +1114,9 @@ function parseNumber(s){
 
 function normCode(code){
   let c = (code || '').trim().toUpperCase().replace(/\s+/g, '');
-  if (/^[\d.]+$/.test(c)) c = c.replace(/\./g, ''); // format ribuan spreadsheet, mis. "1.270" -> "1270"
+  // format ribuan spreadsheet, mis. "1.270" -> "1270" atau "1,270" -> "1270" — kedua gaya
+  // penulisan dianggap kode yang sama supaya tidak tampil dobel di daftar customer.
+  if (/^[\d.,]+$/.test(c)) c = c.replace(/[.,]/g, '');
   return c;
 }
 
@@ -2080,6 +2105,18 @@ function renderDetail(){
     trxList = inMonth;
   }
 
+  // Label "Saldo Awal" berubah jadi "Saldo Awal <Bulan>" saat filter bulan tertentu aktif,
+  // supaya jelas saldo awal itu punya bulan berapa yang sedang dilihat (mis. "Saldo Awal Juni").
+  const dAwalLabelEl = document.getElementById('d-awal-label');
+  if (dAwalLabelEl){
+    if (monthFilter && monthFilter !== 'all'){
+      const fm = Number(monthFilter.split('-')[1]);
+      dAwalLabelEl.textContent = 'Saldo Awal ' + MONTH_ID_LONG[fm - 1];
+    } else {
+      dAwalLabelEl.textContent = 'Saldo Awal';
+    }
+  }
+
   document.getElementById('d-awal').textContent = fmtSaldo(periodAwal);
   document.getElementById('d-in').textContent = fmtNum(periodIn);
   document.getElementById('d-out').textContent = fmtNum(periodOut);
@@ -2193,13 +2230,15 @@ function refreshData(){
   // karena init() mengosongkan seluruh tampilan dulu — kalau koneksi lambat/gagal, halaman jadi
   // sempat kosong/"hilang" sebelum tampil lagi.
   if (authRole && customers.length > 0){
-    silentRefresh();
+    if (window.showAppSplash) window.showAppSplash();
+    silentRefresh().finally(() => { if (window.hideAppSplash) window.hideAppSplash(500); });
     return;
   }
   const btn = document.getElementById('btn-refresh');
   btn.classList.add('spinning');
   setTimeout(() => btn.classList.remove('spinning'), 900);
-  init();
+  if (window.showAppSplash) window.showAppSplash();
+  Promise.resolve(init()).finally(() => { if (window.hideAppSplash) window.hideAppSplash(500); });
 }
 
 /* Refresh data quietly in the background (no loading overlay) — dipakai saat kembali ke daftar */
