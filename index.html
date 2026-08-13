@@ -1112,11 +1112,19 @@ function parseNumber(s){
   return isNaN(n) ? 0 : n;
 }
 
+// Kode customer yang diketahui salah ketik/salah format di CSV sumber, dan harus
+// dianggap sama dengan kode yang benar supaya tidak tampil sebagai customer terpisah.
+// key & value memakai bentuk yang SUDAH dinormalisasi (huruf besar, tanpa spasi/titik/koma).
+const CODE_ALIAS_MAP = {
+  '-264799': '1175-01' // FLORA FOOD MANUFACTURING INDONESIA, PT — typo kode di CSV
+};
+
 function normCode(code){
   let c = (code || '').trim().toUpperCase().replace(/\s+/g, '');
   // format ribuan spreadsheet, mis. "1.270" -> "1270" atau "1,270" -> "1270" — kedua gaya
   // penulisan dianggap kode yang sama supaya tidak tampil dobel di daftar customer.
   if (/^[\d.,]+$/.test(c)) c = c.replace(/[.,]/g, '');
+  if (CODE_ALIAS_MAP[c]) c = CODE_ALIAS_MAP[c];
   return c;
 }
 
