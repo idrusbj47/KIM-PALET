@@ -436,6 +436,7 @@ tr.row-opname td span{color:var(--opname-r)!important}
 .kw-card .kw-label svg{opacity:.8;flex-shrink:0}
 .kw-card .kw-value{font-family:'JetBrains Mono',monospace;font-size:23px;font-weight:700;margin-top:6px;line-height:1}
 .kw-card .kw-sub{font-size:10.5px;color:var(--ink3);margin-top:5px}
+.kw-card .kw-sub.kw-sub-faint{font-style:italic;opacity:.7}
 .kw-card.kw-blue{background:var(--saldo-navy-bg);border-color:var(--saldo-navy-bg)}
 .kw-card.kw-blue .kw-label,.kw-card.kw-blue .kw-sub{color:var(--saldo-navy);opacity:.75}
 .kw-card.kw-blue .kw-value{color:var(--saldo-navy)}
@@ -959,7 +960,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           </div>
           <div class="kw-value" id="kw-gap">—</div>
-          <div class="kw-sub">Pallet belum diketahui posisi</div>
+          <div class="kw-sub" id="kw-gap-sub">Pallet belum diketahui posisi</div>
         </div>
       </div>
       <div class="kw-formula">
@@ -1278,6 +1279,13 @@ function fmtSaldoHTML(n){
   n = n || 0;
   const plain = Math.abs(n).toLocaleString('id-ID');
   return n < 0 ? `<span style="color:var(--red)">(${plain})</span>` : plain;
+}
+// format angka dengan tanda minus biasa (bukan tanda kurung), dipakai khusus utk Gap
+// pada Ringkasan Pallet KIM.
+function fmtSignedNum(n){
+  n = n || 0;
+  const plain = Math.abs(n).toLocaleString('id-ID');
+  return n < 0 ? `-${plain}` : plain;
 }
 
 /* ============================================================
@@ -2153,15 +2161,39 @@ function renderKimWarehouseBox(){
     const c = custByCode[code];
     return s + (c ? c.saldoAkhir : 0);
   }, 0);
-  const gap = pembelian - (saldoCustomer + gudang);
 
   document.getElementById('kw-gudang').textContent = fmtNum(gudang);
   document.getElementById('kw-pembelian').textContent = fmtNum(pembelian);
   document.getElementById('kw-saldo-customer').textContent = fmtNum(saldoCustomer);
+
   const gapEl = document.getElementById('kw-gap');
-  gapEl.textContent = fmtSaldo(gap);
-  document.getElementById('kw-formula-calc').textContent =
-    `${fmtNum(pembelian)} − (${fmtNum(saldoCustomer)} + ${fmtNum(gudang)}) = ${fmtSaldo(gap)}`;
+  const gapSubEl = document.getElementById('kw-gap-sub');
+
+  // Kalau data Total Pembelian belum ada (kolom V masih kosong di spreadsheet untuk
+  // customer ini), Gap tidak bisa dihitung secara valid — tampilkan N/A, bukan angka
+  // yang menyesatkan.
+  if (pembelian === 0){
+    gapEl.textContent = 'N/A';
+    gapSubEl.textContent = 'Total pembelian tidak ada data';
+    gapSubEl.classList.add('kw-sub-faint');
+    document.getElementById('kw-formula-calc').textContent =
+      `Total pembelian belum tercatat — Gap tidak dapat dihitung`;
+  } else {
+    const gap = pembelian - (saldoCustomer + gudang);
+    gapEl.textContent = fmtSignedNum(gap);
+    if (gap < 0){
+      // Gap minus = pallet yang tercatat beredar (di gudang + di customer) justru lebih
+      // banyak dari total yang pernah dibeli untuk customer ini — secara logika ini artinya
+      // customer memakai pallet "titipan"/milik customer lain di KIM, misalnya saat
+      // pengiriman mendesak terpaksa pakai stock pallet customer lain dulu.
+      gapSubEl.textContent = 'Pallet minus — kemungkinan memakai pallet milik customer lain (pengiriman mendesak pakai pallet lain dulu)';
+    } else {
+      gapSubEl.textContent = 'Pallet belum diketahui posisi';
+    }
+    gapSubEl.classList.remove('kw-sub-faint');
+    document.getElementById('kw-formula-calc').textContent =
+      `${fmtNum(pembelian)} − (${fmtNum(saldoCustomer)} + ${fmtNum(gudang)}) = ${fmtSignedNum(gap)}`;
+  }
 
   box.style.display = '';
 }
