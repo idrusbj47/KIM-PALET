@@ -2178,7 +2178,7 @@ function renderKimWarehouseBox(){
     gapSubEl.textContent = 'Total pembelian tidak ada data';
     gapSubEl.classList.add('kw-sub-faint');
     document.getElementById('kw-formula-calc').textContent =
-      `${fmtNum(gudang)} + ${fmtNum(saldoCustomer)} = ${fmtNum(totalPallet)} Total Pallet — Total pembelian belum tercatat, Gap tidak dapat dihitung`;
+      `(T) ${fmtNum(totalPallet)} − Total Pembelian belum tercatat, Gap tidak dapat dihitung`;
   } else {
     // GAP = (Pallet di Gudang KIM + Saldo Akhir) - Total Pembelian
     //   Gap positif (+) -> pallet yang tercatat beredar (di gudang + di customer) LEBIH BANYAK
@@ -2198,7 +2198,7 @@ function renderKimWarehouseBox(){
     }
     gapSubEl.classList.remove('kw-sub-faint');
     document.getElementById('kw-formula-calc').textContent =
-      `${fmtNum(gudang)} + ${fmtNum(saldoCustomer)} = ${fmtNum(totalPallet)} Total Pallet — ${fmtNum(totalPallet)} − ${fmtNum(pembelian)} = ${fmtSignedNum(gap)}`;
+      `(T) ${fmtNum(totalPallet)} − ${fmtNum(pembelian)} = ${fmtSignedNum(gap)}`;
   }
 
   box.style.display = '';
