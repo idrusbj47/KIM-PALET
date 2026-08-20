@@ -1131,7 +1131,24 @@ let customers = [];      // array of customer records
 let custByCode = {};      // normCode -> customer record
 let globalStats = {};
 let reportDate = null;
-let kimWarehouseStats = { stockGudang: 0, totalBeli: 0 }; // ringkasan kolom S-V (Stock Palet Kosong di Gudang KIM)
+let kimStockByCode = {}; // ringkasan kolom S-V (Stock Palet Kosong di Gudang KIM) per C.Code, key = normCode
+
+// Beberapa customer punya lebih dari satu titik pengiriman (kode C.Code berbeda di tabel
+// transaksi & saldo utama), tapi di tabel "Stock Palet Kosong di Gudang KIM" (kolom S-V)
+// datanya sudah digabung di bawah satu kode induk. Jadi saat menampilkan Ringkasan Pallet KIM
+// untuk salah satu kode anggotanya, datanya perlu digabung/dicari lewat kode induk ini:
+//   SALIM IVOMAS PRATAMA (694A = Pluit, 694B = Priok) -> digabung, kode induk di gudang KIM: 694
+//   CS2 POLA SEHAT (346S = SKB, 346T = TGR)            -> digabung, kode induk di gudang KIM: 346
+const KIM_GROUP_MEMBERS = {
+  '694A': ['694A', '694B'],
+  '694B': ['694A', '694B'],
+  '346S': ['346S', '346T'],
+  '346T': ['346S', '346T']
+};
+const KIM_GROUP_BASE_CODE = {
+  '694A': '694', '694B': '694',
+  '346S': '346', '346T': '346'
+};
 let currentFilter = 'all';
 let currentDetailCode = null;
 
@@ -1359,18 +1376,25 @@ function buildData(text){
 
   // --- 1c. Ringkasan "Stock Palet Kosong di Gudang KIM" (kolom S-V / index 18-21) ---
   // S = C.Code, T = Customer, U = Qty (stock kosong per jenis/customer), V = Total Beli Palet.
-  // Dijumlahkan apa adanya dari seluruh baris yang terisi, karena baris-baris ini berupa
-  // rincian per jenis pallet (bukan per transaksi harian seperti kolom A-G).
-  let sumStockGudang = 0, sumTotalBeli = 0;
+  // Di spreadsheet sumber, saat satu customer punya lebih dari satu baris (jenis pallet
+  // berbeda), kolom C.Code & Customer hanya diisi sekali lalu dikosongkan pada baris
+  // berikutnya (mengikuti baris di atasnya) — sehingga perlu "carry-forward" kode terakhir
+  // yang terisi agar baris lanjutan tetap terhitung ke customer yang benar.
+  kimStockByCode = {};
+  let lastKimCode = null;
   for (let i = 2; i < rows.length; i++){
     const r = rows[i];
-    if (!r || r.length < 21) continue;
+    if (!r || r.length < 19) continue;
+    const codeRaw = (r[18] || '').trim();
     const qtyRaw = (r[20] || '').trim();
-    const beliRaw = (r[21] || '').trim();
-    if (qtyRaw) sumStockGudang += parseNumber(qtyRaw);
-    if (beliRaw) sumTotalBeli += parseNumber(beliRaw);
+    const beliRaw = (r.length > 21 ? (r[21] || '') : '').trim();
+    if (codeRaw) lastKimCode = normCode(codeRaw);
+    if (!lastKimCode) continue;
+    if (!qtyRaw && !beliRaw) continue;
+    if (!kimStockByCode[lastKimCode]) kimStockByCode[lastKimCode] = { qty: 0, totalBeli: 0 };
+    if (qtyRaw) kimStockByCode[lastKimCode].qty += parseNumber(qtyRaw);
+    if (beliRaw) kimStockByCode[lastKimCode].totalBeli += parseNumber(beliRaw);
   }
-  kimWarehouseStats = { stockGudang: sumStockGudang, totalBeli: sumTotalBeli };
 
   reportDate = lastDate || new Date();
 
@@ -2105,18 +2129,30 @@ function showDetail(code){
 }
 
 /* Ringkasan Pallet KIM (khusus Staff KIM) — ditampilkan di halaman detail in/out pallet
-   customer, memakai data kolom S-V (Stock Palet Kosong di Gudang KIM) & saldo akhir global.
-   Tidak ditampilkan sama sekali untuk role customer. */
+   customer, KHUSUS untuk customer yang sedang dibuka (bukan gabungan semua customer).
+   Data diambil dari kolom S-V (Stock Palet Kosong di Gudang KIM) berdasarkan C.Code
+   customer tsb. Tidak ditampilkan sama sekali untuk role customer. */
 function renderKimWarehouseBox(){
   const box = document.getElementById('kim-warehouse-box');
   if (!box) return;
-  if (authRole !== 'admin'){
+  if (authRole !== 'admin' || !currentDetailCode){
     box.style.display = 'none';
     return;
   }
-  const gudang = kimWarehouseStats.stockGudang || 0;
-  const pembelian = kimWarehouseStats.totalBeli || 0;
-  const saldoCustomer = (globalStats && globalStats.totalAkhir) || 0;
+
+  // Sebagian customer (SALIM 694A/694B, CS2 346S/346T) punya 2 titik pengiriman dan datanya
+  // digabung — baik utk cari stock gudang KIM (pakai kode induk) maupun saldo di customer
+  // (dijumlahkan dari seluruh kode anggota grup).
+  const members = KIM_GROUP_MEMBERS[currentDetailCode] || [currentDetailCode];
+  const baseCode = KIM_GROUP_BASE_CODE[currentDetailCode] || currentDetailCode;
+
+  const stock = kimStockByCode[baseCode] || { qty: 0, totalBeli: 0 };
+  const gudang = stock.qty || 0;
+  const pembelian = stock.totalBeli || 0;
+  const saldoCustomer = members.reduce((s, code) => {
+    const c = custByCode[code];
+    return s + (c ? c.saldoAkhir : 0);
+  }, 0);
   const gap = pembelian - (saldoCustomer + gudang);
 
   document.getElementById('kw-gudang').textContent = fmtNum(gudang);
@@ -2374,7 +2410,7 @@ async function silentRefresh(){
     if (customers.length === 0) return;
     updateReportDateBadge();
     populateListMonthFilter();
-    if (currentDetailCode && custByCode[currentDetailCode]) renderDetail();
+    if (currentDetailCode && custByCode[currentDetailCode]){ renderDetail(); renderKimWarehouseBox(); }
     else render();
   } catch (e){
     console.error('Silent refresh gagal:', e);
