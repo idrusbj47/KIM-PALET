@@ -964,7 +964,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         </div>
       </div>
       <div class="kw-formula">
-        GAP = TOTAL PEMBELIAN − (SALDO AKHIR + PALLET DI GUDANG KIM)
+        GAP = (SALDO AKHIR + PALLET DI GUDANG KIM) − TOTAL PEMBELIAN
         <span class="kw-formula-calc" id="kw-formula-calc">—</span>
       </div>
     </div>
@@ -2179,20 +2179,25 @@ function renderKimWarehouseBox(){
     document.getElementById('kw-formula-calc').textContent =
       `Total pembelian belum tercatat — Gap tidak dapat dihitung`;
   } else {
-    const gap = pembelian - (saldoCustomer + gudang);
+    // GAP = (Saldo Akhir + Pallet di Gudang KIM) - Total Pembelian
+    //   Gap positif (+) -> pallet yang tercatat beredar (di customer + gudang) LEBIH BANYAK
+    //     dari total yang pernah dibeli untuk customer ini -> customer kemungkinan memakai
+    //     pallet "titipan"/milik customer lain, misalnya saat pengiriman mendesak terpaksa
+    //     pakai stock pallet customer lain dulu.
+    //   Gap negatif (-) -> pallet yang tercatat beredar LEBIH SEDIKIT dari total yang pernah
+    //     dibeli -> ada pallet milik customer ini yang belum diketahui posisinya.
+    const gap = (saldoCustomer + gudang) - pembelian;
     gapEl.textContent = fmtSignedNum(gap);
-    if (gap < 0){
-      // Gap minus = pallet yang tercatat beredar (di gudang + di customer) justru lebih
-      // banyak dari total yang pernah dibeli untuk customer ini — secara logika ini artinya
-      // customer memakai pallet "titipan"/milik customer lain di KIM, misalnya saat
-      // pengiriman mendesak terpaksa pakai stock pallet customer lain dulu.
-      gapSubEl.textContent = 'Pallet minus — kemungkinan memakai pallet milik customer lain (pengiriman mendesak pakai pallet lain dulu)';
-    } else {
+    if (gap > 0){
+      gapSubEl.textContent = 'Pallet lebih — kemungkinan memakai pallet milik customer lain (pengiriman mendesak pakai pallet lain dulu)';
+    } else if (gap < 0){
       gapSubEl.textContent = 'Pallet belum diketahui posisi';
+    } else {
+      gapSubEl.textContent = 'Pallet sesuai — tidak ada selisih';
     }
     gapSubEl.classList.remove('kw-sub-faint');
     document.getElementById('kw-formula-calc').textContent =
-      `${fmtNum(pembelian)} − (${fmtNum(saldoCustomer)} + ${fmtNum(gudang)}) = ${fmtSignedNum(gap)}`;
+      `(${fmtNum(saldoCustomer)} + ${fmtNum(gudang)}) − ${fmtNum(pembelian)} = ${fmtSignedNum(gap)}`;
   }
 
   box.style.display = '';
