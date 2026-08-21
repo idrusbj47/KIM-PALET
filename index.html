@@ -451,6 +451,10 @@ tr.row-opname td span{color:var(--opname-r)!important}
 .kw-card.kw-red .kw-value{color:var(--red)}
 .kw-formula{text-align:center;margin-top:1rem;padding-top:.9rem;border-top:1px dashed var(--border2);font-size:11px;color:var(--ink3);line-height:1.7}
 .kw-formula .kw-formula-calc{display:block;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;color:var(--ink2);margin-top:2px}
+.kw-bongkar-breakdown{display:flex;flex-direction:column;gap:3px;margin-top:9px;padding-top:8px;border-top:1px dashed var(--red)}
+[data-theme="dark"] .kw-bongkar-breakdown{border-top-color:var(--red)}
+.kw-bongkar-breakdown .kw-bd-line{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:10.8px;font-family:'JetBrains Mono',monospace;color:var(--red);opacity:.82}
+.kw-bongkar-breakdown .kw-bd-line b{font-weight:700;opacity:1}
 @media(max-width:480px){.kw-grid{grid-template-columns:repeat(2,1fr)}.kw-card .kw-value{font-size:19px}}
 
 .trx-table tbody tr.awal-row td{background:var(--brass-bg);font-weight:600;color:var(--brass)}
@@ -948,6 +952,19 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
           <div class="kw-value" id="kw-saldo-customer">—</div>
           <div class="kw-sub">Pallet di customer (belum kembali)</div>
         </div>
+        <div class="kw-card kw-red">
+          <div class="kw-label">Total Pallet Dibongkar
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+          </div>
+          <div class="kw-value" id="kw-bongkar">—</div>
+          <div class="kw-sub">Total pallet rusak / dibongkar</div>
+          <div class="kw-bongkar-breakdown" id="kw-bongkar-breakdown">
+            <div class="kw-bd-line"><span>2023</span><b id="kw-bongkar-2023">—</b></div>
+            <div class="kw-bd-line"><span>2024</span><b id="kw-bongkar-2024">—</b></div>
+            <div class="kw-bd-line"><span>2025</span><b id="kw-bongkar-2025">—</b></div>
+            <div class="kw-bd-line"><span>2026</span><b id="kw-bongkar-2026">—</b></div>
+          </div>
+        </div>
         <div class="kw-card kw-green">
           <div class="kw-label">Total Pembelian
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
@@ -955,17 +972,6 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
           <div class="kw-value" id="kw-pembelian">—</div>
           <div class="kw-sub">Total pembelian pallet</div>
         </div>
-        <div class="kw-card kw-red">
-          <div class="kw-label">Gap (Perkiraan)
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          </div>
-          <div class="kw-value" id="kw-gap">—</div>
-          <div class="kw-sub" id="kw-gap-sub">Pallet belum diketahui posisi</div>
-        </div>
-      </div>
-      <div class="kw-formula">
-        GAP = (PALLET DI GUDANG KIM + SALDO AKHIR) − TOTAL PEMBELIAN
-        <span class="kw-formula-calc" id="kw-formula-calc">—</span>
       </div>
     </div>
 
@@ -1133,6 +1139,7 @@ let custByCode = {};      // normCode -> customer record
 let globalStats = {};
 let reportDate = null;
 let kimStockByCode = {}; // ringkasan kolom S-V (Stock Palet Kosong di Gudang KIM) per C.Code, key = normCode
+let bongkarByCode = {};  // ringkasan kolom Y-AF (Daftar Saldo Palet Rusak/Bongkar) per C.Code, key = normCode
 
 // Beberapa customer punya lebih dari satu titik pengiriman (kode C.Code berbeda di tabel
 // transaksi & saldo utama), tapi di tabel "Stock Palet Kosong di Gudang KIM" (kolom S-V)
@@ -1402,6 +1409,25 @@ function buildData(text){
     if (!kimStockByCode[lastKimCode]) kimStockByCode[lastKimCode] = { qty: 0, totalBeli: 0 };
     if (qtyRaw) kimStockByCode[lastKimCode].qty += parseNumber(qtyRaw);
     if (beliRaw) kimStockByCode[lastKimCode].totalBeli += parseNumber(beliRaw);
+  }
+
+  // --- 1d. Daftar Saldo Palet Rusak/Bongkar (kolom Y-AF / index 24-31) ---
+  // Y=No, Z=Customer, AA=C.Code, AB=2023, AC=2024, AD=2025, AE=2026, AF=Total.
+  // Baris header (3 baris) dilewati; data dimulai baris ke-4 spreadsheet (index 3).
+  bongkarByCode = {};
+  for (let i = 3; i < rows.length; i++){
+    const r = rows[i];
+    if (!r || r.length < 27) continue;
+    const codeRaw = (r[26] || '').trim();
+    if (!codeRaw || codeRaw.toLowerCase() === 'c.code') continue;
+    const norm = normCode(codeRaw);
+    const y2023 = parseNumber(r[27]);
+    const y2024 = parseNumber(r[28]);
+    const y2025 = parseNumber(r[29]);
+    const y2026 = parseNumber(r[30]);
+    const totalRaw = (r.length > 31 ? (r[31] || '') : '').trim();
+    const total = totalRaw !== '' ? parseNumber(totalRaw) : (y2023 + y2024 + y2025 + y2026);
+    bongkarByCode[norm] = { y2023, y2024, y2025, y2026, total };
   }
 
   reportDate = lastDate || new Date();
@@ -2166,40 +2192,22 @@ function renderKimWarehouseBox(){
   document.getElementById('kw-pembelian').textContent = fmtNum(pembelian);
   document.getElementById('kw-saldo-customer').textContent = fmtNum(saldoCustomer);
 
-  const gapEl = document.getElementById('kw-gap');
-  const gapSubEl = document.getElementById('kw-gap-sub');
-  const totalPallet = gudang + saldoCustomer; // Pallet di Gudang KIM + Saldo Akhir
-
-  // Kalau data Total Pembelian belum ada (kolom V masih kosong di spreadsheet untuk
-  // customer ini), Gap tidak bisa dihitung secara valid — tampilkan N/A, bukan angka
-  // yang menyesatkan.
-  if (pembelian === 0){
-    gapEl.textContent = 'N/A';
-    gapSubEl.textContent = 'Total pembelian tidak ada data';
-    gapSubEl.classList.add('kw-sub-faint');
-    document.getElementById('kw-formula-calc').textContent =
-      `(T) ${fmtNum(totalPallet)} − Total Pembelian belum tercatat, Gap tidak dapat dihitung`;
-  } else {
-    // GAP = (Pallet di Gudang KIM + Saldo Akhir) - Total Pembelian
-    //   Gap positif (+) -> pallet yang tercatat beredar (di gudang + di customer) LEBIH BANYAK
-    //     dari total yang pernah dibeli untuk customer ini -> customer kemungkinan memakai
-    //     pallet "titipan"/milik customer lain, misalnya saat pengiriman mendesak terpaksa
-    //     pakai stock pallet customer lain dulu.
-    //   Gap negatif (-) -> pallet yang tercatat beredar LEBIH SEDIKIT dari total yang pernah
-    //     dibeli -> ada pallet milik customer ini yang belum diketahui posisinya.
-    const gap = totalPallet - pembelian;
-    gapEl.textContent = fmtSignedNum(gap);
-    if (gap > 0){
-      gapSubEl.textContent = 'Pallet lebih — kemungkinan memakai pallet milik customer lain (pengiriman mendesak pakai pallet lain dulu)';
-    } else if (gap < 0){
-      gapSubEl.textContent = 'Pallet belum diketahui posisi';
-    } else {
-      gapSubEl.textContent = 'Pallet sesuai — tidak ada selisih';
+  // Total Pallet Dibongkar (kolom Y-AF): dijumlah per anggota grup (mis. SALIM/CS2 yang
+  // punya 2 titik pengiriman), lalu dirinci per tahun 2023-2026 di bawah nilai totalnya.
+  const bongkar = members.reduce((acc, code) => {
+    const b = bongkarByCode[code];
+    if (b){
+      acc.y2023 += b.y2023; acc.y2024 += b.y2024; acc.y2025 += b.y2025; acc.y2026 += b.y2026;
+      acc.total += b.total;
     }
-    gapSubEl.classList.remove('kw-sub-faint');
-    document.getElementById('kw-formula-calc').textContent =
-      `(T) ${fmtNum(totalPallet)} − ${fmtNum(pembelian)} = ${fmtSignedNum(gap)}`;
-  }
+    return acc;
+  }, { y2023: 0, y2024: 0, y2025: 0, y2026: 0, total: 0 });
+
+  document.getElementById('kw-bongkar').textContent = fmtNum(bongkar.total);
+  document.getElementById('kw-bongkar-2023').textContent = fmtNum(bongkar.y2023);
+  document.getElementById('kw-bongkar-2024').textContent = fmtNum(bongkar.y2024);
+  document.getElementById('kw-bongkar-2025').textContent = fmtNum(bongkar.y2025);
+  document.getElementById('kw-bongkar-2026').textContent = fmtNum(bongkar.y2026);
 
   box.style.display = '';
 }
