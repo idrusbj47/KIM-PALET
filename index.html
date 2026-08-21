@@ -434,7 +434,8 @@ tr.row-opname td span{color:var(--opname-r)!important}
 .kw-card{border-radius:var(--radius);padding:.95rem 1rem;display:flex;flex-direction:column;gap:2px;border:1px solid var(--border)}
 .kw-card .kw-label{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .kw-card .kw-label svg{opacity:.8;flex-shrink:0}
-.kw-card .kw-value{font-family:'JetBrains Mono',monospace;font-size:23px;font-weight:700;margin-top:6px;line-height:1}
+.kw-card .kw-value{font-family:'JetBrains Mono',monospace;font-size:23px;font-weight:700;margin-top:6px;line-height:1.15}
+.kw-card .kw-value.kw-value-text{font-family:'Inter',sans-serif;font-size:15px;font-weight:700}
 .kw-card .kw-sub{font-size:10.5px;color:var(--ink3);margin-top:5px}
 .kw-card .kw-sub.kw-sub-faint{font-style:italic;opacity:.7}
 .kw-card.kw-blue{background:var(--saldo-navy-bg);border-color:var(--saldo-navy-bg)}
@@ -970,7 +971,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           </div>
           <div class="kw-value" id="kw-pembelian">—</div>
-          <div class="kw-sub">Total pembelian pallet</div>
+          <div class="kw-sub" id="kw-pembelian-sub">Total pembelian pallet</div>
         </div>
       </div>
     </div>
@@ -2189,8 +2190,24 @@ function renderKimWarehouseBox(){
   }, 0);
 
   document.getElementById('kw-gudang').textContent = fmtNum(gudang);
-  document.getElementById('kw-pembelian').textContent = fmtNum(pembelian);
   document.getElementById('kw-saldo-customer').textContent = fmtNum(saldoCustomer);
+
+  // Total Pembelian: kalau kolom V masih kosong (belum sempat diinput), jangan tampilkan
+  // "0" karena bisa disalahartikan seolah customer ini memang belum pernah beli pallet —
+  // padahal datanya cuma belum diinput. Tampilkan status "Belum Ada Data" sebagai gantinya.
+  const pembelianEl = document.getElementById('kw-pembelian');
+  const pembelianSubEl = document.getElementById('kw-pembelian-sub');
+  if (pembelian === 0){
+    pembelianEl.textContent = 'Belum Ada Data';
+    pembelianEl.classList.add('kw-value-text');
+    pembelianSubEl.textContent = 'Data pembelian pallet belum diinput';
+    pembelianSubEl.classList.add('kw-sub-faint');
+  } else {
+    pembelianEl.textContent = fmtNum(pembelian);
+    pembelianEl.classList.remove('kw-value-text');
+    pembelianSubEl.textContent = 'Total pembelian pallet';
+    pembelianSubEl.classList.remove('kw-sub-faint');
+  }
 
   // Total Pallet Dibongkar (kolom Y-AF): dijumlah per anggota grup (mis. SALIM/CS2 yang
   // punya 2 titik pengiriman), lalu dirinci per tahun 2023-2026 di bawah nilai totalnya.
