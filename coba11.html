@@ -1258,16 +1258,73 @@ function triggerDocUpload(key){
   document.getElementById('doc-upload-input').click();
 }
 
+/* Kompres foto di browser sebelum upload, supaya foto dari kamera HP (biasanya
+   beberapa MB) jadi ringan sebelum masuk ke Supabase Storage. Caranya: gambar
+   digambar ulang ke <canvas> dengan lebar maksimum tertentu, lalu dieksport
+   sebagai JPEG dengan kualitas yang diturunkan bertahap sampai ukurannya di
+   bawah target (default 500 KB) atau sampai batas percobaan tercapai. */
+function loadImageFromFile(file){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => { resolve(img); URL.revokeObjectURL(url); };
+    img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+    img.src = url;
+  });
+}
+
+function canvasToBlob(canvas, quality){
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+}
+
+async function compressImage(file, targetBytes = 500 * 1024, maxDim = 1600){
+  // Kalau bukan file gambar (mis. HEIC yang browser tidak bisa render, atau PDF),
+  // lewati kompresi dan kirim apa adanya — daripada gagal total.
+  if (!file.type.startsWith('image/')) return file;
+
+  let img;
+  try{ img = await loadImageFromFile(file); }
+  catch(e){ return file; } // gagal decode -> upload file asli saja
+
+  let { width, height } = img;
+  if (width > maxDim || height > maxDim){
+    const scale = maxDim / Math.max(width, height);
+    width = Math.round(width * scale);
+    height = Math.round(height * scale);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
+  let quality = 0.82;
+  let blob = await canvasToBlob(canvas, quality);
+  let attempts = 0;
+  // Turunkan kualitas bertahap sampai di bawah target ukuran, maksimal 6 percobaan
+  // supaya tidak berputar lama kalau foto memang sulit dikecilkan lagi.
+  while (blob && blob.size > targetBytes && attempts < 6){
+    quality = Math.max(0.35, quality - 0.12);
+    blob = await canvasToBlob(canvas, quality);
+    attempts++;
+  }
+  // Kalau masih di atas target padahal kualitas sudah minimum, coba perkecil dimensi juga.
+  if (blob && blob.size > targetBytes && maxDim > 900){
+    return compressImage(file, targetBytes, Math.round(maxDim * 0.75));
+  }
+  return blob || file;
+}
+
 async function handleDocUploadChange(e){
   const file = e.target.files[0];
   e.target.value = '';
   if (!file || !pendingDocKey || !sbClient) return;
   const btn = document.querySelector(`.doc-upload-btn[data-key="${pendingDocKey}"]`);
   if (btn) btn.classList.add('uploading');
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-  const filename = `${pendingDocKey}_${Date.now()}.${ext}`;
+  const filename = `${pendingDocKey}_${Date.now()}.jpg`;
   try{
-    const { error } = await sbClient.storage.from(SB_BUCKET).upload(filename, file);
+    const compressed = await compressImage(file);
+    const { error } = await sbClient.storage.from(SB_BUCKET).upload(filename, compressed, { contentType: 'image/jpeg' });
     if (error) throw error;
     await loadDocMap();
     renderDetail();
