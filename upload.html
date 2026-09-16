@@ -1206,13 +1206,14 @@ const sbClient = (window.supabase && window.supabase.createClient)
 let docMap = {};       // { "2026-09-02_B9699KYX": [url1, url2, ...] }
 let pendingDocKey = null;
 
-function docKeyFor(date, noPol){
+function docKeyFor(date, noPol, custCode){
   if (!date) return null;
   const pad = n => String(n).padStart(2, '0');
   const dateStr = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   const polStr = (noPol || '').toString().trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (!polStr) return null;
-  return `${dateStr}_${polStr}`;
+  const codeStr = (custCode || '').toString().trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!polStr || !codeStr) return null;
+  return `${codeStr}-${dateStr}_${polStr}`;
 }
 
 async function loadDocMap(){
@@ -1236,8 +1237,8 @@ async function loadDocMap(){
   }
 }
 
-function docCellHTML(date, noPol){
-  const key = docKeyFor(date, noPol);
+function docCellHTML(date, noPol, custCode){
+  const key = docKeyFor(date, noPol, custCode);
   if (!key) return '<span class="doc-empty">–</span>';
   const docs = docMap[key] || [];
   let html = '<div class="doc-cell">';
@@ -2570,7 +2571,7 @@ function renderDetail(){
     if (t.marker === 'reset') noPolCell = `<span class="tag-reset">RESET</span>`;
     else if (t.marker === 'opname') noPolCell = `<span class="tag-opname">OPNAME</span>`;
     else noPolCell = `<span class="code-tag" style="display:inline-block">${t.noPol || '—'}</span>`;
-    const docCell = (t.marker === 'reset' || t.marker === 'opname') ? '<span class="doc-empty">–</span>' : docCellHTML(t.date, t.noPol);
+    const docCell = (t.marker === 'reset' || t.marker === 'opname') ? '<span class="doc-empty">–</span>' : docCellHTML(t.date, t.noPol, currentDetailCode);
     return `<tr class="${rowClass}">
       <td class="no-cell">${idx+1}</td>
       <td>${fmtDateShort(t.date)}</td>
