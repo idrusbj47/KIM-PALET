@@ -970,6 +970,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 
   <!-- ===== VIEW: DETAIL ===== -->
   <input type="file" id="doc-upload-input" accept="image/*" style="display:none" onchange="handleDocUploadChange(event)"/>
+  <input type="file" id="doc-upload-input-camera" accept="image/*" capture="environment" style="display:none" onchange="handleDocUploadChange(event)"/>
   <div id="view-detail" style="display:none">
     <button class="back-btn" id="back-to-list-btn" onclick="goList()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -1294,7 +1295,37 @@ function docCellHTML(date, noPol, custCode){
 
 function triggerDocUpload(key){
   pendingDocKey = key;
-  document.getElementById('doc-upload-input').click();
+  openUploadSourceChooser();
+}
+
+/* Pop-up kecil pilihan "Ambil Foto" (buka kamera langsung, khususnya Android)
+   atau "Pilih dari Galeri". Dua input file terpisah dipakai karena atribut
+   capture="environment" di satu input file akan menyembunyikan opsi galeri
+   di banyak browser Android kalau digabung jadi satu tombol saja. */
+function openUploadSourceChooser(){
+  const existing = document.getElementById('upload-source-overlay');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'upload-source-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.onclick = (ev) => { if (ev.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `
+    <div style="background:#fff;width:100%;max-width:420px;border-radius:16px 16px 0 0;padding:18px 16px 24px;box-shadow:0 -4px 24px rgba(0,0,0,.2);">
+      <div style="text-align:center;font-weight:600;font-size:15px;margin-bottom:14px;color:#222;">Upload Foto</div>
+      <button id="upload-src-camera" style="width:100%;padding:13px;margin-bottom:10px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;">📷 Ambil Foto (Kamera)</button>
+      <button id="upload-src-gallery" style="width:100%;padding:13px;margin-bottom:10px;border:1px solid #ddd;border-radius:10px;background:#f5f5f5;color:#222;font-size:15px;font-weight:600;">🖼️ Pilih dari Galeri</button>
+      <button id="upload-src-cancel" style="width:100%;padding:12px;border:none;background:transparent;color:#888;font-size:14px;">Batal</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('upload-src-camera').onclick = () => {
+    overlay.remove();
+    document.getElementById('doc-upload-input-camera').click();
+  };
+  document.getElementById('upload-src-gallery').onclick = () => {
+    overlay.remove();
+    document.getElementById('doc-upload-input').click();
+  };
+  document.getElementById('upload-src-cancel').onclick = () => overlay.remove();
 }
 
 /* Kompres foto di browser sebelum upload, supaya foto dari kamera HP (biasanya
@@ -1316,6 +1347,26 @@ function canvasToBlob(canvas, quality){
   return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
 }
 
+/* Tulis watermark teks di tengah foto. Ukuran font mengikuti lebar foto
+   supaya proporsional baik untuk foto kecil maupun besar, dengan outline
+   gelap tipis + isi putih semi-transparan supaya tetap terbaca di foto
+   terang maupun gelap. */
+function drawWatermark(ctx, width, height, text){
+  const fontSize = Math.max(18, Math.round(width * 0.045));
+  ctx.save();
+  ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.translate(width / 2, height / 2);
+  ctx.rotate(-Math.PI / 12); // sedikit dimiringkan biar mirip watermark umum
+  ctx.lineWidth = Math.max(2, fontSize * 0.08);
+  ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.strokeText(text, 0, 0);
+  ctx.fillText(text, 0, 0);
+  ctx.restore();
+}
+
 async function compressImage(file, targetBytes = 500 * 1024, maxDim = 1600){
   // Kalau bukan file gambar (mis. HEIC yang browser tidak bisa render, atau PDF),
   // lewati kompresi dan kirim apa adanya — daripada gagal total.
@@ -1335,7 +1386,9 @@ async function compressImage(file, targetBytes = 500 * 1024, maxDim = 1600){
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-  canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, width, height);
+  drawWatermark(ctx, width, height, 'www.kim-pallet.id');
 
   let quality = 0.82;
   let blob = await canvasToBlob(canvas, quality);
