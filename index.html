@@ -1150,10 +1150,11 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 /* ============================================================
    KONFIGURASI
    ============================================================ */
-const _p1 = 'aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvZS8yUEFDWC0xdlRPenRrbUxrLXJ3';
-const _p2 = 'NDMyTzZOSEQ2SklSMmlMUk4xUnRoTGhpTU83YTBZZzFmUkx1ZnZHNDVEVUpGMG1aSF9jR2E5NTdPUFpI';
-const _p3 = 'TVptX2xMSC9wdWI/Z2lkPTkxMjE4ODc1OCZzaW5nbGU9dHJ1ZSZvdXRwdXQ9Y3N2';
-const CSV_URL = atob(_p1 + _p2 + _p3);
+/* CSV data diambil lewat "jembatan" Supabase Edge Function, bukan langsung dari
+   Google Sheets — supaya link Google Sheets aslinya tidak pernah terlihat di
+   browser (Network tab / View Source). Link asli disimpan sebagai secret di
+   server Supabase (PALLET_CSV_URL), dibaca oleh function get-pallet-csv. */
+const CSV_URL = 'https://bpqiejowxcxyeewhoncr.supabase.co/functions/v1/get-pallet-csv';
   
 const MONTH_ID_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const MONTH_ID_LONG  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -1669,7 +1670,7 @@ async function refreshLoginCustomerList(){
   statusEl.style.display = 'none';
   try {
     const t = new Date().getTime();
-    const res = await fetch(`${CSV_URL}&t=${t}`);
+    const res = await fetch(`${CSV_URL}?t=${t}`);
     if (!res.ok) throw new Error('Gagal terhubung ke server data.');
     const text = await res.text();
     buildData(text);
@@ -2523,7 +2524,7 @@ async function init(){
   document.getElementById('period-badge').style.display = 'none';
   try {
     const t = new Date().getTime();
-    const res = await fetch(`${CSV_URL}&t=${t}`);
+    const res = await fetch(`${CSV_URL}?t=${t}`);
     if (!res.ok) throw new Error('Gagal menarik data dari Google Sheets.');
     const text = await res.text();
     buildData(text);
@@ -2574,7 +2575,7 @@ async function silentRefresh(){
   btn.classList.add('spinning');
   try {
     const t = new Date().getTime();
-    const res = await fetch(`${CSV_URL}&t=${t}`);
+    const res = await fetch(`${CSV_URL}?t=${t}`);
     if (!res.ok) return;
     const text = await res.text();
     buildData(text);
