@@ -1354,16 +1354,16 @@ function canvasToBlob(canvas, quality){
    gelap tipis + isi putih semi-transparan supaya tetap terbaca di foto
    terang maupun gelap. */
 function drawWatermark(ctx, width, height, text){
-  const fontSize = Math.max(18, Math.round(width * 0.045));
+  const fontSize = Math.max(13, Math.round(width * 0.028));
   ctx.save();
   ctx.font = `bold ${fontSize}px Arial, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.translate(width / 2, height / 2);
   ctx.rotate(-Math.PI / 12); // sedikit dimiringkan biar mirip watermark umum
-  ctx.lineWidth = Math.max(2, fontSize * 0.08);
-  ctx.strokeStyle = 'rgba(0,0,0,0.45)';
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.lineWidth = Math.max(1, fontSize * 0.06);
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
   ctx.strokeText(text, 0, 0);
   ctx.fillText(text, 0, 0);
   ctx.restore();
