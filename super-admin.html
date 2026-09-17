@@ -642,8 +642,15 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       return;
     }
     if (hash === SA_PASSWORD_HASH){
+      // Satu form login saja: begitu password Super Admin benar, langsung anggap
+      // sebagai sesi Staff (role 'admin') dan reload. Dengan begini layar
+      // Customer/Staff KIM di baliknya TIDAK PERNAH ditampilkan sama sekali —
+      // sebelumnya gerbang ini cuma "menyembunyikan" diri sehingga layar login
+      // biasa di baliknya jadi kelihatan dan bisa dipakai terpisah dari sini.
       sessionStorage.setItem('sa-unlocked', '1');
-      gate.style.display = 'none';
+      sessionStorage.setItem('pallet-auth-role', 'admin');
+      sessionStorage.removeItem('pallet-auth-code');
+      location.reload();
     } else {
       document.getElementById('sa-pass-error').style.display = 'block';
     }
