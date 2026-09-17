@@ -1670,7 +1670,7 @@ async function refreshLoginCustomerList(){
   statusEl.style.display = 'none';
   try {
     const t = new Date().getTime();
-    const res = await fetch(`${CSV_URL}?t=${t}`, { headers: { Authorization: `Bearer ${SB_KEY}`, apikey: SB_KEY } });
+    const res = await fetch(`${CSV_URL}?t=${t}`);
     if (!res.ok) throw new Error('Gagal terhubung ke server data.');
     const text = await res.text();
     buildData(text);
@@ -2524,7 +2524,7 @@ async function init(){
   document.getElementById('period-badge').style.display = 'none';
   try {
     const t = new Date().getTime();
-    const res = await fetch(`${CSV_URL}?t=${t}`, { headers: { Authorization: `Bearer ${SB_KEY}`, apikey: SB_KEY } });
+    const res = await fetch(`${CSV_URL}?t=${t}`);
     if (!res.ok) throw new Error('Gagal menarik data dari Google Sheets.');
     const text = await res.text();
     buildData(text);
@@ -2575,7 +2575,7 @@ async function silentRefresh(){
   btn.classList.add('spinning');
   try {
     const t = new Date().getTime();
-    const res = await fetch(`${CSV_URL}?t=${t}`, { headers: { Authorization: `Bearer ${SB_KEY}`, apikey: SB_KEY } });
+    const res = await fetch(`${CSV_URL}?t=${t}`);
     if (!res.ok) return;
     const text = await res.text();
     buildData(text);
