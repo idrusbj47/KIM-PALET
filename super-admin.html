@@ -307,11 +307,13 @@ tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:
   .code-tag{padding:1px 5px;font-size:9.8px}
   .trx-date .meta{max-width:110px;overflow:hidden;text-overflow:ellipsis}
   .mh-cell{gap:3px;font-size:10.8px}
+  .trx-table tbody tr.awal-row td.awal-label-cell{font-size:10.5px}
 }
 @media(max-width:420px){
   thead th{padding:7px 4px;font-size:8.5px}
   tbody td{padding:7px 4px}
   .cust-cell{font-size:11.5px}
+  .trx-table tbody tr.awal-row td.awal-label-cell{font-size:9.8px}
 }
 tbody tr:last-child td{border-bottom:none}
 tbody tr.data-row{cursor:pointer;transition:background .12s}
@@ -460,7 +462,7 @@ tr.row-opname td span{color:var(--opname-r)!important}
 
 .trx-table tbody tr.awal-row td{background:var(--brass-bg);font-weight:600;color:var(--brass)}
 .trx-table tbody tr.awal-row:hover td{background:var(--brass-bg)!important}
-.trx-table tbody tr.awal-row td.awal-label-cell{white-space:nowrap}
+.trx-table tbody tr.awal-row td.awal-label-cell{white-space:normal;line-height:1.35;word-break:break-word}
 
 /* ===== MODAL: ANALISA AI ===== */
 .modal-overlay{position:fixed;inset:0;background:rgba(20,18,12,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
