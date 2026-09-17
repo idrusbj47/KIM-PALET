@@ -598,62 +598,112 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 </head>
 <body>
 
-<!-- ===== GERBANG PASSWORD SUPER ADMIN ===== -->
+<!-- Supabase JS dimuat di paling awal supaya gerbang login (di bawah) bisa langsung
+     memakainya untuk otentikasi sungguhan (Supabase Auth), bukan sekadar pengecekan
+     password di JS browser. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<!-- ===== GERBANG LOGIN STAFF (Supabase Auth) ===== -->
 <div id="sa-gate" style="position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:#14101f;padding:20px">
   <div style="background:#1d1830;border:1px solid #3a2e5c;border-radius:16px;padding:32px 28px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center">
     <div style="width:52px;height:52px;border-radius:14px;background:#2a1f42;border:1.5px solid #7a5cc4;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b79bff" stroke-width="1.8"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
     </div>
     <h2 style="font-family:'Fraunces',Georgia,serif;color:#efe8fb;font-size:18px;margin-bottom:6px">Super Admin</h2>
-    <p style="color:#b6afce;font-size:12.5px;margin-bottom:20px">Masukkan password untuk masuk ke mode upload dokumentasi SJ.</p>
+    <p style="color:#b6afce;font-size:12.5px;margin-bottom:20px">Masukkan password Staff untuk masuk ke mode upload/hapus dokumentasi SJ.</p>
     <input type="password" id="sa-pass-input" placeholder="Password" style="width:100%;padding:11px 13px;border-radius:10px;border:1px solid #4a3d70;background:#241c3a;color:#efe8fb;font-size:14px;margin-bottom:10px;box-sizing:border-box" onkeydown="if(event.key==='Enter')checkSuperAdminPassword()"/>
     <div id="sa-pass-error" style="color:#e28068;font-size:12px;margin-bottom:10px;display:none">Password salah, coba lagi.</div>
-    <button onclick="checkSuperAdminPassword()" style="width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#7a5cc4,#5b3fa0);color:#fff;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit">Masuk</button>
+    <button id="sa-login-btn" onclick="checkSuperAdminPassword()" style="width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#7a5cc4,#5b3fa0);color:#fff;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit">Masuk</button>
     <a href="index.html" style="display:block;margin-top:14px;color:#8a7fb0;font-size:12px;text-decoration:none">← Kembali ke tampilan biasa</a>
   </div>
 </div>
 <script>
 (function(){
-  // Password Super Admin TIDAK disimpan polos di source — yang disimpan cuma hash SHA-256-nya.
-  // Saat password dimasukkan, browser menghitung hash-nya lalu dibandingkan dengan nilai ini.
-  // Catatan: karena ini halaman statis (tanpa server), ini tetap bukan proteksi 100% terhadap
-  // orang yang niat membongkar lewat DevTools — tapi passwordnya tidak lagi terlihat polos.
-  const SA_PASSWORD_HASH = '7ee8e8c45847716f4653ddaf330b0581a659966432de604f05b97e766d6f22c4';
+  // ============================================================
+  // LOGIN STAFF PAKAI SUPABASE AUTH (bukan cek password di JS browser).
+  // Kenapa ini penting: kalau cuma dicek di JS (walau di-hash sekalipun),
+  // orang yang buka DevTools tetap bisa "memaksa" status login lewat console
+  // tanpa tahu passwordnya sama sekali. Dengan Supabase Auth, verifikasi
+  // password terjadi di SERVER Supabase — request upload/hapus foto akan
+  // otomatis ditolak Supabase sendiri kalau sesi auth-nya tidak valid,
+  // walau JS di browser sudah diotak-atik habis-habisan.
+  //
+  // SETUP YANG PERLU DILAKUKAN SEKALI DI DASHBOARD SUPABASE:
+  // 1) Authentication -> Users -> Add user -> buat 1 akun untuk Staff,
+  //    misal email: staff@kim-pallet.id, password: (password staff kalian).
+  //    Centang "Auto Confirm User" supaya tidak perlu verifikasi email.
+  // 2) Ganti STAFF_LOGIN_EMAIL di bawah ini sesuai email yang dibuat.
+  // 3) Storage -> Policies -> bucket dokumentasi-sj -> update policy
+  //    INSERT & DELETE supaya "Target roles" = authenticated (bukan public
+  //    lagi). Detail SQL-nya sudah dijelaskan terpisah.
+  // ============================================================
+  const SB_URL = 'https://bpqiejowxcxyeewhoncr.supabase.co';
+  const SB_KEY = 'sb_publishable_3tCR_a01HgzEpH-5uypqGg_s8WvXsa9';
+  const STAFF_LOGIN_EMAIL = 'staff@kim-pallet.id'; // <-- ganti sesuai akun yang dibuat di Supabase Auth
+
   const gate = document.getElementById('sa-gate');
-  if (sessionStorage.getItem('sa-unlocked') === '1'){
+
+  // Sesi login disimpan di sessionStorage (bukan localStorage) supaya otomatis
+  // "logout" sendiri kalau tab/browser ditutup — konsisten dengan perilaku
+  // login Customer/Staff KIM yang sudah ada di aplikasi ini.
+  const gateClient = (window.supabase && window.supabase.createClient)
+    ? window.supabase.createClient(SB_URL, SB_KEY, {
+        auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true }
+      })
+    : null;
+  window.__sbAuthClient = gateClient; // dipakai ulang oleh script utama, supaya sesi login yang sama ikut kepakai untuk upload/hapus foto
+
+  function unlockGateAndFlagSession(){
+    sessionStorage.setItem('sa-unlocked', '1');
+    sessionStorage.setItem('pallet-auth-role', 'admin');
+    sessionStorage.removeItem('pallet-auth-code');
     gate.style.display = 'none';
   }
 
-  async function sha256Hex(text){
-    const buf = new TextEncoder().encode(text);
-    const digest = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+  // Kalau sesi Supabase Auth masih valid (tab ini belum ditutup / belum logout),
+  // langsung lewati gerbang tanpa perlu masukkan password lagi.
+  async function checkExistingSession(){
+    if (!gateClient) return;
+    try{
+      const { data } = await gateClient.auth.getSession();
+      if (data && data.session){
+        unlockGateAndFlagSession();
+      }
+    } catch(e){ /* diamkan, gerbang tetap tampil minta login */ }
   }
+  checkExistingSession();
 
   window.checkSuperAdminPassword = async function(){
-    const val = document.getElementById('sa-pass-input').value;
-    let hash;
-    try{
-      hash = await sha256Hex(val);
-    } catch(e){
-      // Browser sangat lama tanpa dukungan crypto.subtle -> tolak demi keamanan, minta password lagi.
-      document.getElementById('sa-pass-error').textContent = 'Browser tidak didukung, coba browser lain.';
-      document.getElementById('sa-pass-error').style.display = 'block';
+    const errEl = document.getElementById('sa-pass-error');
+    const btn = document.getElementById('sa-login-btn');
+    errEl.style.display = 'none';
+
+    if (!gateClient){
+      errEl.textContent = 'Modul login gagal dimuat, coba refresh halaman.';
+      errEl.style.display = 'block';
       return;
     }
-    if (hash === SA_PASSWORD_HASH){
-      // Satu form login saja: begitu password Super Admin benar, langsung anggap
-      // sebagai sesi Staff (role 'admin') dan reload. Dengan begini layar
-      // Customer/Staff KIM di baliknya TIDAK PERNAH ditampilkan sama sekali —
-      // sebelumnya gerbang ini cuma "menyembunyikan" diri sehingga layar login
-      // biasa di baliknya jadi kelihatan dan bisa dipakai terpisah dari sini.
-      sessionStorage.setItem('sa-unlocked', '1');
-      sessionStorage.setItem('pallet-auth-role', 'admin');
-      sessionStorage.removeItem('pallet-auth-code');
-      location.reload();
-    } else {
-      document.getElementById('sa-pass-error').style.display = 'block';
+    const pass = document.getElementById('sa-pass-input').value;
+    if (!pass){
+      errEl.textContent = 'Password belum diisi.';
+      errEl.style.display = 'block';
+      return;
     }
+
+    btn.disabled = true;
+    btn.textContent = 'Memeriksa...';
+    const { error } = await gateClient.auth.signInWithPassword({ email: STAFF_LOGIN_EMAIL, password: pass });
+    btn.disabled = false;
+    btn.textContent = 'Masuk';
+
+    if (error){
+      // Supabase membalas pesan generik "Invalid login credentials" -> tampilkan versi ramah.
+      errEl.textContent = 'Password salah.';
+      errEl.style.display = 'block';
+      return;
+    }
+    unlockGateAndFlagSession();
+    location.reload();
   };
 })();
 </script>
@@ -1234,7 +1284,6 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 /* ============================================================
    KONFIGURASI
@@ -1293,9 +1342,12 @@ async function sha256Hex(text){
 const SB_URL = 'https://bpqiejowxcxyeewhoncr.supabase.co';
 const SB_KEY = 'sb_publishable_3tCR_a01HgzEpH-5uypqGg_s8WvXsa9';
 const SB_BUCKET = 'dokumentasi-sj';
-const sbClient = (window.supabase && window.supabase.createClient)
-  ? window.supabase.createClient(SB_URL, SB_KEY)
-  : null;
+// Pakai client yang sama dengan gerbang login (window.__sbAuthClient) supaya sesi
+// Supabase Auth yang sudah login ikut kepakai saat upload/hapus foto — kalau karena
+// suatu hal belum ada (mis. skrip gerbang gagal dimuat), buat client baru sebagai fallback.
+const sbClient = window.__sbAuthClient || ((window.supabase && window.supabase.createClient)
+  ? window.supabase.createClient(SB_URL, SB_KEY, { auth: { storage: window.sessionStorage } })
+  : null);
 
 let docMap = {};       // { "2026-09-02_B9699KYX": [{url, name}, ...] }
 let pendingDocKey = null;
@@ -2223,9 +2275,18 @@ async function doAdminLogin(){
 function doLogout(){
   sessionStorage.removeItem('pallet-auth-role');
   sessionStorage.removeItem('pallet-auth-code');
-  sessionStorage.removeItem('sa-unlocked'); // logout dari Super Admin juga harus kembali ke gerbang password Super Admin
-  location.hash = '';
-  location.reload();
+  sessionStorage.removeItem('sa-unlocked');
+  // Logout dari Supabase Auth juga (bukan cuma hapus flag di sessionStorage) supaya
+  // sesi server-nya benar-benar berakhir dan tidak bisa dipulihkan lewat DevTools.
+  if (sbClient && sbClient.auth && sbClient.auth.signOut){
+    sbClient.auth.signOut().finally(() => {
+      location.hash = '';
+      location.reload();
+    });
+  } else {
+    location.hash = '';
+    location.reload();
+  }
 }
 
 /* Memaksa browser mengembalikan zoom ke ukuran normal.
