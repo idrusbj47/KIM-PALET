@@ -307,11 +307,13 @@ tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:
   .code-tag{padding:1px 5px;font-size:9.8px}
   .trx-date .meta{max-width:110px;overflow:hidden;text-overflow:ellipsis}
   .mh-cell{gap:3px;font-size:10.8px}
+  .trx-table tbody tr.awal-row td.awal-label-cell{font-size:10.5px}
 }
 @media(max-width:420px){
   thead th{padding:7px 4px;font-size:8.5px}
   tbody td{padding:7px 4px}
   .cust-cell{font-size:11.5px}
+  .trx-table tbody tr.awal-row td.awal-label-cell{font-size:9.8px}
 }
 tbody tr:last-child td{border-bottom:none}
 tbody tr.data-row{cursor:pointer;transition:background .12s}
@@ -460,7 +462,7 @@ tr.row-opname td span{color:var(--opname-r)!important}
 
 .trx-table tbody tr.awal-row td{background:var(--brass-bg);font-weight:600;color:var(--brass)}
 .trx-table tbody tr.awal-row:hover td{background:var(--brass-bg)!important}
-.trx-table tbody tr.awal-row td.awal-label-cell{white-space:nowrap}
+.trx-table tbody tr.awal-row td.awal-label-cell{white-space:normal;line-height:1.35;word-break:break-word}
 
 /* ===== MODAL: ANALISA AI ===== */
 .modal-overlay{position:fixed;inset:0;background:rgba(20,18,12,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
@@ -740,7 +742,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/><path d="M9 21v-6h6v6"/><path d="M9 13h.01M15 13h.01M9 9h.01M15 9h.01"/></svg>
         <span class="lbl">Gudang KIM</span>
       </a>
-      <a class="icon-btn" id="btn-super-admin" href="super-admin.html" title="Masuk ke Super Admin (kelola dokumentasi SJ)">
+      <a class="icon-btn" id="btn-super-admin" href="super-admin.html" style="display:none" title="Masuk ke Super Admin (kelola dokumentasi SJ)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         <span class="lbl">Super Admin</span>
       </a>
@@ -1804,6 +1806,9 @@ function applyRoleUI(){
     try { openedToday = localStorage.getItem('stock-kim-btn-last-seen') === new Date().toDateString(); } catch(e){}
     btnStockKim.classList.toggle('btn-pulse-attn', !isCustomer && !openedToday);
   }
+  // Tombol "Super Admin" hanya untuk Staff KIM, tidak untuk customer.
+  const btnSuperAdmin = document.getElementById('btn-super-admin');
+  if (btnSuperAdmin) btnSuperAdmin.style.display = isCustomer ? 'none' : '';
   document.getElementById('btn-logout').style.display = 'inline-flex';
   const logoutDivider = document.getElementById('hdr-divider-logout');
   if (logoutDivider) logoutDivider.style.display = '';
