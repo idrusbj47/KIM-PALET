@@ -614,14 +614,34 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 </div>
 <script>
 (function(){
-  const SA_PASSWORD = 'KIM123891';
+  // Password Super Admin TIDAK disimpan polos di source — yang disimpan cuma hash SHA-256-nya.
+  // Saat password dimasukkan, browser menghitung hash-nya lalu dibandingkan dengan nilai ini.
+  // Catatan: karena ini halaman statis (tanpa server), ini tetap bukan proteksi 100% terhadap
+  // orang yang niat membongkar lewat DevTools — tapi passwordnya tidak lagi terlihat polos.
+  const SA_PASSWORD_HASH = '7ee8e8c45847716f4653ddaf330b0581a659966432de604f05b97e766d6f22c4';
   const gate = document.getElementById('sa-gate');
   if (sessionStorage.getItem('sa-unlocked') === '1'){
     gate.style.display = 'none';
   }
-  window.checkSuperAdminPassword = function(){
+
+  async function sha256Hex(text){
+    const buf = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  window.checkSuperAdminPassword = async function(){
     const val = document.getElementById('sa-pass-input').value;
-    if (val === SA_PASSWORD){
+    let hash;
+    try{
+      hash = await sha256Hex(val);
+    } catch(e){
+      // Browser sangat lama tanpa dukungan crypto.subtle -> tolak demi keamanan, minta password lagi.
+      document.getElementById('sa-pass-error').textContent = 'Browser tidak didukung, coba browser lain.';
+      document.getElementById('sa-pass-error').style.display = 'block';
+      return;
+    }
+    if (hash === SA_PASSWORD_HASH){
       sessionStorage.setItem('sa-unlocked', '1');
       gate.style.display = 'none';
     } else {
@@ -2196,6 +2216,7 @@ async function doAdminLogin(){
 function doLogout(){
   sessionStorage.removeItem('pallet-auth-role');
   sessionStorage.removeItem('pallet-auth-code');
+  sessionStorage.removeItem('sa-unlocked'); // logout dari Super Admin juga harus kembali ke gerbang password Super Admin
   location.hash = '';
   location.reload();
 }
