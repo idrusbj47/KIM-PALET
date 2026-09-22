@@ -602,6 +602,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
      memakainya untuk otentikasi sungguhan (Supabase Auth), bukan sekadar pengecekan
      password di JS browser. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 
 <!-- ===== GERBANG LOGIN STAFF (Supabase Auth) ===== -->
 <div id="sa-gate" style="position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:#14101f;padding:20px">
@@ -1472,8 +1473,8 @@ function drawWatermark(ctx, width, height, text){
 }
 
 async function compressImage(file, targetBytes = 500 * 1024, maxDim = 1600){
-  // Kalau bukan file gambar (mis. HEIC yang browser tidak bisa render, atau PDF),
-  // lewati kompresi dan kirim apa adanya — daripada gagal total.
+  // Kalau bukan file gambar (mis. PDF), lewati kompresi dan kirim apa adanya —
+  // daripada gagal total. HEIC sudah dikonversi ke JPEG sebelum sampai sini.
   if (!file.type.startsWith('image/')) return file;
 
   let img;
@@ -1511,10 +1512,44 @@ async function compressImage(file, targetBytes = 500 * 1024, maxDim = 1600){
   return blob || file;
 }
 
+/* Deteksi file HEIC/HEIF (foto default iPhone, dan sebagian Android/Samsung
+   dengan mode "High Efficiency"). Sebagian browser mengirim MIME type kosong
+   untuk HEIC, jadi cek juga dari ekstensi nama filenya. */
+function isHeicFile(file){
+  const type = (file.type || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  return type === 'image/heic' || type === 'image/heif' ||
+         name.endsWith('.heic') || name.endsWith('.heif');
+}
+
+/* Convert HEIC/HEIF ke JPEG dulu di browser (pakai heic2any), karena <img> dan
+   <canvas> browser tidak bisa membaca HEIC sama sekali. Tanpa ini, foto dari
+   HP yang settingan kameranya "High Efficiency" akan gagal tampil setelah
+   diupload walau nama filenya dipaksa .jpg. */
+async function convertHeicToJpeg(file){
+  try{
+    const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 });
+    const blob = Array.isArray(result) ? result[0] : result;
+    // Bungkus jadi File supaya nama & type-nya rapi untuk proses selanjutnya.
+    return new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+  } catch(e){
+    console.error('Gagal konversi HEIC:', e);
+    alert('Foto format HEIC ini gagal dikonversi otomatis. Coba ganti setting kamera HP ke "Most Compatible" (bukan "High Efficiency"), lalu upload ulang.');
+    return null;
+  }
+}
+
 async function handleDocUploadChange(e){
-  const file = e.target.files[0];
+  let file = e.target.files[0];
   e.target.value = '';
   if (!file || !pendingDocKey || !sbClient) return;
+
+  // Kalau HEIC/HEIF, convert ke JPEG dulu sebelum masuk ke editor & compressor.
+  if (isHeicFile(file)){
+    const converted = await convertHeicToJpeg(file);
+    if (!converted) return; // gagal convert, sudah dikasih tahu ke user
+    file = converted;
+  }
 
   // Tampilkan preview dulu supaya foto bisa diputar/di-crop sebelum benar-benar
   // diupload — berguna kalau posisi kamera miring atau ada bagian yang mau dibuang.
