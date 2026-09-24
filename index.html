@@ -551,6 +551,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
      tanpa teks nama yang panjang, supaya header tetap ringkas & rapi saat dicetak. */
   .role-badge{display:inline-flex!important;width:26px;height:26px;padding:0!important;border-radius:50%;justify-content:center;gap:0!important}
   .role-badge span.rb-full{display:none!important}
+
+  /* Kolom "Dok. SJ" (foto surat jalan) disembunyikan saat cetak: tombol lihat/upload
+     tidak relevan di kertas, jadi header & selnya dibuang dari layout cetak. */
+  .doc-th,.doc-td{display:none!important}
 }
 /* ===== DOKUMENTASI SJ (foto surat jalan per baris) ===== */
 .doc-cell{display:flex;align-items:center;justify-content:center;gap:5px}
@@ -1061,7 +1065,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
             <th style="text-align:right">In</th>
             <th style="text-align:right">Out</th>
             <th style="text-align:right">Saldo</th>
-            <th style="text-align:center;width:64px">Dok. SJ</th>
+            <th class="doc-th" style="text-align:center;width:64px">Dok. SJ</th>
           </tr>
         </thead>
         <tbody id="tbody-detail"></tbody>
