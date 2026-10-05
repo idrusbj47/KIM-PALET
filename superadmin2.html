@@ -614,8 +614,8 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b79bff" stroke-width="1.8"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
     </div>
     <h2 style="font-family:'Fraunces',Georgia,serif;color:#efe8fb;font-size:18px;margin-bottom:6px">Super Admin</h2>
-    <p style="color:#b6afce;font-size:12.5px;margin-bottom:20px">Masukkan password Staff untuk masuk ke mode upload/hapus dokumentasi SJ.</p>
-    <input type="email" id="sa-email-input" placeholder="Email admin" autocomplete="username" style="width:100%;padding:11px 13px;border-radius:10px;border:1px solid #4a3d70;background:#241c3a;color:#efe8fb;font-size:14px;margin-bottom:10px;box-sizing:border-box">
+    <p style="color:#b6afce;font-size:12.5px;margin-bottom:20px">Masuk dengan email atau nickname, lalu password.</p>
+    <input type="text" id="sa-email-input" placeholder="Email atau nickname" autocomplete="username" autocapitalize="none" spellcheck="false" style="width:100%;padding:11px 13px;border-radius:10px;border:1px solid #4a3d70;background:#241c3a;color:#efe8fb;font-size:14px;margin-bottom:10px;box-sizing:border-box">
     <input type="password" id="sa-pass-input" placeholder="Password" style="width:100%;padding:11px 13px;border-radius:10px;border:1px solid #4a3d70;background:#241c3a;color:#efe8fb;font-size:14px;margin-bottom:10px;box-sizing:border-box" onkeydown="if(event.key==='Enter')checkSuperAdminPassword()"/>
     <div id="sa-pass-error" style="color:#e28068;font-size:12px;margin-bottom:10px;display:none">Password salah, coba lagi.</div>
     <button id="sa-login-btn" onclick="checkSuperAdminPassword()" style="width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#7a5cc4,#5b3fa0);color:#fff;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit">Masuk</button>
@@ -698,15 +698,32 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 
     btn.disabled = true;
     btn.textContent = 'Memeriksa...';
-    const typedEmail = (document.getElementById('sa-email-input').value || '').trim() || STAFF_LOGIN_EMAIL;
-    const { error } = await gateClient.auth.signInWithPassword({ email: typedEmail, password: pass });
-    if (!error) { try{ localStorage.setItem('sa-last-email', typedEmail); }catch(e){} }
+    const typedId = (document.getElementById('sa-email-input').value || '').trim() || STAFF_LOGIN_EMAIL;
+    // Supabase Auth hanya mengenal email. Kalau yang diketik bukan email (tanpa "@"), cari dulu
+    // email milik nickname itu lewat fungsi database login_email_by_nickname (lihat 08_staff_profiles.sql).
+    let loginEmail = typedId;
+    if (!typedId.includes('@')){
+      let rpcErr = null, found = null;
+      try{
+        const r = await gateClient.rpc('login_email_by_nickname', { p_nick: typedId });
+        rpcErr = r.error; found = r.data;
+      }catch(e){ rpcErr = e; }
+      if (rpcErr || !found){
+        btn.disabled = false; btn.textContent = 'Masuk';
+        errEl.textContent = rpcErr ? 'Login nickname belum aktif di database (jalankan 08_staff_profiles.sql). Sementara masuk pakai email.' : 'Nickname atau password salah.';
+        errEl.style.display = 'block';
+        return;
+      }
+      loginEmail = found;
+    }
+    const { error } = await gateClient.auth.signInWithPassword({ email: loginEmail, password: pass });
+    if (!error) { try{ localStorage.setItem('sa-last-email', typedId); }catch(e){} }
     btn.disabled = false;
     btn.textContent = 'Masuk';
 
     if (error){
       // Supabase membalas pesan generik "Invalid login credentials" -> tampilkan versi ramah.
-      errEl.textContent = 'Password salah.';
+      errEl.textContent = 'Email/nickname atau password salah.';
       errEl.style.display = 'block';
       return;
     }
@@ -912,6 +929,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     <span class="hdr-divider" id="hdr-divider-logout" aria-hidden="true" style="display:none"></span>
 
     <!-- Grup 3: keluar dari sesi — dipisah sendiri supaya tidak tertukar dengan tombol aksi lain -->
+    <button class="icon-btn" id="btn-profile" onclick="openProfile()" title="Profil: ubah nickname & password" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="lbl" id="btn-profile-lbl">Profil</span>
+    </button>
     <button class="icon-btn logout-btn" id="btn-logout" onclick="doLogout()" title="Keluar dari sesi" style="display:none">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       <span class="lbl">Keluar</span>
@@ -2477,6 +2498,8 @@ function applyRoleUI(){
     btnStockKim.classList.toggle('btn-pulse-attn', !isCustomer && !openedToday);
   }
   document.getElementById('btn-logout').style.display = 'inline-flex';
+  const btnProf = document.getElementById('btn-profile');
+  if (btnProf && !isCustomer){ btnProf.style.display = 'inline-flex'; setTimeout(()=>{ try{ profRefreshLabel(); }catch(e){} }, 400); }
   const logoutDivider = document.getElementById('hdr-divider-logout');
   if (logoutDivider) logoutDivider.style.display = '';
   const backBtn = document.getElementById('back-to-list-btn');
@@ -3931,8 +3954,10 @@ function endTour(){
 @keyframes pwShake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 #inp-overlay.on,#cust-overlay.on{animation:ovIn .22s ease both}
 #inp-overlay.on .inp-card,#cust-overlay.on .inp-card{animation:cardIn .26s cubic-bezier(.2,.9,.3,1) both}
-#inp-overlay.closing,#cust-overlay.closing,#pw-overlay.closing{animation:ovOut .24s ease both!important}
-#inp-overlay.closing .inp-card,#cust-overlay.closing .inp-card,#pw-overlay.closing .inp-card{animation:cardOut .24s ease both!important}
+#inp-overlay.closing,#cust-overlay.closing,#pw-overlay.closing,#prof-overlay.closing{animation:ovOut .24s ease both!important}
+#inp-overlay.closing .inp-card,#cust-overlay.closing .inp-card,#pw-overlay.closing .inp-card,#prof-overlay.closing .inp-card{animation:cardOut .24s ease both!important}
+#prof-overlay.on{animation:ovIn .22s ease both}
+#prof-overlay.on .inp-card{animation:cardIn .26s cubic-bezier(.2,.9,.3,1) both}
 @keyframes ovIn{from{opacity:0}to{opacity:1}}
 @keyframes ovOut{from{opacity:1}to{opacity:0}}
 @keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
@@ -4692,7 +4717,7 @@ html.modal-open{overscroll-behavior:none}
 /* ---- Pencatat log (tidak pernah memblokir proses utama) ---- */
 const ACT_META={INPUT_TRX:['Input Transaksi','ok'],EDIT_TRX:['Edit Transaksi','mid'],HAPUS_TRX:['Hapus Transaksi','bad'],
   TAMBAH_CUST:['Tambah Customer','ok'],EDIT_CUST:['Edit Customer','mid'],HAPUS_CUST:['Hapus Customer','bad'],
-  UPLOAD_DOK:['Upload Dokumen','mid'],HAPUS_DOK:['Hapus Dokumen','bad'],BACKUP_EXCEL:['Backup Excel','mid'],INPUT_OPNAME:['Input Opname','ok'],EDIT_OPNAME:['Edit Opname','mid']};
+  UPLOAD_DOK:['Upload Dokumen','mid'],HAPUS_DOK:['Hapus Dokumen','bad'],BACKUP_EXCEL:['Backup Excel','mid'],INPUT_OPNAME:['Input Opname','ok'],EDIT_OPNAME:['Edit Opname','mid'],UBAH_NICK:['Ubah Nickname','mid'],UBAH_PASS:['Ubah Password','mid']};
 let _logWarned=false;
 async function logActivity(action,target,ringkasan,extra){
   try{
@@ -4759,7 +4784,7 @@ function logRender(){
 /* ---- Kunci scroll halaman belakang saat ada jendela/form terbuka ---- */
 let _scrollLocked=false,_lockY=0;
 function updateScrollLock(){
-  const lock=!!document.querySelector('#inp-overlay.on,#cust-overlay.on,#pw-overlay.on,#log-overlay.on,#opnh-overlay.on,.doc-modal-overlay,#analysis-modal[style*="flex"],#install-modal[style*="flex"]');
+  const lock=!!document.querySelector('#inp-overlay.on,#cust-overlay.on,#prof-overlay.on,#pw-overlay.on,#log-overlay.on,#opnh-overlay.on,.doc-modal-overlay,#analysis-modal[style*="flex"],#install-modal[style*="flex"]');
   if(lock===_scrollLocked) return;
   _scrollLocked=lock;
   const b=document.body, h=document.documentElement;
@@ -4859,6 +4884,132 @@ function opnhRender(){
     return `<div class="oh-item${i===0?' latest':''}"><div class="oh-top"><span class="oh-date">${logEsc(fmtDateShort(r.date))}${i===0?'<span class="oh-tag">Terakhir</span>':''}</span><span class="oh-qty">QTY ${r.qty==null?'–':logEsc(r.qty)}</span></div>`+
       `<div class="oh-ago">${days>=0?days+' hari lalu':''}${r.adj?' · penyesuaian saldo '+logEsc(r.adj):''}</div>${r.catatan?`<div class="oh-cat">${logEsc(r.catatan)}</div>`:''}${doc}</div>`;
   }).join('');
+}
+</script>
+
+<!-- ===== PROFIL (ubah nickname & password) ===== -->
+<style>
+#prof-overlay{position:fixed;inset:0;z-index:8100;background:rgba(10,8,20,.55);display:none;align-items:flex-end;justify-content:center}
+#prof-overlay.on{display:flex}
+@media(min-width:600px){#prof-overlay{align-items:center;padding:20px}}
+.prof-sec{margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+.prof-sec:first-of-type{border-top:none;padding-top:0;margin-top:6px}
+.prof-sec h4{font-size:13px;margin:0 0 2px;color:var(--ink)}
+.prof-email{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink2);background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;word-break:break-all}
+.prof-btn{margin-top:12px;width:100%;padding:11px;border-radius:10px;border:1px solid var(--brass-line);background:var(--brass-bg);color:var(--brass);font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit}
+.prof-btn:disabled{opacity:.6;cursor:default}
+</style>
+<div id="prof-overlay">
+  <div class="inp-card" role="dialog" aria-label="Profil">
+    <button type="button" class="inp-x" onclick="closeProfile()" aria-label="Tutup">&times;</button>
+    <h3>👤 Profil Saya</h3>
+    <div class="inp-sub">Nickname bisa dipakai untuk masuk menggantikan email.</div>
+
+    <div class="prof-sec">
+      <label class="inp-lbl" style="margin-top:0">Email (tidak bisa diubah di sini)</label>
+      <div class="prof-email" id="prof-email">—</div>
+      <label class="inp-lbl" for="prof-nick">Nickname</label>
+      <input class="inp-field" id="prof-nick" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="20" placeholder="mis. mad.idrus">
+      <div class="inp-sub" style="margin:5px 0 0">3–20 karakter: huruf, angka, titik, strip, underscore. Tidak boleh ada spasi atau “@”.</div>
+      <div class="inp-msg" id="prof-nick-msg"></div>
+      <button type="button" class="prof-btn" id="prof-nick-btn" onclick="profSaveNick()">💾 Simpan Nickname</button>
+    </div>
+
+    <div class="prof-sec">
+      <h4>🔑 Ubah Password</h4>
+      <label class="inp-lbl" for="prof-old">Password saat ini</label>
+      <input class="inp-field" type="password" id="prof-old" autocomplete="current-password">
+      <label class="inp-lbl" for="prof-new">Password baru</label>
+      <input class="inp-field" type="password" id="prof-new" autocomplete="new-password" placeholder="minimal 8 karakter">
+      <label class="inp-lbl" for="prof-new2">Ulangi password baru</label>
+      <input class="inp-field" type="password" id="prof-new2" autocomplete="new-password" onkeydown="if(event.key==='Enter')profSavePass()">
+      <div class="inp-msg" id="prof-pass-msg"></div>
+      <button type="button" class="prof-btn" id="prof-pass-btn" onclick="profSavePass()">🔑 Ubah Password</button>
+    </div>
+
+    <div class="inp-actions" style="margin-top:16px"><button type="button" onclick="closeProfile()">Tutup</button></div>
+  </div>
+</div>
+<script>
+let _profTok=0, _profNick='', _profEmail='';
+function profMsg(id,t,cls){ const m=document.getElementById(id); m.textContent=t||''; m.className='inp-msg'+(t?' '+cls:''); }
+async function profUser(){
+  if(!sbClient) return null;
+  const { data } = await sbClient.auth.getSession();
+  return (data && data.session && data.session.user) || null;
+}
+async function profLoadNick(){
+  const u=await profUser(); if(!u) return '';
+  _profEmail=u.email||'';
+  try{
+    const { data, error } = await sbClient.from('staff_profiles').select('nickname').eq('user_id',u.id).maybeSingle();
+    if(error) throw error;
+    _profNick=(data&&data.nickname)||'';
+  }catch(e){ console.warn('Profil belum bisa dibaca (jalankan 08_staff_profiles.sql):',e); _profNick=''; }
+  return _profNick;
+}
+async function profRefreshLabel(){
+  await profLoadNick();
+  const l=document.getElementById('btn-profile-lbl'); if(l) l.textContent=_profNick||'Profil';
+}
+async function openProfile(){
+  _profTok++; const o=document.getElementById('prof-overlay'); o.classList.remove('closing');
+  profMsg('prof-nick-msg',''); profMsg('prof-pass-msg','');
+  ['prof-old','prof-new','prof-new2'].forEach(i=>document.getElementById(i).value='');
+  await profLoadNick();
+  document.getElementById('prof-email').textContent=_profEmail||'—';
+  document.getElementById('prof-nick').value=_profNick;
+  o.classList.add('on');
+}
+function closeProfile(){
+  const o=document.getElementById('prof-overlay');
+  if(!o.classList.contains('on')||o.classList.contains('closing')) return Promise.resolve();
+  const tok=++_profTok; o.classList.add('closing');
+  return sleep(240).then(()=>{ if(tok!==_profTok) return; o.classList.remove('on','closing'); ['prof-old','prof-new','prof-new2'].forEach(i=>document.getElementById(i).value=''); });
+}
+async function profSaveNick(){
+  profMsg('prof-nick-msg','');
+  const nick=document.getElementById('prof-nick').value.trim().toLowerCase();
+  if(!/^[a-z0-9._-]{3,20}$/.test(nick)) return profMsg('prof-nick-msg','Nickname 3–20 karakter: huruf, angka, titik, strip, underscore (tanpa spasi / @).','err');
+  if(nick===_profNick) return profMsg('prof-nick-msg','Nickname tidak berubah.','err');
+  const u=await profUser(); if(!u) return profMsg('prof-nick-msg','Sesi login habis. Muat ulang halaman lalu login lagi.','err');
+  const btn=document.getElementById('prof-nick-btn'); btn.disabled=true; const t0=btn.textContent; btn.textContent='Menyimpan…';
+  try{
+    const { error } = await sbClient.rpc('set_my_nickname',{ p_nick:nick });
+    if(error){
+      if(error.code==='23505' || /duplicate|unique/i.test(error.message||'')) throw new Error('Nickname sudah dipakai orang lain.');
+      if(error.code==='PGRST202' || /Could not find the function/i.test(error.message||'')) throw new Error('Fungsi database belum ada. Jalankan 08_staff_profiles.sql di Supabase.');
+      throw error;
+    }
+    const old=_profNick; _profNick=nick;
+    logActivity('UBAH_NICK', u.email||nick, `nickname ${old||'—'} → ${nick}`);
+    document.getElementById('prof-nick').value=nick;
+    const l=document.getElementById('btn-profile-lbl'); if(l) l.textContent=nick;
+    await closeProfile(); await sleep(140);
+    showSuccess('Nickname Tersimpan', nick);
+  }catch(e){ profMsg('prof-nick-msg','Gagal menyimpan: '+(e.message||e),'err'); }
+  finally{ btn.disabled=false; btn.textContent=t0; }
+}
+async function profSavePass(){
+  profMsg('prof-pass-msg','');
+  const oldP=document.getElementById('prof-old').value, n1=document.getElementById('prof-new').value, n2=document.getElementById('prof-new2').value;
+  if(!oldP) return profMsg('prof-pass-msg','Password saat ini wajib diisi.','err');
+  if(n1.length<8) return profMsg('prof-pass-msg','Password baru minimal 8 karakter.','err');
+  if(n1!==n2) return profMsg('prof-pass-msg','Ulangi password baru belum sama.','err');
+  if(n1===oldP) return profMsg('prof-pass-msg','Password baru harus berbeda dari yang lama.','err');
+  const u=await profUser(); if(!u||!u.email) return profMsg('prof-pass-msg','Sesi login habis. Muat ulang halaman lalu login lagi.','err');
+  const btn=document.getElementById('prof-pass-btn'); btn.disabled=true; const t0=btn.textContent; btn.textContent='Memeriksa…';
+  try{
+    const { error:e1 } = await sbClient.auth.signInWithPassword({ email:u.email, password:oldP });   // verifikasi password lama
+    if(e1) throw new Error('Password saat ini salah.');
+    btn.textContent='Menyimpan…';
+    const { error:e2 } = await sbClient.auth.updateUser({ password:n1 });
+    if(e2) throw e2;
+    logActivity('UBAH_PASS', u.email, 'password akun diubah');
+    await closeProfile(); await sleep(140);
+    showSuccess('Password Diubah', 'Gunakan password baru saat login berikutnya');
+  }catch(e){ profMsg('prof-pass-msg', (e.message||String(e)),'err'); }
+  finally{ btn.disabled=false; btn.textContent=t0; }
 }
 </script>
 
