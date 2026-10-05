@@ -3898,6 +3898,14 @@ function endTour(){
 .pw-lock{width:46px;height:46px;border-radius:50%;background:var(--brass-bg);color:var(--brass);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 0 10px}
 #pw-overlay.shake .inp-card{animation:pwShake .4s}
 @keyframes pwShake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+#inp-overlay.on,#cust-overlay.on{animation:ovIn .22s ease both}
+#inp-overlay.on .inp-card,#cust-overlay.on .inp-card{animation:cardIn .26s cubic-bezier(.2,.9,.3,1) both}
+#inp-overlay.closing,#cust-overlay.closing,#pw-overlay.closing{animation:ovOut .24s ease both!important}
+#inp-overlay.closing .inp-card,#cust-overlay.closing .inp-card,#pw-overlay.closing .inp-card{animation:cardOut .24s ease both!important}
+@keyframes ovIn{from{opacity:0}to{opacity:1}}
+@keyframes ovOut{from{opacity:1}to{opacity:0}}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes cardOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(14px) scale(.97)}}
 #ok-overlay{position:fixed;inset:0;z-index:9600;background:rgba(10,8,20,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
 #ok-overlay.on{display:flex;animation:okFade .2s ease both}
 #ok-overlay.out{animation:okFadeOut .25s ease both}
@@ -3947,6 +3955,7 @@ function endTour(){
 </div>
 <script>
 /* ---- Bunyi "ting" (WebAudio, tanpa file suara) ---- */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let _audioCtx=null;
 function audioUnlock(){ try{ _audioCtx=_audioCtx||new (window.AudioContext||window.webkitAudioContext)(); if(_audioCtx.state==='suspended') _audioCtx.resume(); }catch(e){} }
 function playTing(){
@@ -3987,15 +3996,16 @@ function askPassword(title,desc){
     document.getElementById('pw-title').textContent=title||'Konfirmasi Password';
     document.getElementById('pw-desc').textContent=desc||'Masukkan password akun yang sedang login untuk melanjutkan.';
     const i=document.getElementById('pw-input'); i.value='';
-    pwMsg(''); document.getElementById('pw-overlay').classList.add('on');
+    pwMsg(''); document.getElementById('pw-overlay').classList.remove('closing'); document.getElementById('pw-overlay').classList.add('on');
     setTimeout(()=>i.focus(),60);
   });
 }
 function pwMsg(t){ const m=document.getElementById('pw-msg'); m.textContent=t||''; m.className='inp-msg'+(t?' err':''); }
 function pwResolve(v){
-  document.getElementById('pw-overlay').classList.remove('on','shake');
+  const o=document.getElementById('pw-overlay'), f=_pwDone; _pwDone=null;
+  o.classList.remove('shake'); o.classList.add('closing');
   document.getElementById('pw-input').value='';
-  const f=_pwDone; _pwDone=null; if(f) f(v);
+  setTimeout(()=>{ o.classList.remove('on','closing'); if(f) f(v); },240);
 }
 async function pwSubmit(){
   const pw=document.getElementById('pw-input').value;
@@ -4130,6 +4140,7 @@ function inpResetFields(){
   document.getElementById('inp-out').value='0';
 }
 function openInputForm(){
+  _inpTok++; document.getElementById('inp-overlay').classList.remove('closing');
   inpFillCodeList(); inpSetMode(null); inpClearPhotos(); inpResetFields();
   inpMsg(''); inpOnCode();
   document.getElementById('inp-overlay').classList.add('on');
@@ -4137,6 +4148,7 @@ function openInputForm(){
 function openEditTrx(idx){
   const rec = palletTrxRaw[idx-1];
   if(!rec) return alert('Data transaksi tidak ditemukan. Perbarui data lalu coba lagi.');
+  _inpTok++; document.getElementById('inp-overlay').classList.remove('closing');
   inpFillCodeList(); inpSetMode(rec); inpClearPhotos(); inpMsg('');
   document.getElementById('inp-tgl').value = String(rec.tanggal).slice(0,10);
   document.getElementById('inp-code').value = rec.c_code;
@@ -4146,7 +4158,13 @@ function openEditTrx(idx){
   inpOnCode(); inpRenderExisting();
   document.getElementById('inp-overlay').classList.add('on');
 }
-function closeInputForm(){ document.getElementById('inp-overlay').classList.remove('on'); inpSetMode(null); inpClearPhotos(); inpResetFields(); inpMsg(''); inpOnCode(); }
+let _inpTok=0;
+function closeInputForm(){
+  const o=document.getElementById('inp-overlay');
+  if(!o.classList.contains('on')||o.classList.contains('closing')) return Promise.resolve();
+  const tok=++_inpTok; o.classList.add('closing');
+  return sleep(240).then(()=>{ if(tok!==_inpTok) return; o.classList.remove('on','closing'); inpSetMode(null); inpClearPhotos(); inpResetFields(); inpMsg(''); inpOnCode(); });
+}
 function inpRecKey(rec){ return docKeyFor(inpISO(rec.tanggal), rec.no_mobil, normCode(rec.c_code)); }
 function inpRenderExisting(){
   const el=document.getElementById('inp-exist'); if(!inpEditRec){ el.innerHTML=''; return; }
@@ -4262,16 +4280,11 @@ async function inpSave(){
   const warn=[];
   if(fail) warn.push(`${fail} dari ${nPh} foto gagal diupload (upload ulang lewat tombol ⬆ di detail).`);
   if(moveFail) warn.push(`${moveFail} foto lama belum ikut pindah (${moveMsg}). Jalankan 05_storage_update_policy.sql lalu edit ulang, atau upload ulang fotonya.`);
-  if(rec){
-    closeInputForm();
-    await inpReload();
-    if(warn.length) alert('Perubahan tersimpan, tetapi:\n- '+warn.join('\n- ')); else showSuccess('Perubahan Tersimpan', c.name);
-  } else {
-    closeInputForm();
-    await inpReload();
-    if(warn.length) alert('Transaksi tersimpan, tetapi:\n- '+warn.join('\n- '));
-    else showSuccess('Transaksi Tersimpan', `${c.name} · ${pol}${nPh?` · ${nPh} foto`:''}`);
-  }
+  // urutan bertahap: form menutup halus -> jeda singkat -> animasi sukses (data dimuat ulang di belakang layar)
+  const reloadP = inpReload();
+  await closeInputForm(); await sleep(140);
+  if(warn.length){ await reloadP; alert((rec?'Perubahan tersimpan':'Transaksi tersimpan')+', tetapi:\n- '+warn.join('\n- ')); }
+  else { showSuccess(rec?'Perubahan Tersimpan':'Transaksi Tersimpan', rec?c.name:`${c.name} · ${pol}${nPh?` · ${nPh} foto`:''}`); await reloadP; }
 }
 /* HAPUS transaksi (dari tombol 🗑 di baris tabel, atau tombol Hapus di form edit) */
 async function deleteTrx(idx, fromForm){
@@ -4295,9 +4308,11 @@ async function deleteTrx(idx, fromForm){
     const { error:pe } = await sbClient.storage.from(SB_BUCKET).remove(docs.map(d=>d.name));
     if(pe) photoErr=pe.message||String(pe);
   }
-  if(fromForm){ closeInputForm(); }
-  await inpReload();
-  if(photoErr) alert('Transaksi terhapus, tetapi foto gagal dihapus: '+photoErr); else showSuccess('Transaksi Dihapus', rec.nama||rec.c_code);
+  const reloadP = inpReload();
+  if(fromForm){ await closeInputForm(); }
+  await sleep(140);
+  if(photoErr) await reloadP;
+  if(photoErr) alert('Transaksi terhapus, tetapi foto gagal dihapus: '+photoErr); else { showSuccess('Transaksi Dihapus', rec.nama||rec.c_code); await reloadP; }
 }
 function inpDeleteFromForm(){ deleteTrx(null, true); }
 </script>
@@ -4339,6 +4354,7 @@ function custSetMode(c){
 }
 function openEditCust(){
   const c = custByCode[currentDetailCode]; if(!c) return;
+  _custTok++; document.getElementById('cust-overlay').classList.remove('closing');
   custSetMode(c);
   document.getElementById('cust-code').value = c.code;
   document.getElementById('cust-name').value = c.name;
@@ -4346,12 +4362,19 @@ function openEditCust(){
   custMsg(''); document.getElementById('cust-overlay').classList.add('on');
 }
 function openCustForm(){
+  _custTok++; document.getElementById('cust-overlay').classList.remove('closing');
   custSetMode(null);
   ['cust-code','cust-name'].forEach(i=>document.getElementById(i).value=''); document.getElementById('cust-saldo').value='0';
   custMsg(''); document.getElementById('cust-overlay').classList.add('on');
   setTimeout(()=>document.getElementById('cust-code').focus(),50);
 }
-function closeCustForm(){ document.getElementById('cust-overlay').classList.remove('on'); custSetMode(null); }
+let _custTok=0;
+function closeCustForm(){
+  const o=document.getElementById('cust-overlay');
+  if(!o.classList.contains('on')||o.classList.contains('closing')) return Promise.resolve();
+  const tok=++_custTok; o.classList.add('closing');
+  return sleep(240).then(()=>{ if(tok!==_custTok) return; o.classList.remove('on','closing'); custSetMode(null); });
+}
 const BTN_CUST_TXT = () => custEditOld ? '💾 Simpan Perubahan' : '💾 Simpan Customer';
 /* Pindahkan nama file foto SJ ke prefix kode baru (nama file memuat kode customer). */
 async function custMovePhotos(oldNorm, newNorm){
@@ -4372,17 +4395,27 @@ async function deleteCust(){
   const { data:ses } = await sbClient.auth.getSession();
   if(!ses||!ses.session) return custMsg('Sesi login Staff habis. Muat ulang halaman lalu login lagi.','err');
   const n = c.trx.length;
-  let withTrx = false;
-  if(n > 0){
-    if(!confirm(`Customer ${c.name} masih punya ${n} transaksi.\n\nMenghapus customer akan MENGHAPUS PERMANEN semua transaksinya juga.\n\nLanjutkan?`)) return;
-    if(prompt(`Ketik kode customer (${c.code}) untuk konfirmasi hapus:`) !== c.code) return custMsg('Kode konfirmasi tidak cocok. Dibatalkan.','err');
-    withTrx = true;
-  } else if(!confirm(`Hapus customer ${c.name} (${c.code})?`)) return;
+  const withTrx = n > 0;
+  const info = '\n\nBackup Excel akan diunduh otomatis terlebih dahulu.';
+  if(withTrx){
+    if(!confirm(`Customer ${c.name} masih punya ${n} transaksi.\n\nMenghapus customer akan MENGHAPUS PERMANEN semua transaksinya juga.${info}\n\nLanjutkan?`)) return;
+  } else if(!confirm(`Hapus customer ${c.name} (${c.code})?${info}`)) return;
+  // 1) backup Excel dulu — kalau gagal, penghapusan dibatalkan
+  custMsg('Mengunduh backup Excel…','ok');
+  const okBackup = await backupExcel(true);
+  if(!okBackup) return custMsg('Backup gagal, penghapusan dibatalkan.','err');
+  custMsg('');
+  // 2) verifikasi C.Code
+  const typed = prompt(`Backup sudah diunduh.\n\nVerifikasi: ketik C.Code customer (${c.code}) untuk melanjutkan hapus:`);
+  if(typed === null) return;
+  if(normCode(typed) !== normCode(c.code)) return custMsg('C.Code tidak cocok. Dibatalkan.','err');
+  // 3) password akun yang sedang login
   if(!(await askPassword('Hapus Customer','Tindakan permanen. Masukkan password untuk menghapus '+c.name+'.'))) return;
   const { error } = await sbClient.rpc('pallet_delete_customer', { p_code: old, p_with_trx: withTrx });
   if(error) return custMsg('Gagal menghapus: '+(error.message||error),'err');
-  closeCustForm(); currentDetailCode = null;
+  await closeCustForm(); currentDetailCode = null;
   try{ goList(); }catch(e){}
+  await sleep(140);
   showSuccess('Customer Dihapus', c.name);
 }
 async function saveCust(){
@@ -4419,18 +4452,19 @@ async function saveCust(){
     return custMsg('Gagal menyimpan: '+(err.message||err),'err');
   }
   btn.disabled=false; btn.textContent=BTN_CUST_TXT();
-  try{ await silentRefresh(); await loadDocMap(); if(currentDetailCode&&custByCode[normCode(currentDetailCode)]) renderDetail(); }catch(e){ console.warn(e); }
-  closeCustForm();
+  const refreshP=(async()=>{ try{ await silentRefresh(); await loadDocMap(); if(currentDetailCode&&custByCode[normCode(currentDetailCode)]) renderDetail(); }catch(e){ console.warn(e); } })();
+  await closeCustForm(); await sleep(140);
   if(editing){
-    if(photoFail) alert('Customer tersimpan, tetapi foto SJ lama belum ikut pindah ke kode baru. Jalankan 05_storage_update_policy.sql lalu coba lagi, atau upload ulang fotonya.');
-    else showSuccess('Customer Diperbarui', name);
+    if(photoFail){ await refreshP; alert('Customer tersimpan, tetapi foto SJ lama belum ikut pindah ke kode baru. Jalankan 05_storage_update_policy.sql lalu coba lagi, atau upload ulang fotonya.'); }
+    else { showSuccess('Customer Diperbarui', name); await refreshP; }
     return;
   }
+  showSuccess('Customer Ditambahkan', name);
+  await refreshP;
   // kalau form input sedang terbuka, langsung pilih customer yang baru dibuat
   if(document.getElementById('inp-overlay').classList.contains('on')){
     inpFillCodeList(); document.getElementById('inp-code').value=code; inpOnCode();
   }
-  showSuccess('Customer Ditambahkan', name);
 }
 
 /* ===== BACKUP EXCEL (semua transaksi) =====
@@ -4445,8 +4479,8 @@ function loadSheetJS(){
     document.head.appendChild(sc);
   });
 }
-async function backupExcel(){
-  const btn=document.getElementById('btn-backup-xlsx'); btn.disabled=true;
+async function backupExcel(silent){
+  const btn=document.getElementById('btn-backup-xlsx'); if(btn) btn.disabled=true;
   try{
     await loadSheetJS();
     const [trx,cust]=await Promise.all([ sbFetchAll('pallet_transaksi','id'), sbFetchAll('pallet_customers','code') ]);
@@ -4459,9 +4493,10 @@ async function backupExcel(){
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Transaksi'); XLSX.utils.book_append_sheet(wb,ws2,'Customer');
     XLSX.writeFile(wb,`backup-pallet-${inpToday()}.xlsx`);
-    inpToast(`✓ Backup diunduh (${trx.length} transaksi, ${cust.length} customer)`);
-  }catch(e){ alert('Backup gagal: '+(e.message||e)); }
-  finally{ btn.disabled=false; }
+    if(!silent) inpToast(`✓ Backup diunduh (${trx.length} transaksi, ${cust.length} customer)`);
+    return true;
+  }catch(e){ alert('Backup gagal: '+(e.message||e)); return false; }
+  finally{ if(btn) btn.disabled=false; }
 }
 </script>
 
