@@ -1629,7 +1629,6 @@ async function handleDocUploadChange(e){
     // kalau edited null (gagal decode, mis. HEIC), lanjut pakai file asli seperti sebelumnya
   }
 
-  if (!(await askPassword('Upload Dokumen','Masukkan password untuk mengupload foto dokumen.'))) return;
   const btn = document.querySelector(`.doc-upload-btn[data-key="${pendingDocKey}"]`);
   if (btn) btn.classList.add('uploading');
   const filename = `${pendingDocKey}_${Date.now()}.jpg`;
@@ -4220,7 +4219,6 @@ async function inpSave(){
       && !(rec && palletTrxRaw[t._idx-1] && palletTrxRaw[t._idx-1].id===rec.id));
   if(dup && !confirm('Transaksi yang sama persis (tanggal, no pol, IN, OUT) sudah ada. Tetap simpan?')) return;
   if(!(await inpNeedSession())) return;
-  if(!(await askPassword(rec?'Simpan Perubahan Transaksi':'Simpan Transaksi Baru','Masukkan password untuk menyimpan transaksi.'))) return;
 
   const btn=document.getElementById('inp-save'), btnTxt=btn.textContent; btn.disabled=true; btn.textContent='Menyimpan…';
   const done=()=>{ btn.disabled=false; btn.textContent=btnTxt; };
@@ -4284,7 +4282,9 @@ async function deleteTrx(idx, fromForm){
   if(!ses || !ses.session) return alert('Sesi login Staff habis. Muat ulang halaman lalu login lagi.');
   const tgl=fmtDateShort(inpISO(rec.tanggal));
   if(!confirm(`Hapus transaksi ini secara permanen?\n\n${rec.nama||rec.c_code}\n${tgl} · ${rec.no_mobil||'—'} · IN ${rec.qty_in} · OUT ${rec.qty_out}\n\nTindakan ini tidak bisa dibatalkan.`)) return;
-  if(!(await askPassword('Hapus Transaksi','Masukkan password untuk menghapus transaksi ini secara permanen.'))) return;
+  const typedCode = prompt(`Verifikasi: ketik C.Code customer (${rec.c_code}) untuk menghapus transaksi ini:`);
+  if(typedCode === null) return;
+  if(normCode(typedCode) !== normCode(rec.c_code)) return alert('C.Code tidak cocok. Transaksi tidak dihapus.');
   const key=inpRecKey(rec), docs=(key&&docMap[key])||[];
   const delPhotos = docs.length ? confirm(`Transaksi ini punya ${docs.length} foto SJ.\n\nOK = hapus juga fotonya\nBatal = hapus transaksinya saja (foto dibiarkan)`) : false;
   const { data, error } = await sbClient.from('pallet_transaksi').delete().eq('id', rec.id).select();
@@ -4398,7 +4398,7 @@ async function saveCust(){
   if(!sbClient) return custMsg('Koneksi Supabase belum siap.','err');
   const { data:ses } = await sbClient.auth.getSession();
   if(!ses||!ses.session) return custMsg('Sesi login Staff habis. Muat ulang halaman lalu login lagi.','err');
-  if(!(await askPassword(editing?'Simpan Perubahan Customer':'Simpan Customer Baru','Masukkan password untuk menyimpan data customer.'))) return;
+  if(editing && !(await askPassword('Simpan Perubahan Customer','Masukkan password untuk menyimpan perubahan customer.'))) return;
   const btn=document.getElementById('cust-save'); btn.disabled=true; btn.textContent='Menyimpan…';
   let photoFail=0;
   try{
