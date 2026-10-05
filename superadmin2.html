@@ -1172,6 +1172,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Lihat Dokumen
         </a>
+        <button type="button" class="opname-doc-btn" id="d-opname-add-btn" onclick="openOpnForm()" style="display:none;font-family:inherit;cursor:pointer">＋ Input Opname</button>
       </div>
     </div>
 
@@ -1318,6 +1319,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
    yang sama dengan layout sheet lama, jadi seluruh logika buildData()
    (saldo, status, MH, dsb.) tidak perlu diubah.
    ============================================================ */
+let palletOpnRaw = [];   // baris mentah pallet_opname (terbaru dulu) — punya id
 let palletTrxRaw = [];   // baris mentah pallet_transaksi (punya id) — index = _idx-1 pada buildData
 async function sbFetchAll(table, orderCol){
   if (!sbClient) throw new Error('Supabase client belum siap.');
@@ -1346,6 +1348,8 @@ async function fetchPalletRows(){
     sbFetchAll('pallet_bongkar', 'id')
   ]);
   palletTrxRaw = trx;
+  opn.sort((a,b)=> String(b.tgl_opname||'').localeCompare(String(a.tgl_opname||'')) || ((b.id||0)-(a.id||0)));
+  palletOpnRaw = opn;
   const W = 32;
   const n = Math.max(trx.length + 1, cust.length + 1, opn.length + 1, kim.length + 2, bkr.length + 3, 4);
   const rows = Array.from({ length: n }, () => Array(W).fill(''));
@@ -1898,6 +1902,7 @@ async function deleteDocPhoto(key, name){
   try{
     const { error } = await sbClient.storage.from(SB_BUCKET).remove([name]);
     if (error) throw error;
+    logActivity('HAPUS_DOK', key, 'Hapus foto: ' + name);
     await loadDocMap();
     renderDetail();
     const grid = document.getElementById('doc-modal-grid');
@@ -3124,17 +3129,26 @@ function renderDetail(){
     opSubEl.textContent = '';
   }
 
-  // Tombol "Lihat Dokumen" — hanya ditampilkan kalau kolom Q (link dokumen opname) di CSV
-  // memang terisi link yang valid. Kalau kosong, tombolnya juga tidak ditampilkan.
+  // Tombol "Lihat Dokumen": utama = foto di storage dokumentasi-sj (key CODE-TANGGAL_OPNAME);
+  // data lama yang masih berisi link Google Drive tetap bisa dibuka sebagai cadangan.
   const opDocBtn = document.getElementById('d-opname-doc-btn');
+  const opKey = (opn && opn.tglDate) ? docKeyFor(opn.tglDate, 'OPNAME', c.code) : null;
+  const opDocs = (opKey && docMap[opKey]) || [];
   const opLink = (opn && opn.link || '').trim();
-  if (opLink && /^https?:\/\//i.test(opLink)){
-    opDocBtn.href = opLink;
+  opDocBtn.onclick = null;
+  if (opDocs.length){
+    opDocBtn.href = '#'; opDocBtn.title = opDocs.length + ' foto dokumen opname';
+    opDocBtn.onclick = (ev) => { ev.preventDefault(); openDocViewer(opKey); };
+    opDocBtn.style.display = 'inline-flex';
+  } else if (opLink && /^https?:\/\//i.test(opLink)){
+    opDocBtn.href = opLink; opDocBtn.title = '';
     opDocBtn.style.display = 'inline-flex';
   } else {
     opDocBtn.removeAttribute('href');
     opDocBtn.style.display = 'none';
   }
+  const opAddBtn = document.getElementById('d-opname-add-btn');
+  if (opAddBtn) opAddBtn.style.display = (authRole === 'admin') ? 'inline-flex' : 'none';
 
   const q = document.getElementById('d-search').value.trim().toLowerCase();
   if (q) trxList = trxList.filter(t => t.noPol.toLowerCase().includes(q) || fmtDateShort(t.date).toLowerCase().includes(q));
@@ -4575,7 +4589,7 @@ html.modal-open{overscroll-behavior:none}
         <option value="">Semua aksi</option>
         <option value="INPUT_TRX">Input transaksi</option><option value="EDIT_TRX">Edit transaksi</option><option value="HAPUS_TRX">Hapus transaksi</option>
         <option value="TAMBAH_CUST">Tambah customer</option><option value="EDIT_CUST">Edit customer</option><option value="HAPUS_CUST">Hapus customer</option>
-        <option value="UPLOAD_DOK">Upload dokumen</option><option value="HAPUS_DOK">Hapus dokumen</option><option value="BACKUP_EXCEL">Backup Excel</option>
+        <option value="UPLOAD_DOK">Upload dokumen</option><option value="HAPUS_DOK">Hapus dokumen</option><option value="BACKUP_EXCEL">Backup Excel</option><option value="INPUT_OPNAME">Input opname</option><option value="EDIT_OPNAME">Edit opname</option>
       </select>
       <select class="inp-field" id="log-admin" onchange="logLoad(true)"><option value="">Semua admin</option></select>
       <input class="inp-field" id="log-search" placeholder="Cari admin / customer / no pol…" oninput="logRender()">
@@ -4592,7 +4606,7 @@ html.modal-open{overscroll-behavior:none}
 /* ---- Pencatat log (tidak pernah memblokir proses utama) ---- */
 const ACT_META={INPUT_TRX:['Input Transaksi','ok'],EDIT_TRX:['Edit Transaksi','mid'],HAPUS_TRX:['Hapus Transaksi','bad'],
   TAMBAH_CUST:['Tambah Customer','ok'],EDIT_CUST:['Edit Customer','mid'],HAPUS_CUST:['Hapus Customer','bad'],
-  UPLOAD_DOK:['Upload Dokumen','mid'],HAPUS_DOK:['Hapus Dokumen','bad'],BACKUP_EXCEL:['Backup Excel','mid']};
+  UPLOAD_DOK:['Upload Dokumen','mid'],HAPUS_DOK:['Hapus Dokumen','bad'],BACKUP_EXCEL:['Backup Excel','mid'],INPUT_OPNAME:['Input Opname','ok'],EDIT_OPNAME:['Edit Opname','mid']};
 let _logWarned=false;
 async function logActivity(action,target,ringkasan,extra){
   try{
@@ -4659,7 +4673,7 @@ function logRender(){
 /* ---- Kunci scroll halaman belakang saat ada jendela/form terbuka ---- */
 let _scrollLocked=false,_lockY=0;
 function updateScrollLock(){
-  const lock=!!document.querySelector('#inp-overlay.on,#cust-overlay.on,#pw-overlay.on,#log-overlay.on,.doc-modal-overlay,#analysis-modal[style*="flex"],#install-modal[style*="flex"]');
+  const lock=!!document.querySelector('#inp-overlay.on,#cust-overlay.on,#pw-overlay.on,#log-overlay.on,#opn-overlay.on,.doc-modal-overlay,#analysis-modal[style*="flex"],#install-modal[style*="flex"]');
   if(lock===_scrollLocked) return;
   _scrollLocked=lock;
   const b=document.body, h=document.documentElement;
@@ -4674,6 +4688,146 @@ function updateScrollLock(){
   }
 }
 new MutationObserver(updateScrollLock).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
+</script>
+
+<!-- ===== INPUT HASIL OPNAME (dokumen disimpan sebagai foto di bucket dokumentasi-sj) ===== -->
+<style>
+#opn-overlay{position:fixed;inset:0;z-index:8050;background:rgba(10,8,20,.55);display:none;align-items:flex-end;justify-content:center}
+#opn-overlay.on{display:flex;animation:ovIn .22s ease both}
+#opn-overlay.on .inp-card{animation:cardIn .26s cubic-bezier(.2,.9,.3,1) both}
+#opn-overlay.closing{animation:ovOut .24s ease both!important}
+#opn-overlay.closing .inp-card{animation:cardOut .24s ease both!important}
+@media(min-width:600px){#opn-overlay{align-items:center;padding:20px}}
+</style>
+<div id="opn-overlay">
+  <div class="inp-card" role="dialog" aria-label="Input hasil opname">
+    <button type="button" class="inp-x" onclick="closeOpnForm()" aria-label="Tutup">&times;</button>
+    <h3 id="opn-title">📋 Input Hasil Opname</h3>
+    <div class="inp-sub" id="opn-sub"></div>
+    <label class="inp-lbl" for="opn-tgl">Tanggal Opname</label>
+    <input class="inp-field" type="date" id="opn-tgl">
+    <label class="inp-lbl" for="opn-qty">Qty Hasil Opname (pallet)</label>
+    <input class="inp-field" type="number" inputmode="numeric" min="0" id="opn-qty" placeholder="mis. 219">
+    <label class="inp-lbl" for="opn-cat">Catatan <span style="text-transform:none;font-weight:500;color:var(--ink3)">(opsional)</span></label>
+    <input class="inp-field" id="opn-cat" autocomplete="off" placeholder="mis. Menunggu persetujuan manajemen">
+    <label class="inp-lbl">Dokumen / Foto Berita Acara Opname <span style="text-transform:none;font-weight:500;color:var(--ink3)">(opsional, bisa lebih dari satu)</span></label>
+    <div class="inp-btns">
+      <button type="button" onclick="document.getElementById('opn-file-cam').click()">📷 Kamera</button>
+      <button type="button" onclick="document.getElementById('opn-file').click()">🖼️ Galeri</button>
+    </div>
+    <div class="inp-photos" id="opn-photos"></div>
+    <input type="file" id="opn-file" accept="image/*" style="display:none" onchange="opnAddPhoto(event)">
+    <input type="file" id="opn-file-cam" accept="image/*" capture="environment" style="display:none" onchange="opnAddPhoto(event)">
+    <a href="#" id="opn-fix-link" onclick="opnLoadLatest();return false" style="display:none;font-size:12px;color:var(--brass);font-weight:600;margin-top:10px">✏️ Koreksi opname terakhir</a>
+    <div class="inp-msg" id="opn-msg"></div>
+    <div class="inp-actions">
+      <button type="button" onclick="closeOpnForm()">Tutup</button>
+      <button type="button" class="inp-save" id="opn-save" onclick="opnSave()">💾 Simpan Opname</button>
+    </div>
+  </div>
+</div>
+<script>
+let opnPhotos=[], opnEditRec=null, _opnTok=0;
+function opnMsg(t,cls){ const m=document.getElementById('opn-msg'); m.textContent=t||''; m.className='inp-msg'+(t?' '+cls:''); }
+function opnLatest(code){ const n=normCode(code); return palletOpnRaw.find(o=>normCode(o.code)===n && o.tgl_opname) || null; }
+function opnClearPhotos(){ opnPhotos.forEach(p=>URL.revokeObjectURL(p.url)); opnPhotos=[]; opnRenderPhotos(); }
+function opnRenderPhotos(){
+  document.getElementById('opn-photos').innerHTML=opnPhotos.map((p,i)=>`<div class="inp-ph"><img src="${p.url}" alt="foto ${i+1}"><button type="button" onclick="opnRemovePhoto(${i})" aria-label="Hapus foto">×</button></div>`).join('');
+}
+function opnRemovePhoto(i){ URL.revokeObjectURL(opnPhotos[i].url); opnPhotos.splice(i,1); opnRenderPhotos(); }
+async function opnAddPhoto(e){
+  let file=e.target.files[0]; e.target.value=''; if(!file) return;
+  if(isHeicFile(file)){ const cv=await convertHeicToJpeg(file); if(!cv) return; file=cv; }
+  let src=file;
+  if(file.type.startsWith('image/')){ const ed=await openImageEditor(file); if(ed==='CANCEL') return; if(ed) src=ed; }
+  opnPhotos.push({blob:src,url:URL.createObjectURL(src)}); opnRenderPhotos();
+}
+function opnSetMode(rec){
+  opnEditRec=rec||null;
+  document.getElementById('opn-title').textContent = rec ? '✏️ Koreksi Hasil Opname' : '📋 Input Hasil Opname';
+  document.getElementById('opn-save').textContent = rec ? '💾 Simpan Perubahan' : '💾 Simpan Opname';
+}
+function openOpnForm(){
+  const c=custByCode[currentDetailCode]; if(!c) return;
+  _opnTok++; document.getElementById('opn-overlay').classList.remove('closing');
+  opnSetMode(null); opnClearPhotos(); opnMsg('');
+  document.getElementById('opn-sub').textContent=`${c.name} · C.Code ${c.code}`;
+  document.getElementById('opn-tgl').value=inpToday();
+  document.getElementById('opn-qty').value=''; document.getElementById('opn-cat').value='';
+  document.getElementById('opn-fix-link').style.display = opnLatest(c.code) ? 'inline-block' : 'none';
+  document.getElementById('opn-overlay').classList.add('on');
+}
+function opnLoadLatest(){
+  const c=custByCode[currentDetailCode], rec=c&&opnLatest(c.code); if(!rec) return;
+  opnSetMode(rec); opnClearPhotos(); opnMsg('');
+  document.getElementById('opn-tgl').value=String(rec.tgl_opname).slice(0,10);
+  document.getElementById('opn-qty').value=(rec.qty==null?'':rec.qty);
+  document.getElementById('opn-cat').value=rec.catatan||'';
+  document.getElementById('opn-fix-link').style.display='none';
+}
+function closeOpnForm(){
+  const o=document.getElementById('opn-overlay');
+  if(!o.classList.contains('on')||o.classList.contains('closing')) return Promise.resolve();
+  const tok=++_opnTok; o.classList.add('closing');
+  return sleep(240).then(()=>{ if(tok!==_opnTok) return; o.classList.remove('on','closing'); opnSetMode(null); opnClearPhotos(); opnMsg(''); });
+}
+async function opnSave(){
+  opnMsg('');
+  const c=custByCode[currentDetailCode]; if(!c) return opnMsg('Customer tidak ditemukan.','err');
+  const tgl=document.getElementById('opn-tgl').value, qRaw=document.getElementById('opn-qty').value.trim();
+  const qty=parseInt(qRaw,10), cat=document.getElementById('opn-cat').value.trim()||null;
+  if(!tgl) return opnMsg('Tanggal opname wajib diisi.','err');
+  if(qRaw===''||isNaN(qty)||qty<0) return opnMsg('Qty hasil opname wajib diisi (angka 0 atau lebih).','err');
+  if(!sbClient) return opnMsg('Koneksi Supabase belum siap.','err');
+  const { data:ses } = await sbClient.auth.getSession();
+  if(!ses||!ses.session) return opnMsg('Sesi login Staff habis. Muat ulang halaman lalu login lagi.','err');
+  const btn=document.getElementById('opn-save'), btnTxt=btn.textContent; btn.disabled=true; btn.textContent='Menyimpan…';
+  const rec=opnEditRec, fields={ tgl_opname:tgl, qty, catatan:cat };
+  const dateObj=inpISO(tgl); let moveFail=0, fail=0; const nPh=opnPhotos.length;
+  try{
+    if(rec){
+      const { data, error } = await sbClient.from('pallet_opname').update(fields).eq('id',rec.id).select();
+      if(error) throw error;
+      if(!data||!data.length) throw new Error('Tidak ada baris yang berubah (kemungkinan ditolak oleh hak akses / RLS).');
+      const oldKey=docKeyFor(inpISO(rec.tgl_opname),'OPNAME',c.code), newKey=docKeyFor(dateObj,'OPNAME',c.code);
+      if(oldKey&&newKey&&oldKey!==newKey){
+        for(const d of (docMap[oldKey]||[])){
+          const { error:me } = await sbClient.storage.from(SB_BUCKET).move(d.name, newKey+d.name.slice(oldKey.length));
+          if(me) moveFail++;
+        }
+      }
+    } else {
+      let { data, error } = await sbClient.from('pallet_opname').insert(Object.assign({code:c.code,nama:c.name},fields)).select();
+      if(error && error.code==='23505'){   // tabel membatasi 1 baris per customer -> perbarui baris itu
+        ({ data, error } = await sbClient.from('pallet_opname').update(fields).eq('code',c.code).select());
+      }
+      if(error) throw error;
+      if(!data||!data.length) throw new Error('Tidak tersimpan (kemungkinan ditolak oleh hak akses / RLS).');
+    }
+  }catch(err){
+    btn.disabled=false; btn.textContent=btnTxt;
+    return opnMsg('Gagal menyimpan opname: '+(err.message||err),'err');
+  }
+  const key=docKeyFor(dateObj,'OPNAME',c.code);
+  if(nPh&&key){
+    for(let i=0;i<nPh;i++){
+      try{
+        const comp=await compressImage(opnPhotos[i].blob);
+        const { error } = await sbClient.storage.from(SB_BUCKET).upload(`${key}_${Date.now()}${i}.jpg`, comp, { contentType:'image/jpeg' });
+        if(error) throw error;
+      }catch(e){ console.error(e); fail++; }
+    }
+  }
+  btn.disabled=false; btn.textContent=btnTxt;
+  const warn=[];
+  if(fail) warn.push(`${fail} dari ${nPh} foto gagal diupload (coba lagi lewat Koreksi opname terakhir).`);
+  if(moveFail) warn.push(`${moveFail} foto lama belum ikut pindah ke tanggal baru (jalankan 05_storage_update_policy.sql).`);
+  logActivity(rec?'EDIT_OPNAME':'INPUT_OPNAME', `${c.name} (${c.code})`, `tgl ${tgl} · qty ${qty}${cat?` · ${cat}`:''}${nPh?` · ${nPh} foto`:''}`);
+  const reloadP=(async()=>{ try{ await silentRefresh(); await loadDocMap(); if(currentDetailCode&&custByCode[currentDetailCode]) renderDetail(); }catch(e){ console.warn(e); } })();
+  await closeOpnForm(); await sleep(140);
+  if(warn.length){ await reloadP; alert('Opname tersimpan, tetapi:\n- '+warn.join('\n- ')); }
+  else { showSuccess(rec?'Opname Diperbarui':'Opname Tersimpan', `${c.name} · QTY ${qty}`); await reloadP; }
+}
 </script>
 
 </body>
