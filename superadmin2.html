@@ -1172,6 +1172,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Lihat Dokumen
         </a>
+        <button type="button" class="opname-doc-btn" id="d-opname-hist-btn" onclick="openOpnHist()" style="display:none;font-family:inherit;cursor:pointer">📜 Riwayat</button>
         <button type="button" class="opname-doc-btn" id="d-opname-add-btn" onclick="openOpnForm()" style="display:none;font-family:inherit;cursor:pointer">＋ Input Opname</button>
       </div>
     </div>
@@ -1449,7 +1450,10 @@ async function loadDocMap(){
     (data || []).forEach(f => {
       const parts = f.name.split('_');
       if (parts.length < 2) return;
-      const key = parts[0] + '_' + parts[1];
+      let key;
+      if (f.name.startsWith('OPNAME-')) key = parts[0];                           // nama baru: OPNAME-KODE-TANGGAL_timestamp.jpg
+      else if (parts.length >= 3 && parts[1] === 'OPNAME') key = 'OPNAME-' + parts[0]; // nama lama: KODE-TANGGAL_OPNAME_timestamp.jpg
+      else key = parts[0] + '_' + parts[1];
       const { data: pub } = sbClient.storage.from(SB_BUCKET).getPublicUrl(f.name);
       if (!pub || !pub.publicUrl) return;
       if (!map[key]) map[key] = [];
@@ -1877,7 +1881,7 @@ function openDocViewer(key){
   overlay.innerHTML = `
     <div class="doc-modal">
       <div class="doc-modal-head">
-        <h3>Dokumentasi SJ</h3>
+        <h3>${key.startsWith('OPNAME-') ? 'Dokumen Opname' : 'Dokumentasi SJ'}</h3>
         <button class="doc-modal-close" onclick="this.closest('.doc-modal-overlay').remove()">✕</button>
       </div>
       <div class="doc-modal-grid" id="doc-modal-grid" data-key="${key}">
@@ -1899,10 +1903,11 @@ async function deleteDocPhoto(key, name){
   if (!sbClient) return;
   const ok = confirm('Hapus foto dokumentasi ini secara permanen dari Supabase? Tindakan ini tidak bisa dibatalkan.');
   if (!ok) return;
+  if (key.startsWith('OPNAME-') && !(await askPassword('Hapus Dokumen Opname','Dokumen opname sangat penting. Masukkan password untuk menghapus foto ini secara permanen.'))) return;
   try{
     const { error } = await sbClient.storage.from(SB_BUCKET).remove([name]);
     if (error) throw error;
-    logActivity('HAPUS_DOK', key, 'Hapus foto: ' + name);
+    logActivity('HAPUS_DOK', key, (key.startsWith('OPNAME-') ? 'Hapus foto dokumen OPNAME: ' : 'Hapus foto: ') + name);
     await loadDocMap();
     renderDetail();
     const grid = document.getElementById('doc-modal-grid');
@@ -3132,7 +3137,7 @@ function renderDetail(){
   // Tombol "Lihat Dokumen": utama = foto di storage dokumentasi-sj (key CODE-TANGGAL_OPNAME);
   // data lama yang masih berisi link Google Drive tetap bisa dibuka sebagai cadangan.
   const opDocBtn = document.getElementById('d-opname-doc-btn');
-  const opKey = (opn && opn.tglDate) ? docKeyFor(opn.tglDate, 'OPNAME', c.code) : null;
+  const opKey = (opn && opn.tglDate) ? opnDocKey(opn.tglDate, c.code) : null;
   const opDocs = (opKey && docMap[opKey]) || [];
   const opLink = (opn && opn.link || '').trim();
   opDocBtn.onclick = null;
@@ -3149,6 +3154,9 @@ function renderDetail(){
   }
   const opAddBtn = document.getElementById('d-opname-add-btn');
   if (opAddBtn) opAddBtn.style.display = (authRole === 'admin') ? 'inline-flex' : 'none';
+  const opHistBtn = document.getElementById('d-opname-hist-btn');
+  if (opHistBtn){ const nh = opnHistRows(c.code).length; opHistBtn.style.display = nh ? 'inline-flex' : 'none'; opHistBtn.textContent = '📜 Riwayat (' + nh + ')'; }
+  try{ if (document.getElementById('opnh-overlay').classList.contains('on')) opnhRender(); }catch(e){}
 
   const q = document.getElementById('d-search').value.trim().toLowerCase();
   if (q) trxList = trxList.filter(t => t.noPol.toLowerCase().includes(q) || fmtDateShort(t.date).toLowerCase().includes(q));
@@ -4673,7 +4681,7 @@ function logRender(){
 /* ---- Kunci scroll halaman belakang saat ada jendela/form terbuka ---- */
 let _scrollLocked=false,_lockY=0;
 function updateScrollLock(){
-  const lock=!!document.querySelector('#inp-overlay.on,#cust-overlay.on,#pw-overlay.on,#log-overlay.on,#opn-overlay.on,.doc-modal-overlay,#analysis-modal[style*="flex"],#install-modal[style*="flex"]');
+  const lock=!!document.querySelector('#inp-overlay.on,#cust-overlay.on,#pw-overlay.on,#log-overlay.on,#opn-overlay.on,#opnh-overlay.on,.doc-modal-overlay,#analysis-modal[style*="flex"],#install-modal[style*="flex"]');
   if(lock===_scrollLocked) return;
   _scrollLocked=lock;
   const b=document.body, h=document.documentElement;
@@ -4789,10 +4797,10 @@ async function opnSave(){
       const { data, error } = await sbClient.from('pallet_opname').update(fields).eq('id',rec.id).select();
       if(error) throw error;
       if(!data||!data.length) throw new Error('Tidak ada baris yang berubah (kemungkinan ditolak oleh hak akses / RLS).');
-      const oldKey=docKeyFor(inpISO(rec.tgl_opname),'OPNAME',c.code), newKey=docKeyFor(dateObj,'OPNAME',c.code);
+      const oldKey=opnDocKey(inpISO(rec.tgl_opname),c.code), newKey=opnDocKey(dateObj,c.code);
       if(oldKey&&newKey&&oldKey!==newKey){
         for(const d of (docMap[oldKey]||[])){
-          const { error:me } = await sbClient.storage.from(SB_BUCKET).move(d.name, newKey+d.name.slice(oldKey.length));
+          const { error:me } = await sbClient.storage.from(SB_BUCKET).move(d.name, newKey+opnSuffix(d.name));
           if(me) moveFail++;
         }
       }
@@ -4808,7 +4816,7 @@ async function opnSave(){
     btn.disabled=false; btn.textContent=btnTxt;
     return opnMsg('Gagal menyimpan opname: '+(err.message||err),'err');
   }
-  const key=docKeyFor(dateObj,'OPNAME',c.code);
+  const key=opnDocKey(dateObj,c.code);
   if(nPh&&key){
     for(let i=0;i<nPh;i++){
       try{
@@ -4827,6 +4835,76 @@ async function opnSave(){
   await closeOpnForm(); await sleep(140);
   if(warn.length){ await reloadP; alert('Opname tersimpan, tetapi:\n- '+warn.join('\n- ')); }
   else { showSuccess(rec?'Opname Diperbarui':'Opname Tersimpan', `${c.name} · QTY ${qty}`); await reloadP; }
+}
+</script>
+
+<!-- ===== RIWAYAT OPNAME (daftar semua opname + foto/dokumennya) ===== -->
+<style>
+#opnh-overlay{position:fixed;inset:0;z-index:3500;background:rgba(10,8,20,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:16px}
+#opnh-overlay.on{display:flex;animation:ovIn .22s ease both}
+#opnh-overlay.on .log-card{animation:cardIn .26s cubic-bezier(.2,.9,.3,1) both}
+#opnh-overlay.closing{animation:ovOut .24s ease both!important}
+#opnh-overlay.closing .log-card{animation:cardOut .24s ease both!important}
+.oh-item{border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-top:9px;background:var(--bg)}
+.oh-item.latest{border-color:var(--brass-line);background:var(--brass-bg)}
+.oh-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.oh-date{font-weight:700;font-size:14.5px}
+.oh-qty{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--brass)}
+.oh-tag{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--brass);color:#fff;margin-left:6px}
+.oh-cat{font-size:12.5px;color:var(--ink2);margin-top:3px}
+.oh-ago{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.oh-thumbs{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.oh-thumbs button{width:64px;height:64px;padding:0;border-radius:9px;overflow:hidden;border:1px solid var(--border2);background:var(--surface);cursor:pointer}
+.oh-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.oh-nodoc{font-size:12px;color:var(--ink3);margin-top:8px}
+.oh-link{display:inline-block;margin-top:8px;font-size:12px;color:var(--brass);font-weight:600}
+</style>
+<div id="opnh-overlay">
+  <div class="log-card" role="dialog" aria-label="Riwayat opname">
+    <button type="button" class="inp-x" onclick="closeOpnHist()" aria-label="Tutup">&times;</button>
+    <div class="log-head"><h3>📜 Riwayat Opname</h3><div class="inp-sub" id="opnh-sub" style="margin:0"></div></div>
+    <div class="log-body" id="opnh-body"></div>
+    <div class="log-foot"><button type="button" onclick="closeOpnHist()">Tutup</button></div>
+  </div>
+</div>
+<script>
+/* Nama file opname di Supabase Storage: OPNAME-KODE-TANGGAL_timestamp.jpg
+   (diawali OPNAME supaya gampang dicari di direktori). File lama KODE-TANGGAL_OPNAME_timestamp.jpg tetap terbaca. */
+function opnDocKey(date, code){
+  const k = docKeyFor(date, 'X', code);
+  return k ? 'OPNAME-' + k.split('_')[0] : null;
+}
+function opnSuffix(name){      // bagian "_timestamp.jpg" dari nama file baru maupun lama
+  const i = name.indexOf('_');
+  return name.startsWith('OPNAME-') ? name.slice(i) : name.slice(i + '_OPNAME'.length);
+}
+function opnHistRows(code){ const n=normCode(code); return palletOpnRaw.filter(o=>normCode(o.code)===n && o.tgl_opname); }
+function openOpnHist(){
+  _opnhTok++; const o=document.getElementById('opnh-overlay'); o.classList.remove('closing'); o.classList.add('on'); opnhRender();
+}
+let _opnhTok=0;
+function closeOpnHist(){
+  const o=document.getElementById('opnh-overlay');
+  if(!o.classList.contains('on')||o.classList.contains('closing')) return;
+  const tok=++_opnhTok; o.classList.add('closing');
+  setTimeout(()=>{ if(tok===_opnhTok) o.classList.remove('on','closing'); },240);
+}
+function opnhRender(){
+  const c=custByCode[currentDetailCode], body=document.getElementById('opnh-body'); if(!c) return;
+  document.getElementById('opnh-sub').textContent=`${c.name} · C.Code ${c.code}`;
+  const rows=opnHistRows(c.code);
+  if(!rows.length){ body.innerHTML='<div class="log-empty">Belum ada riwayat opname.</div>'; return; }
+  body.innerHTML=rows.map((r,i)=>{
+    const d=inpISO(r.tgl_opname), key=opnDocKey(d,c.code), docs=(key&&docMap[key])||[];
+    const days=Math.round((reportDate-d)/86400000);
+    const link=(r.link_dokumen||'').trim();
+    let doc;
+    if(docs.length) doc=`<div class="oh-thumbs">${docs.map(x=>`<button type="button" onclick="openDocViewer('${key}')" title="Buka dokumen"><img src="${x.url}" loading="lazy" alt="dokumen opname"></button>`).join('')}</div>`;
+    else doc='<div class="oh-nodoc">Belum ada foto dokumen</div>';
+    if(/^https?:\/\//i.test(link)) doc+=`<a class="oh-link" href="${logEsc(link)}" target="_blank" rel="noopener">🔗 Dokumen lama (Google Drive)</a>`;
+    return `<div class="oh-item${i===0?' latest':''}"><div class="oh-top"><span class="oh-date">${logEsc(fmtDateShort(d))}${i===0?'<span class="oh-tag">Terakhir</span>':''}</span><span class="oh-qty">QTY ${r.qty==null?'–':logEsc(r.qty)}</span></div>`+
+      `<div class="oh-ago">${days>=0?days+' hari lalu':''}</div>${r.catatan?`<div class="oh-cat">${logEsc(r.catatan)}</div>`:''}${doc}</div>`;
+  }).join('');
 }
 </script>
 
