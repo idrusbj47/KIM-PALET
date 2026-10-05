@@ -612,6 +612,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     </div>
     <h2 style="font-family:'Fraunces',Georgia,serif;color:#efe8fb;font-size:18px;margin-bottom:6px">Super Admin</h2>
     <p style="color:#b6afce;font-size:12.5px;margin-bottom:20px">Masukkan password Staff untuk masuk ke mode upload/hapus dokumentasi SJ.</p>
+    <input type="email" id="sa-email-input" placeholder="Email admin" autocomplete="username" style="width:100%;padding:11px 13px;border-radius:10px;border:1px solid #4a3d70;background:#241c3a;color:#efe8fb;font-size:14px;margin-bottom:10px;box-sizing:border-box">
     <input type="password" id="sa-pass-input" placeholder="Password" style="width:100%;padding:11px 13px;border-radius:10px;border:1px solid #4a3d70;background:#241c3a;color:#efe8fb;font-size:14px;margin-bottom:10px;box-sizing:border-box" onkeydown="if(event.key==='Enter')checkSuperAdminPassword()"/>
     <div id="sa-pass-error" style="color:#e28068;font-size:12px;margin-bottom:10px;display:none">Password salah, coba lagi.</div>
     <button id="sa-login-btn" onclick="checkSuperAdminPassword()" style="width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#7a5cc4,#5b3fa0);color:#fff;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit">Masuk</button>
@@ -673,6 +674,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
     } catch(e){ /* diamkan, gerbang tetap tampil minta login */ }
   }
   checkExistingSession();
+  try{ var _le = localStorage.getItem('sa-last-email'); var _ei = document.getElementById('sa-email-input'); if(_ei) _ei.value = _le || STAFF_LOGIN_EMAIL; }catch(e){}
 
   window.checkSuperAdminPassword = async function(){
     const errEl = document.getElementById('sa-pass-error');
@@ -693,7 +695,9 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 
     btn.disabled = true;
     btn.textContent = 'Memeriksa...';
-    const { error } = await gateClient.auth.signInWithPassword({ email: STAFF_LOGIN_EMAIL, password: pass });
+    const typedEmail = (document.getElementById('sa-email-input').value || '').trim() || STAFF_LOGIN_EMAIL;
+    const { error } = await gateClient.auth.signInWithPassword({ email: typedEmail, password: pass });
+    if (!error) { try{ localStorage.setItem('sa-last-email', typedEmail); }catch(e){} }
     btn.disabled = false;
     btn.textContent = 'Masuk';
 
@@ -872,6 +876,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       <button class="icon-btn" id="btn-backup-xlsx" onclick="backupExcel()" title="Unduh backup transaksi (Excel)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <span class="lbl">Backup</span>
+      </button>
+      <button class="icon-btn" id="btn-log" onclick="openLog()" title="Log aktivitas admin">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+        <span class="lbl">Log</span>
       </button>
       <button class="icon-btn icon-only" id="btn-refresh" onclick="refreshData()" title="Perbarui data" aria-label="Perbarui data">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
@@ -1638,6 +1646,7 @@ async function handleDocUploadChange(e){
     if (error) throw error;
     await loadDocMap();
     renderDetail();
+    logActivity('UPLOAD_DOK', pendingDocKey, 'Upload foto dokumen SJ');
     showSuccess('Dokumen Terupload');
   } catch(err){
     alert('Upload foto gagal: ' + (err.message || err));
@@ -4086,10 +4095,10 @@ async function pwSubmit(){
     <input class="inp-field" id="inp-pol" autocapitalize="characters" autocomplete="off" placeholder="mis. B9320KXT (atau RESET / OPNAME)" oninput="this.value=this.value.toUpperCase();inpUpdateSaldo()">
 
     <div class="inp-row">
-      <div><label class="inp-lbl" for="inp-in">Qty IN (kembali)</label>
-        <input class="inp-field" type="number" inputmode="numeric" min="0" id="inp-in" value="0" oninput="inpUpdateSaldo()"></div>
       <div><label class="inp-lbl" for="inp-out">Qty OUT (kirim)</label>
         <input class="inp-field" type="number" inputmode="numeric" min="0" id="inp-out" value="0" oninput="inpUpdateSaldo()"></div>
+      <div><label class="inp-lbl" for="inp-in">Qty IN (kembali)</label>
+        <input class="inp-field" type="number" inputmode="numeric" min="0" id="inp-in" value="0" oninput="inpUpdateSaldo()"></div>
     </div>
 
     <div id="inp-exist-wrap" style="display:none"><label class="inp-lbl">Foto yang sudah tersimpan</label><div class="inp-photos" id="inp-exist"></div></div>
@@ -4176,6 +4185,7 @@ async function inpDeleteExisting(name){
   if(!confirm('Hapus foto ini secara permanen dari Supabase?')) return;
   const { error } = await sbClient.storage.from(SB_BUCKET).remove([name]);
   if(error) return inpMsg('Gagal menghapus foto: '+error.message,'err');
+  logActivity("HAPUS_DOK", inpEditRec?`${inpEditRec.nama||inpEditRec.c_code} (${inpEditRec.c_code})`:name, "Hapus foto: "+name);
   await loadDocMap(); inpRenderExisting();
   try{ renderDetail(); }catch(e){}
 }
@@ -4280,6 +4290,18 @@ async function inpSave(){
   const warn=[];
   if(fail) warn.push(`${fail} dari ${nPh} foto gagal diupload (upload ulang lewat tombol ⬆ di detail).`);
   if(moveFail) warn.push(`${moveFail} foto lama belum ikut pindah (${moveMsg}). Jalankan 05_storage_update_policy.sql lalu edit ulang, atau upload ulang fotonya.`);
+  if(rec){
+    const o=rec, ch=[];
+    if(String(o.tanggal).slice(0,10)!==tglStr) ch.push(`tanggal ${String(o.tanggal).slice(0,10)} → ${tglStr}`);
+    if((o.no_mobil||'')!==pol) ch.push(`no pol ${o.no_mobil||'—'} → ${pol}`);
+    if(o.qty_in!==qin) ch.push(`IN ${o.qty_in} → ${qin}`);
+    if(o.qty_out!==qout) ch.push(`OUT ${o.qty_out} → ${qout}`);
+    if(normCode(o.c_code)!==normCode(newCode)) ch.push(`customer ${o.c_code} → ${newCode}`);
+    if(nPh) ch.push(`+${nPh} foto`);
+    logActivity('EDIT_TRX', `${c.name} (${newCode})`, ch.length?ch.join('; '):'tanpa perubahan data', {id:rec.id});
+  } else {
+    logActivity('INPUT_TRX', `${c.name} (${c.code})`, `${tglStr} · ${pol} · IN ${qin} · OUT ${qout}${nPh?` · ${nPh} foto`:''}`);
+  }
   // urutan bertahap: form menutup halus -> jeda singkat -> animasi sukses (data dimuat ulang di belakang layar)
   const reloadP = inpReload();
   await closeInputForm(); await sleep(140);
@@ -4309,6 +4331,7 @@ async function deleteTrx(idx, fromForm){
     if(pe) photoErr=pe.message||String(pe);
   }
   const reloadP = inpReload();
+  logActivity('HAPUS_TRX', `${rec.nama||rec.c_code} (${rec.c_code})`, `${tgl} · ${rec.no_mobil||'—'} · IN ${rec.qty_in} · OUT ${rec.qty_out}${delPhotos?` · ${docs.length} foto ikut dihapus`:''}`, {id:rec.id});
   if(fromForm){ await closeInputForm(); }
   await sleep(140);
   if(photoErr) await reloadP;
@@ -4413,6 +4436,7 @@ async function deleteCust(){
   if(!(await askPassword('Hapus Customer','Tindakan permanen. Masukkan password untuk menghapus '+c.name+'.'))) return;
   const { error } = await sbClient.rpc('pallet_delete_customer', { p_code: old, p_with_trx: withTrx });
   if(error) return custMsg('Gagal menghapus: '+(error.message||error),'err');
+  logActivity('HAPUS_CUST', `${c.name} (${c.code})`, `${n} transaksi ikut terhapus; saldo awal ${c.saldoAwal}`);
   await closeCustForm(); currentDetailCode = null;
   try{ goList(); }catch(e){}
   await sleep(140);
@@ -4431,6 +4455,8 @@ async function saveCust(){
   if(!sbClient) return custMsg('Koneksi Supabase belum siap.','err');
   const { data:ses } = await sbClient.auth.getSession();
   if(!ses||!ses.session) return custMsg('Sesi login Staff habis. Muat ulang halaman lalu login lagi.','err');
+  const beforeC = editing ? custByCode[normCode(custEditOld)] : null;
+  const beforeSnap = beforeC ? {code:beforeC.code,name:beforeC.name,saldo:beforeC.saldoAwal} : null;
   if(editing && !(await askPassword('Simpan Perubahan Customer','Masukkan password untuk menyimpan perubahan customer.'))) return;
   const btn=document.getElementById('cust-save'); btn.disabled=true; btn.textContent='Menyimpan…';
   let photoFail=0;
@@ -4452,6 +4478,15 @@ async function saveCust(){
     return custMsg('Gagal menyimpan: '+(err.message||err),'err');
   }
   btn.disabled=false; btn.textContent=BTN_CUST_TXT();
+  if(editing && beforeSnap){
+    const ch=[];
+    if(normCode(beforeSnap.code)!==normCode(code) || beforeSnap.code!==code) ch.push(`kode ${beforeSnap.code} → ${code}`);
+    if(beforeSnap.name!==name) ch.push(`nama "${beforeSnap.name}" → "${name}"`);
+    if(beforeSnap.saldo!==saldo) ch.push(`saldo awal ${beforeSnap.saldo} → ${saldo}`);
+    logActivity('EDIT_CUST', `${name} (${code})`, ch.length?ch.join('; '):'tanpa perubahan data');
+  } else if(!editing){
+    logActivity('TAMBAH_CUST', `${name} (${code})`, `saldo awal ${saldo}`);
+  }
   const refreshP=(async()=>{ try{ await silentRefresh(); await loadDocMap(); if(currentDetailCode&&custByCode[normCode(currentDetailCode)]) renderDetail(); }catch(e){ console.warn(e); } })();
   await closeCustForm(); await sleep(140);
   if(editing){
@@ -4493,11 +4528,152 @@ async function backupExcel(silent){
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Transaksi'); XLSX.utils.book_append_sheet(wb,ws2,'Customer');
     XLSX.writeFile(wb,`backup-pallet-${inpToday()}.xlsx`);
+    logActivity('BACKUP_EXCEL','Semua data',`${trx.length} transaksi, ${cust.length} customer${silent?' (otomatis sebelum hapus customer)':''}`);
     if(!silent) inpToast(`✓ Backup diunduh (${trx.length} transaksi, ${cust.length} customer)`);
     return true;
   }catch(e){ alert('Backup gagal: '+(e.message||e)); return false; }
   finally{ if(btn) btn.disabled=false; }
 }
+</script>
+
+
+<!-- ===== LOG AKTIVITAS + KUNCI SCROLL HALAMAN BELAKANG ===== -->
+<style>
+html.modal-open{overscroll-behavior:none}
+.inp-card,.log-body{overscroll-behavior:contain}
+#log-overlay{position:fixed;inset:0;z-index:8200;background:rgba(10,8,20,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:16px}
+#log-overlay.on{display:flex;animation:ovIn .22s ease both}
+#log-overlay.closing{animation:ovOut .24s ease both!important}
+#log-overlay.on .log-card{animation:cardIn .26s cubic-bezier(.2,.9,.3,1) both}
+#log-overlay.closing .log-card{animation:cardOut .24s ease both!important}
+.log-card{position:relative;background:var(--surface);color:var(--ink);width:100%;max-width:760px;height:min(88vh,820px);border-radius:18px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden}
+.log-head{padding:18px 54px 10px 18px;border-bottom:1px solid var(--border)}
+.log-head h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 2px}
+.log-tools{display:flex;gap:8px;padding:10px 18px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.log-tools .inp-field{padding:8px 10px;font-size:13.5px;width:auto;flex:1;min-width:130px}
+.log-body{flex:1;overflow:auto;padding:10px 18px 14px}
+.log-item{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-top:8px;background:var(--bg)}
+.log-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.log-badge{font-size:11px;font-weight:700;letter-spacing:.03em;padding:3px 9px;border-radius:999px;text-transform:uppercase}
+.log-badge.ok{background:var(--green-bg);color:var(--green)}
+.log-badge.mid{background:var(--brass-bg);color:var(--brass)}
+.log-badge.bad{background:var(--red-bg);color:var(--red)}
+.log-time{font-size:11.5px;color:var(--ink3)}
+.log-target{font-weight:700;font-size:14px;margin-top:6px;word-break:break-word}
+.log-detail{font-size:12.5px;color:var(--ink2);margin-top:2px;word-break:break-word}
+.log-who{font-size:11.5px;color:var(--ink3);margin-top:5px}
+.log-empty{text-align:center;color:var(--ink3);font-size:13px;padding:36px 10px}
+.log-foot{padding:10px 18px 14px;border-top:1px solid var(--border);display:flex;gap:8px}
+.log-foot button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border2);background:var(--bg);color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer}
+</style>
+<div id="log-overlay">
+  <div class="log-card" role="dialog" aria-label="Log aktivitas">
+    <button type="button" class="inp-x" onclick="closeLog()" aria-label="Tutup">&times;</button>
+    <div class="log-head"><h3>📜 Log Aktivitas</h3><div class="inp-sub" id="log-me" style="margin:0"></div></div>
+    <div class="log-tools">
+      <select class="inp-field" id="log-filter" onchange="logLoad(true)">
+        <option value="">Semua aksi</option>
+        <option value="INPUT_TRX">Input transaksi</option><option value="EDIT_TRX">Edit transaksi</option><option value="HAPUS_TRX">Hapus transaksi</option>
+        <option value="TAMBAH_CUST">Tambah customer</option><option value="EDIT_CUST">Edit customer</option><option value="HAPUS_CUST">Hapus customer</option>
+        <option value="UPLOAD_DOK">Upload dokumen</option><option value="HAPUS_DOK">Hapus dokumen</option><option value="BACKUP_EXCEL">Backup Excel</option>
+      </select>
+      <select class="inp-field" id="log-admin" onchange="logLoad(true)"><option value="">Semua admin</option></select>
+      <input class="inp-field" id="log-search" placeholder="Cari admin / customer / no pol…" oninput="logRender()">
+    </div>
+    <div class="log-body" id="log-body"></div>
+    <div class="log-foot">
+      <button type="button" id="log-more" onclick="logLoad(false)" style="display:none">Muat lebih banyak</button>
+      <button type="button" onclick="logLoad(true)">↻ Segarkan</button>
+      <button type="button" onclick="closeLog()">Tutup</button>
+    </div>
+  </div>
+</div>
+<script>
+/* ---- Pencatat log (tidak pernah memblokir proses utama) ---- */
+const ACT_META={INPUT_TRX:['Input Transaksi','ok'],EDIT_TRX:['Edit Transaksi','mid'],HAPUS_TRX:['Hapus Transaksi','bad'],
+  TAMBAH_CUST:['Tambah Customer','ok'],EDIT_CUST:['Edit Customer','mid'],HAPUS_CUST:['Hapus Customer','bad'],
+  UPLOAD_DOK:['Upload Dokumen','mid'],HAPUS_DOK:['Hapus Dokumen','bad'],BACKUP_EXCEL:['Backup Excel','mid']};
+let _logWarned=false;
+async function logActivity(action,target,ringkasan,extra){
+  try{
+    if(!sbClient) return;
+    const { error } = await sbClient.from('pallet_activity_log').insert({ action, target:target||null, detail:Object.assign({ringkasan:ringkasan||''},extra||{}) });
+    if(error) throw error;
+  }catch(e){
+    console.warn('Log aktivitas gagal dicatat:',e);
+    if(!_logWarned){ _logWarned=true; inpToast('⚠ Aktivitas belum tercatat di log (jalankan 07_activity_log.sql)'); }
+  }
+}
+/* ---- Panel log: dibuka dengan password akun admin yang sedang login ---- */
+let logRows=[], logHasMore=false, _logTok=0, _logMe=''; const LOG_PAGE=100;
+function logEsc(t){ return String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+async function openLog(){
+  if(!(await askPassword('Buka Log Aktivitas','Masukkan password akun Anda untuk melihat riwayat aktivitas admin.'))) return;
+  const { data:ses } = await sbClient.auth.getSession();
+  _logMe = (ses&&ses.session&&ses.session.user&&ses.session.user.email)||'';
+  document.getElementById('log-me').textContent = 'Menampilkan aktivitas semua admin · Anda: ' + (_logMe||'—');
+  document.getElementById('log-admin').innerHTML='<option value="">Semua admin</option>';
+  _logTok++; const o=document.getElementById('log-overlay'); o.classList.remove('closing'); o.classList.add('on');
+  document.getElementById('log-search').value='';
+  logLoad(true);
+}
+function closeLog(){
+  const o=document.getElementById('log-overlay');
+  if(!o.classList.contains('on')||o.classList.contains('closing')) return;
+  const tok=++_logTok; o.classList.add('closing');
+  setTimeout(()=>{ if(tok===_logTok) o.classList.remove('on','closing'); },240);
+}
+async function logLoad(reset){
+  const body=document.getElementById('log-body');
+  if(reset){ logRows=[]; body.innerHTML='<div class="log-empty">Memuat…</div>'; }
+  const off=logRows.length, f=document.getElementById('log-filter').value;
+  try{
+    let q=sbClient.from('pallet_activity_log').select('*').order('created_at',{ascending:false}).range(off,off+LOG_PAGE-1);
+    if(f) q=q.eq('action',f);
+    const fa=document.getElementById('log-admin').value; if(fa) q=q.eq('user_email',fa);
+    const { data, error } = await q;
+    if(error) throw error;
+    logRows=logRows.concat(data||[]); logHasMore=(data||[]).length===LOG_PAGE;
+    // daftar admin untuk filter: dikumpulkan dari semua email yang pernah muncul di log
+    const sel=document.getElementById('log-admin'), cur=sel.value, known=new Set(Array.from(sel.options).map(o=>o.value));
+    logRows.forEach(r=>{ if(r.user_email && !known.has(r.user_email)){ known.add(r.user_email); const o=document.createElement('option'); o.value=r.user_email; o.textContent=r.user_email+(r.user_email===_logMe?' (Anda)':''); sel.appendChild(o); } });
+    sel.value=cur;
+    logRender();
+  }catch(e){
+    body.innerHTML='<div class="log-empty">Gagal memuat log: '+logEsc(e.message||e)+'<br><br>Pastikan 07_activity_log.sql sudah dijalankan di Supabase.</div>';
+  }
+}
+function logRender(){
+  const body=document.getElementById('log-body'), kw=document.getElementById('log-search').value.trim().toLowerCase();
+  const rows=logRows.filter(r=>!kw||[r.user_email,r.target,r.detail&&r.detail.ringkasan,(ACT_META[r.action]||[r.action])[0]].join(' ').toLowerCase().includes(kw));
+  document.getElementById('log-more').style.display=logHasMore?'':'none';
+  if(!rows.length){ body.innerHTML='<div class="log-empty">Belum ada aktivitas yang tercatat.</div>'; return; }
+  body.innerHTML=rows.map(r=>{
+    const m=ACT_META[r.action]||[r.action,'mid'];
+    const t=new Date(r.created_at).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    return `<div class="log-item"><div class="log-top"><span class="log-badge ${m[1]}">${logEsc(m[0])}</span><span class="log-time">${logEsc(t)}</span></div>`+
+      `<div class="log-target">${logEsc(r.target||'—')}</div><div class="log-detail">${logEsc((r.detail&&r.detail.ringkasan)||'')}</div>`+
+      `<div class="log-who">👤 ${logEsc(r.user_email)}${r.user_email===_logMe?' (Anda)':''}</div></div>`;
+  }).join('');
+}
+/* ---- Kunci scroll halaman belakang saat ada jendela/form terbuka ---- */
+let _scrollLocked=false,_lockY=0;
+function updateScrollLock(){
+  const lock=!!document.querySelector('#inp-overlay.on,#cust-overlay.on,#pw-overlay.on,#log-overlay.on,.doc-modal-overlay,#analysis-modal[style*="flex"],#install-modal[style*="flex"]');
+  if(lock===_scrollLocked) return;
+  _scrollLocked=lock;
+  const b=document.body, h=document.documentElement;
+  if(lock){
+    _lockY=window.scrollY||h.scrollTop||0;
+    b.style.position='fixed'; b.style.top=(-_lockY)+'px'; b.style.left='0'; b.style.right='0'; b.style.width='100%';
+    h.classList.add('modal-open');
+  } else {
+    b.style.position=''; b.style.top=''; b.style.left=''; b.style.right=''; b.style.width='';
+    h.classList.remove('modal-open');
+    window.scrollTo({top:_lockY,behavior:'instant'});
+  }
+}
+new MutationObserver(updateScrollLock).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
 </script>
 
 </body>
