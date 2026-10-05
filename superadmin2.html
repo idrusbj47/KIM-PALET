@@ -573,7 +573,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 .doc-delete-btn:hover{background:#a13a29}
 
 /* ===== Preview foto: putar & crop sebelum upload ===== */
-.img-editor-overlay{position:fixed;inset:0;background:rgba(20,18,12,.68);z-index:5000;display:flex;align-items:center;justify-content:center;padding:16px}
+.img-editor-overlay{position:fixed;inset:0;background:rgba(20,18,12,.68);z-index:9200;display:flex;align-items:center;justify-content:center;padding:16px}
 .img-editor-box{background:var(--surface);border-radius:var(--radius-lg);max-width:460px;width:100%;max-height:92vh;overflow-y:auto;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center}
 .img-editor-head{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:10px}
 .img-editor-head h3{font-family:'Fraunces',serif;font-size:16px;color:var(--ink)}
@@ -864,6 +864,14 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       <button class="icon-btn primary" id="btn-input-trx" onclick="openInputForm()" title="Input transaksi pallet baru">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span class="lbl">Input</span>
+      </button>
+      <button class="icon-btn" id="btn-add-cust" onclick="openCustForm()" title="Tambah customer baru">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+        <span class="lbl">Customer</span>
+      </button>
+      <button class="icon-btn" id="btn-backup-xlsx" onclick="backupExcel()" title="Unduh backup transaksi (Excel)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span class="lbl">Backup</span>
       </button>
       <button class="icon-btn icon-only" id="btn-refresh" onclick="refreshData()" title="Perbarui data" aria-label="Perbarui data">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
@@ -1206,7 +1214,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
             <th style="text-align:right">Out</th>
             <th style="text-align:right">Saldo</th>
             <th style="text-align:center;width:64px">Dok. SJ</th>
-            <th class="act-th" style="text-align:center;width:72px">Aksi</th>
+            <th class="act-th" style="text-align:center;width:56px">Aksi</th>
           </tr>
         </thead>
         <tbody id="tbody-detail"></tbody>
@@ -3135,7 +3143,7 @@ function renderDetail(){
       <td class="num-cell">${t.outVal ? fmtNum(t.outVal) : '–'}</td>
       <td class="num-cell">${fmtSaldoHTML(t.saldo)}</td>
       <td class="doc-td">${docCell}</td>
-      <td class="act-td"><div class="act-cell"><button class="act-btn" title="Edit transaksi" onclick="openEditTrx(${t._idx})">✏️</button><button class="act-btn del" title="Hapus transaksi" onclick="deleteTrx(${t._idx})">🗑</button></div></td>
+      <td class="act-td"><div class="act-cell"><button class="act-btn" title="Edit transaksi" onclick="openEditTrx(${t._idx})">✏️</button></div></td>
     </tr>`;
   }).join('');
 
@@ -3924,6 +3932,7 @@ function endTour(){
     <input class="inp-field" id="inp-code" list="inp-code-list" autocomplete="off" autocapitalize="characters" placeholder="mis. 617 atau ketik untuk mencari" oninput="inpOnCode()">
     <datalist id="inp-code-list"></datalist>
     <div class="inp-name" id="inp-name"></div>
+    <a href="#" onclick="openCustForm();return false" style="font-size:12px;color:var(--brass);font-weight:600;display:inline-block;margin-top:4px">+ Customer baru</a>
     <div class="inp-saldo" id="inp-saldo"></div>
 
     <label class="inp-lbl" for="inp-pol">No Pol / No Mobil</label>
@@ -4146,6 +4155,100 @@ async function deleteTrx(idx, fromForm){
   if(photoErr) alert('Transaksi terhapus, tetapi foto gagal dihapus: '+photoErr); else inpToast('✓ Transaksi dihapus');
 }
 function inpDeleteFromForm(){ deleteTrx(null, true); }
+</script>
+
+<!-- ===== TAMBAH CUSTOMER BARU ===== -->
+<style>
+#cust-overlay{position:fixed;inset:0;z-index:8100;background:rgba(10,8,20,.55);display:none;align-items:flex-end;justify-content:center}
+#cust-overlay.on{display:flex}
+@media(min-width:600px){#cust-overlay{align-items:center;padding:20px}}
+</style>
+<div id="cust-overlay" onclick="if(event.target===this)closeCustForm()">
+  <div class="inp-card" role="dialog" aria-label="Tambah customer baru" style="max-height:90vh">
+    <h3>👤 Tambah Customer Baru</h3>
+    <div class="inp-sub">Masuk ke tabel pallet_customers (master customer).</div>
+    <label class="inp-lbl" for="cust-code">Kode Customer (C.Code)</label>
+    <input class="inp-field" id="cust-code" autocomplete="off" autocapitalize="characters" placeholder="mis. 1330 atau 346T">
+    <label class="inp-lbl" for="cust-name">Nama Customer</label>
+    <input class="inp-field" id="cust-name" autocomplete="off" placeholder="mis. PT CONTOH MAKMUR, PT">
+    <label class="inp-lbl" for="cust-saldo">Saldo Awal Pallet</label>
+    <input class="inp-field" type="number" inputmode="numeric" id="cust-saldo" value="0">
+    <div class="inp-msg" id="cust-msg"></div>
+    <div class="inp-actions">
+      <button type="button" onclick="closeCustForm()">Tutup</button>
+      <button type="button" class="inp-save" id="cust-save" onclick="saveCust()">💾 Simpan Customer</button>
+    </div>
+  </div>
+</div>
+<script>
+function custMsg(t,cls){ const m=document.getElementById('cust-msg'); m.textContent=t||''; m.className='inp-msg'+(t?' '+cls:''); }
+function openCustForm(){
+  ['cust-code','cust-name'].forEach(i=>document.getElementById(i).value=''); document.getElementById('cust-saldo').value='0';
+  custMsg(''); document.getElementById('cust-overlay').classList.add('on');
+  setTimeout(()=>document.getElementById('cust-code').focus(),50);
+}
+function closeCustForm(){ document.getElementById('cust-overlay').classList.remove('on'); }
+async function saveCust(){
+  custMsg('');
+  const code=document.getElementById('cust-code').value.trim().toUpperCase();
+  const name=document.getElementById('cust-name').value.trim();
+  const saldo=parseInt(document.getElementById('cust-saldo').value,10)||0;
+  if(!code) return custMsg('Kode customer wajib diisi.','err');
+  if(!name) return custMsg('Nama customer wajib diisi.','err');
+  const ex=custByCode[normCode(code)];
+  if(ex) return custMsg(`Kode ${code} sudah dipakai oleh: ${ex.name}.`,'err');
+  if(!sbClient) return custMsg('Koneksi Supabase belum siap.','err');
+  const { data:ses } = await sbClient.auth.getSession();
+  if(!ses||!ses.session) return custMsg('Sesi login Staff habis. Muat ulang halaman lalu login lagi.','err');
+  const btn=document.getElementById('cust-save'); btn.disabled=true; btn.textContent='Menyimpan…';
+  try{
+    const { data, error } = await sbClient.from('pallet_customers').insert({ code, name, saldo_awal:saldo }).select();
+    if(error) throw error;
+    if(!data||!data.length) throw new Error('Tidak tersimpan (kemungkinan ditolak oleh hak akses / RLS).');
+  }catch(err){
+    btn.disabled=false; btn.textContent='💾 Simpan Customer';
+    return custMsg('Gagal menyimpan: '+(err.message||err),'err');
+  }
+  btn.disabled=false; btn.textContent='💾 Simpan Customer';
+  try{ await silentRefresh(); }catch(e){ console.warn(e); }
+  closeCustForm();
+  // kalau form input sedang terbuka, langsung pilih customer yang baru dibuat
+  if(document.getElementById('inp-overlay').classList.contains('on')){
+    inpFillCodeList(); document.getElementById('inp-code').value=code; inpOnCode();
+  }
+  inpToast('✓ Customer '+name+' ditambahkan');
+}
+
+/* ===== BACKUP EXCEL (semua transaksi) =====
+   Header kolom = nama kolom tabel pallet_transaksi, jadi file ini bisa langsung
+   di-import balik lewat Table Editor Supabase (tanggal ditulis YYYY-MM-DD). */
+function loadSheetJS(){
+  return new Promise((res,rej)=>{
+    if(window.XLSX) return res();
+    const sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    sc.onload=()=>res(); sc.onerror=()=>rej(new Error('Library Excel gagal dimuat. Periksa koneksi internet.'));
+    document.head.appendChild(sc);
+  });
+}
+async function backupExcel(){
+  const btn=document.getElementById('btn-backup-xlsx'); btn.disabled=true;
+  try{
+    await loadSheetJS();
+    const [trx,cust]=await Promise.all([ sbFetchAll('pallet_transaksi','id'), sbFetchAll('pallet_customers','code') ]);
+    const rows=[['tanggal','c_code','no_mobil','qty_in','qty_out','nama']];
+    trx.forEach(t=>rows.push([String(t.tanggal).slice(0,10), t.c_code, t.no_mobil||'', t.qty_in, t.qty_out, t.nama||'']));
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:12},{wch:10},{wch:14},{wch:8},{wch:8},{wch:42}];
+    const rows2=[['code','name','saldo_awal']]; cust.forEach(c=>rows2.push([c.code,c.name,c.saldo_awal]));
+    const ws2=XLSX.utils.aoa_to_sheet(rows2); ws2['!cols']=[{wch:10},{wch:42},{wch:12}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Transaksi'); XLSX.utils.book_append_sheet(wb,ws2,'Customer');
+    XLSX.writeFile(wb,`backup-pallet-${inpToday()}.xlsx`);
+    inpToast(`✓ Backup diunduh (${trx.length} transaksi, ${cust.length} customer)`);
+  }catch(e){ alert('Backup gagal: '+(e.message||e)); }
+  finally{ btn.disabled=false; }
+}
 </script>
 
 </body>
