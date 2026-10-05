@@ -1629,6 +1629,7 @@ async function handleDocUploadChange(e){
     // kalau edited null (gagal decode, mis. HEIC), lanjut pakai file asli seperti sebelumnya
   }
 
+  if (!(await askPassword('Upload Dokumen','Masukkan password untuk mengupload foto dokumen.'))) return;
   const btn = document.querySelector(`.doc-upload-btn[data-key="${pendingDocKey}"]`);
   if (btn) btn.classList.add('uploading');
   const filename = `${pendingDocKey}_${Date.now()}.jpg`;
@@ -1638,6 +1639,7 @@ async function handleDocUploadChange(e){
     if (error) throw error;
     await loadDocMap();
     renderDetail();
+    showSuccess('Dokumen Terupload');
   } catch(err){
     alert('Upload foto gagal: ' + (err.message || err));
     if (btn) btn.classList.remove('uploading');
@@ -3887,6 +3889,136 @@ function endTour(){
     });
   }
 </script>
+
+<!-- ===== KONFIRMASI PASSWORD + ANIMASI SUKSES ===== -->
+<style>
+#pw-overlay{position:fixed;inset:0;z-index:9200;background:rgba(10,8,20,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:20px}
+#pw-overlay.on{display:flex}
+#pw-overlay .inp-card{max-width:380px;border-radius:18px;animation:pwIn .22s ease both}
+@keyframes pwIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+.pw-lock{width:46px;height:46px;border-radius:50%;background:var(--brass-bg);color:var(--brass);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 0 10px}
+#pw-overlay.shake .inp-card{animation:pwShake .4s}
+@keyframes pwShake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+#ok-overlay{position:fixed;inset:0;z-index:9600;background:rgba(10,8,20,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
+#ok-overlay.on{display:flex;animation:okFade .2s ease both}
+#ok-overlay.out{animation:okFadeOut .25s ease both}
+@keyframes okFade{from{opacity:0}to{opacity:1}}
+@keyframes okFadeOut{from{opacity:1}to{opacity:0}}
+.ok-card{background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:24px;padding:28px 34px 24px;min-width:210px;max-width:84vw;text-align:center;box-shadow:0 24px 60px rgba(20,12,40,.4);animation:okPop .45s cubic-bezier(.2,1.2,.3,1) both}
+@keyframes okPop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.ok-svg{width:92px;height:92px;display:block;margin:0 auto 14px;overflow:visible}
+.ok-ring{fill:none;stroke:var(--brass-line);stroke-width:2.5;stroke-dasharray:151;stroke-dashoffset:151;transform:rotate(-90deg);transform-origin:center}
+.ok-fill{fill:url(#okGrad);transform:scale(0);transform-origin:center}
+.ok-check{fill:none;stroke:#fff;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40}
+#ok-overlay.on .ok-ring{animation:okRing .5s ease-out .1s forwards}
+#ok-overlay.on .ok-fill{animation:okFill .38s cubic-bezier(.2,1.3,.4,1) .55s forwards}
+#ok-overlay.on .ok-check{animation:okCheck .35s ease-out .8s forwards}
+@keyframes okRing{to{stroke-dashoffset:0}}
+@keyframes okFill{to{transform:scale(1)}}
+@keyframes okCheck{to{stroke-dashoffset:0}}
+.ok-title{font-family:'Fraunces',serif;font-size:18px;font-weight:600;opacity:0;animation:okFade .3s ease 1s forwards}
+.ok-sub{font-size:12.5px;color:var(--ink3);margin-top:4px;opacity:0;animation:okFade .3s ease 1.1s forwards}
+@media(prefers-reduced-motion:reduce){.ok-ring,.ok-fill,.ok-check{animation-duration:.01s!important}}
+</style>
+<div id="pw-overlay">
+  <div class="inp-card" role="dialog" aria-label="Konfirmasi password" style="padding-top:22px">
+    <button type="button" class="inp-x" onclick="pwResolve(false)" aria-label="Tutup">&times;</button>
+    <div class="pw-lock">🔒</div>
+    <h3 id="pw-title">Konfirmasi Password</h3>
+    <div class="inp-sub" id="pw-desc">Masukkan password akun yang sedang login untuk melanjutkan.</div>
+    <input class="inp-field" type="password" id="pw-input" autocomplete="current-password" placeholder="Password" onkeydown="if(event.key==='Enter')pwSubmit()">
+    <div class="inp-msg" id="pw-msg"></div>
+    <div class="inp-actions">
+      <button type="button" onclick="pwResolve(false)">Batal</button>
+      <button type="button" class="inp-save" id="pw-ok" onclick="pwSubmit()">Konfirmasi</button>
+    </div>
+  </div>
+</div>
+<div id="ok-overlay" onclick="okHide()">
+  <div class="ok-card">
+    <svg class="ok-svg" viewBox="0 0 52 52" aria-hidden="true">
+      <defs><linearGradient id="okGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--brass-mid)"/><stop offset="1" stop-color="var(--brass)"/></linearGradient></defs>
+      <circle class="ok-fill" cx="26" cy="26" r="24"/>
+      <circle class="ok-ring" cx="26" cy="26" r="24"/>
+      <path class="ok-check" d="M15 27.5l7.5 7.5L37.5 18.5"/>
+    </svg>
+    <div class="ok-title" id="ok-title">Berhasil</div>
+    <div class="ok-sub" id="ok-sub"></div>
+  </div>
+</div>
+<script>
+/* ---- Bunyi "ting" (WebAudio, tanpa file suara) ---- */
+let _audioCtx=null;
+function audioUnlock(){ try{ _audioCtx=_audioCtx||new (window.AudioContext||window.webkitAudioContext)(); if(_audioCtx.state==='suspended') _audioCtx.resume(); }catch(e){} }
+function playTing(){
+  try{
+    audioUnlock(); const ac=_audioCtx; if(!ac) return;
+    const t0=ac.currentTime+0.02;
+    [[1318.5,0],[1975.5,0.11]].forEach(([f,d],i)=>{
+      const o=ac.createOscillator(), g=ac.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001,t0+d);
+      g.gain.exponentialRampToValueAtTime(i?0.16:0.2,t0+d+0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+d+(i?1.0:0.7));
+      o.connect(g); g.connect(ac.destination); o.start(t0+d); o.stop(t0+d+1.1);
+    });
+  }catch(e){}
+}
+/* ---- Animasi sukses ala Apple Pay ---- */
+let _okTimer=null;
+function showSuccess(title,sub){
+  const o=document.getElementById('ok-overlay');
+  document.getElementById('ok-title').textContent=title||'Berhasil';
+  document.getElementById('ok-sub').textContent=sub||'';
+  clearTimeout(_okTimer); o.classList.remove('on','out'); void o.offsetWidth; o.classList.add('on');
+  playTing(); if(navigator.vibrate) try{navigator.vibrate(18)}catch(e){}
+  _okTimer=setTimeout(okHide,2000);
+}
+function okHide(){
+  const o=document.getElementById('ok-overlay'); if(!o.classList.contains('on')) return;
+  clearTimeout(_okTimer); o.classList.add('out');
+  setTimeout(()=>o.classList.remove('on','out'),260);
+}
+/* ---- Konfirmasi password akun yang sedang login (Supabase Auth) ---- */
+let _pwDone=null;
+function askPassword(title,desc){
+  audioUnlock();
+  return new Promise(res=>{
+    _pwDone=res;
+    document.getElementById('pw-title').textContent=title||'Konfirmasi Password';
+    document.getElementById('pw-desc').textContent=desc||'Masukkan password akun yang sedang login untuk melanjutkan.';
+    const i=document.getElementById('pw-input'); i.value='';
+    pwMsg(''); document.getElementById('pw-overlay').classList.add('on');
+    setTimeout(()=>i.focus(),60);
+  });
+}
+function pwMsg(t){ const m=document.getElementById('pw-msg'); m.textContent=t||''; m.className='inp-msg'+(t?' err':''); }
+function pwResolve(v){
+  document.getElementById('pw-overlay').classList.remove('on','shake');
+  document.getElementById('pw-input').value='';
+  const f=_pwDone; _pwDone=null; if(f) f(v);
+}
+async function pwSubmit(){
+  const pw=document.getElementById('pw-input').value;
+  if(!pw) return pwMsg('Password belum diisi.');
+  if(!sbClient) return pwMsg('Koneksi Supabase belum siap.');
+  const btn=document.getElementById('pw-ok'); btn.disabled=true; btn.textContent='Memeriksa…';
+  try{
+    const { data:ses } = await sbClient.auth.getSession();
+    const email = ses && ses.session && ses.session.user && ses.session.user.email;
+    if(!email){ pwMsg('Sesi login habis. Muat ulang halaman lalu login lagi.'); return; }
+    const { error } = await sbClient.auth.signInWithPassword({ email, password: pw });
+    if(error){
+      pwMsg('Password salah.');
+      const o=document.getElementById('pw-overlay'); o.classList.remove('shake'); void o.offsetWidth; o.classList.add('shake');
+      document.getElementById('pw-input').select(); return;
+    }
+    pwResolve(true);
+  }catch(e){ pwMsg('Gagal memeriksa password: '+(e.message||e)); }
+  finally{ btn.disabled=false; btn.textContent='Konfirmasi'; }
+}
+</script>
+
 <!-- ===== FORM INPUT TRANSAKSI (Staff / Super Admin) ===== -->
 <style>
 #inp-overlay{position:fixed;inset:0;z-index:8000;background:rgba(10,8,20,.55);display:none;align-items:flex-end;justify-content:center;padding:0}
@@ -4088,6 +4220,7 @@ async function inpSave(){
       && !(rec && palletTrxRaw[t._idx-1] && palletTrxRaw[t._idx-1].id===rec.id));
   if(dup && !confirm('Transaksi yang sama persis (tanggal, no pol, IN, OUT) sudah ada. Tetap simpan?')) return;
   if(!(await inpNeedSession())) return;
+  if(!(await askPassword(rec?'Simpan Perubahan Transaksi':'Simpan Transaksi Baru','Masukkan password untuk menyimpan transaksi.'))) return;
 
   const btn=document.getElementById('inp-save'), btnTxt=btn.textContent; btn.disabled=true; btn.textContent='Menyimpan…';
   const done=()=>{ btn.disabled=false; btn.textContent=btnTxt; };
@@ -4132,15 +4265,14 @@ async function inpSave(){
   if(fail) warn.push(`${fail} dari ${nPh} foto gagal diupload (upload ulang lewat tombol ⬆ di detail).`);
   if(moveFail) warn.push(`${moveFail} foto lama belum ikut pindah (${moveMsg}). Jalankan 05_storage_update_policy.sql lalu edit ulang, atau upload ulang fotonya.`);
   if(rec){
-    inpSetMode(null); document.getElementById('inp-overlay').classList.remove('on');
-    inpResetFields(); inpOnCode();
+    closeInputForm();
     await inpReload();
-    if(warn.length) alert('Perubahan tersimpan, tetapi:\n- '+warn.join('\n- ')); else inpToast('✓ Perubahan tersimpan');
+    if(warn.length) alert('Perubahan tersimpan, tetapi:\n- '+warn.join('\n- ')); else showSuccess('Perubahan Tersimpan', c.name);
   } else {
-    document.getElementById('inp-pol').value=''; document.getElementById('inp-in').value='0'; document.getElementById('inp-out').value='0';
-    inpMsg(warn.length ? 'Transaksi tersimpan, tapi '+warn.join(' ')
-                       : `✓ Tersimpan: ${c.name} · ${pol}${nPh?` · ${nPh} foto`:''}. Silakan input berikutnya.`, warn.length?'err':'ok');
+    closeInputForm();
     await inpReload();
+    if(warn.length) alert('Transaksi tersimpan, tetapi:\n- '+warn.join('\n- '));
+    else showSuccess('Transaksi Tersimpan', `${c.name} · ${pol}${nPh?` · ${nPh} foto`:''}`);
   }
 }
 /* HAPUS transaksi (dari tombol 🗑 di baris tabel, atau tombol Hapus di form edit) */
@@ -4152,6 +4284,7 @@ async function deleteTrx(idx, fromForm){
   if(!ses || !ses.session) return alert('Sesi login Staff habis. Muat ulang halaman lalu login lagi.');
   const tgl=fmtDateShort(inpISO(rec.tanggal));
   if(!confirm(`Hapus transaksi ini secara permanen?\n\n${rec.nama||rec.c_code}\n${tgl} · ${rec.no_mobil||'—'} · IN ${rec.qty_in} · OUT ${rec.qty_out}\n\nTindakan ini tidak bisa dibatalkan.`)) return;
+  if(!(await askPassword('Hapus Transaksi','Masukkan password untuk menghapus transaksi ini secara permanen.'))) return;
   const key=inpRecKey(rec), docs=(key&&docMap[key])||[];
   const delPhotos = docs.length ? confirm(`Transaksi ini punya ${docs.length} foto SJ.\n\nOK = hapus juga fotonya\nBatal = hapus transaksinya saja (foto dibiarkan)`) : false;
   const { data, error } = await sbClient.from('pallet_transaksi').delete().eq('id', rec.id).select();
@@ -4164,7 +4297,7 @@ async function deleteTrx(idx, fromForm){
   }
   if(fromForm){ closeInputForm(); }
   await inpReload();
-  if(photoErr) alert('Transaksi terhapus, tetapi foto gagal dihapus: '+photoErr); else inpToast('✓ Transaksi dihapus');
+  if(photoErr) alert('Transaksi terhapus, tetapi foto gagal dihapus: '+photoErr); else showSuccess('Transaksi Dihapus', rec.nama||rec.c_code);
 }
 function inpDeleteFromForm(){ deleteTrx(null, true); }
 </script>
@@ -4245,11 +4378,12 @@ async function deleteCust(){
     if(prompt(`Ketik kode customer (${c.code}) untuk konfirmasi hapus:`) !== c.code) return custMsg('Kode konfirmasi tidak cocok. Dibatalkan.','err');
     withTrx = true;
   } else if(!confirm(`Hapus customer ${c.name} (${c.code})?`)) return;
+  if(!(await askPassword('Hapus Customer','Tindakan permanen. Masukkan password untuk menghapus '+c.name+'.'))) return;
   const { error } = await sbClient.rpc('pallet_delete_customer', { p_code: old, p_with_trx: withTrx });
   if(error) return custMsg('Gagal menghapus: '+(error.message||error),'err');
   closeCustForm(); currentDetailCode = null;
   try{ goList(); }catch(e){}
-  inpToast('✓ Customer '+c.name+' dihapus');
+  showSuccess('Customer Dihapus', c.name);
 }
 async function saveCust(){
   custMsg('');
@@ -4264,6 +4398,7 @@ async function saveCust(){
   if(!sbClient) return custMsg('Koneksi Supabase belum siap.','err');
   const { data:ses } = await sbClient.auth.getSession();
   if(!ses||!ses.session) return custMsg('Sesi login Staff habis. Muat ulang halaman lalu login lagi.','err');
+  if(!(await askPassword(editing?'Simpan Perubahan Customer':'Simpan Customer Baru','Masukkan password untuk menyimpan data customer.'))) return;
   const btn=document.getElementById('cust-save'); btn.disabled=true; btn.textContent='Menyimpan…';
   let photoFail=0;
   try{
@@ -4288,14 +4423,14 @@ async function saveCust(){
   closeCustForm();
   if(editing){
     if(photoFail) alert('Customer tersimpan, tetapi foto SJ lama belum ikut pindah ke kode baru. Jalankan 05_storage_update_policy.sql lalu coba lagi, atau upload ulang fotonya.');
-    else inpToast('✓ Customer diperbarui');
+    else showSuccess('Customer Diperbarui', name);
     return;
   }
   // kalau form input sedang terbuka, langsung pilih customer yang baru dibuat
   if(document.getElementById('inp-overlay').classList.contains('on')){
     inpFillCodeList(); document.getElementById('inp-code').value=code; inpOnCode();
   }
-  inpToast('✓ Customer '+name+' ditambahkan');
+  showSuccess('Customer Ditambahkan', name);
 }
 
 /* ===== BACKUP EXCEL (semua transaksi) =====
