@@ -1098,6 +1098,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
       <div class="detail-title">
         <h2 id="d-name">—</h2>
         <p><span id="d-code">—</span> · Laporan per <span id="d-reportdate">—</span><span id="d-print-time" class="print-time-tag"></span></p>
+        <button type="button" id="btn-edit-cust" class="act-btn" style="display:none;width:auto;padding:5px 10px;margin-top:6px;font-size:12px;font-weight:600" onclick="openEditCust()">✏️ Edit / Hapus Customer</button>
       </div>
       <div class="detail-side">
         <div class="side-box" id="side-cust-count-box"><div class="n" id="d-cust-count">—</div><div class="l">Σ Customer</div></div>
@@ -3038,6 +3039,7 @@ function renderDetail(){
 
   document.getElementById('d-name').textContent = c.name || '(Tanpa Nama)';
   document.getElementById('d-code').textContent = 'C.Code ' + c.code;
+  const ebtn = document.getElementById('btn-edit-cust'); if(ebtn) ebtn.style.display = (authRole==='admin') ? '' : 'none';
   document.getElementById('d-reportdate').textContent = fmtDateLong(reportDate);
   document.getElementById('d-cust-count').textContent = fmtNum(globalStats.totalCust);
   document.getElementById('d-trx-count').textContent = fmtNum(c.trx.length);
@@ -3891,7 +3893,10 @@ function endTour(){
 #inp-overlay.on{display:flex}
 .inp-card{background:var(--surface);color:var(--ink);width:100%;max-width:520px;max-height:94vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 18px 22px;box-shadow:0 -10px 40px rgba(0,0,0,.3)}
 @media(min-width:600px){#inp-overlay{align-items:center;padding:20px}.inp-card{border-radius:18px}}
-.inp-card h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 2px}
+.inp-card{position:relative}
+.inp-x{position:absolute;top:10px;right:12px;width:32px;height:32px;border:none;background:none;font-size:26px;line-height:1;color:var(--ink3);cursor:pointer;border-radius:8px}
+.inp-x:hover{color:var(--ink);background:var(--bg)}
+.inp-card h3{padding-right:34px;font-family:'Fraunces',serif;font-size:19px;margin:0 0 2px}
 .inp-sub{font-size:12px;color:var(--ink3);margin-bottom:14px}
 .inp-row{display:flex;gap:10px}.inp-row>*{flex:1;min-width:0}
 .inp-lbl{display:block;font-size:11.5px;font-weight:700;letter-spacing:.03em;color:var(--ink2);margin:12px 0 5px;text-transform:uppercase}
@@ -3920,8 +3925,9 @@ function endTour(){
 @media print{.act-th,.act-td{display:none!important}}
 </style>
 <div id="inp-toast"></div>
-<div id="inp-overlay" onclick="if(event.target===this)closeInputForm()">
+<div id="inp-overlay">
   <div class="inp-card" role="dialog" aria-label="Input transaksi pallet">
+    <button type="button" class="inp-x" onclick="closeInputForm()" aria-label="Tutup">&times;</button>
     <h3 id="inp-title">➕ Input Transaksi Pallet</h3>
     <div class="inp-sub" id="inp-subtitle">Tersimpan langsung ke database Supabase.</div>
 
@@ -3985,9 +3991,15 @@ function inpSetMode(rec){
   document.getElementById('inp-del').style.display = rec ? '' : 'none';
   document.getElementById('inp-exist-wrap').style.display = rec ? '' : 'none';
 }
+function inpResetFields(){
+  document.getElementById('inp-tgl').value=inpToday();
+  document.getElementById('inp-code').value='';
+  document.getElementById('inp-pol').value='';
+  document.getElementById('inp-in').value='0';
+  document.getElementById('inp-out').value='0';
+}
 function openInputForm(){
-  inpFillCodeList(); inpSetMode(null); inpClearPhotos();
-  if(!document.getElementById('inp-tgl').value) document.getElementById('inp-tgl').value=inpToday();
+  inpFillCodeList(); inpSetMode(null); inpClearPhotos(); inpResetFields();
   inpMsg(''); inpOnCode();
   document.getElementById('inp-overlay').classList.add('on');
 }
@@ -4003,7 +4015,7 @@ function openEditTrx(idx){
   inpOnCode(); inpRenderExisting();
   document.getElementById('inp-overlay').classList.add('on');
 }
-function closeInputForm(){ document.getElementById('inp-overlay').classList.remove('on'); if(inpEditRec){ inpSetMode(null); inpClearPhotos(); } }
+function closeInputForm(){ document.getElementById('inp-overlay').classList.remove('on'); inpSetMode(null); inpClearPhotos(); inpResetFields(); inpMsg(''); inpOnCode(); }
 function inpRecKey(rec){ return docKeyFor(inpISO(rec.tanggal), rec.no_mobil, normCode(rec.c_code)); }
 function inpRenderExisting(){
   const el=document.getElementById('inp-exist'); if(!inpEditRec){ el.innerHTML=''; return; }
@@ -4121,7 +4133,7 @@ async function inpSave(){
   if(moveFail) warn.push(`${moveFail} foto lama belum ikut pindah (${moveMsg}). Jalankan 05_storage_update_policy.sql lalu edit ulang, atau upload ulang fotonya.`);
   if(rec){
     inpSetMode(null); document.getElementById('inp-overlay').classList.remove('on');
-    ['inp-pol'].forEach(i=>document.getElementById(i).value=''); document.getElementById('inp-in').value='0'; document.getElementById('inp-out').value='0';
+    inpResetFields(); inpOnCode();
     await inpReload();
     if(warn.length) alert('Perubahan tersimpan, tetapi:\n- '+warn.join('\n- ')); else inpToast('✓ Perubahan tersimpan');
   } else {
@@ -4150,7 +4162,7 @@ async function deleteTrx(idx, fromForm){
     const { error:pe } = await sbClient.storage.from(SB_BUCKET).remove(docs.map(d=>d.name));
     if(pe) photoErr=pe.message||String(pe);
   }
-  if(fromForm){ inpSetMode(null); document.getElementById('inp-overlay').classList.remove('on'); }
+  if(fromForm){ closeInputForm(); }
   await inpReload();
   if(photoErr) alert('Transaksi terhapus, tetapi foto gagal dihapus: '+photoErr); else inpToast('✓ Transaksi dihapus');
 }
@@ -4163,10 +4175,11 @@ function inpDeleteFromForm(){ deleteTrx(null, true); }
 #cust-overlay.on{display:flex}
 @media(min-width:600px){#cust-overlay{align-items:center;padding:20px}}
 </style>
-<div id="cust-overlay" onclick="if(event.target===this)closeCustForm()">
+<div id="cust-overlay">
   <div class="inp-card" role="dialog" aria-label="Tambah customer baru" style="max-height:90vh">
-    <h3>👤 Tambah Customer Baru</h3>
-    <div class="inp-sub">Masuk ke tabel pallet_customers (master customer).</div>
+    <button type="button" class="inp-x" onclick="closeCustForm()" aria-label="Tutup">&times;</button>
+    <h3 id="cust-title">👤 Tambah Customer Baru</h3>
+    <div class="inp-sub" id="cust-sub">Masuk ke tabel pallet_customers (master customer).</div>
     <label class="inp-lbl" for="cust-code">Kode Customer (C.Code)</label>
     <input class="inp-field" id="cust-code" autocomplete="off" autocapitalize="characters" placeholder="mis. 1330 atau 346T">
     <label class="inp-lbl" for="cust-name">Nama Customer</label>
@@ -4175,6 +4188,7 @@ function inpDeleteFromForm(){ deleteTrx(null, true); }
     <input class="inp-field" type="number" inputmode="numeric" id="cust-saldo" value="0">
     <div class="inp-msg" id="cust-msg"></div>
     <div class="inp-actions">
+      <button type="button" id="cust-del" onclick="deleteCust()" style="display:none;color:var(--red);border-color:var(--red)">🗑 Hapus</button>
       <button type="button" onclick="closeCustForm()">Tutup</button>
       <button type="button" class="inp-save" id="cust-save" onclick="saveCust()">💾 Simpan Customer</button>
     </div>
@@ -4182,12 +4196,61 @@ function inpDeleteFromForm(){ deleteTrx(null, true); }
 </div>
 <script>
 function custMsg(t,cls){ const m=document.getElementById('cust-msg'); m.textContent=t||''; m.className='inp-msg'+(t?' '+cls:''); }
+let custEditOld = null;   // kode lama customer yang sedang diedit (null = tambah baru)
+function custSetMode(c){
+  custEditOld = c ? c.code : null;
+  document.getElementById('cust-title').textContent = c ? '✏️ Edit Customer' : '👤 Tambah Customer Baru';
+  document.getElementById('cust-sub').textContent = c ? 'Kode/nama/saldo awal berubah di SEMUA tabel terkait sekaligus (lewat fungsi database).' : 'Masuk ke tabel pallet_customers (master customer).';
+  document.getElementById('cust-save').textContent = c ? '💾 Simpan Perubahan' : '💾 Simpan Customer';
+  document.getElementById('cust-del').style.display = c ? '' : 'none';
+}
+function openEditCust(){
+  const c = custByCode[currentDetailCode]; if(!c) return;
+  custSetMode(c);
+  document.getElementById('cust-code').value = c.code;
+  document.getElementById('cust-name').value = c.name;
+  document.getElementById('cust-saldo').value = c.saldoAwal;
+  custMsg(''); document.getElementById('cust-overlay').classList.add('on');
+}
 function openCustForm(){
+  custSetMode(null);
   ['cust-code','cust-name'].forEach(i=>document.getElementById(i).value=''); document.getElementById('cust-saldo').value='0';
   custMsg(''); document.getElementById('cust-overlay').classList.add('on');
   setTimeout(()=>document.getElementById('cust-code').focus(),50);
 }
-function closeCustForm(){ document.getElementById('cust-overlay').classList.remove('on'); }
+function closeCustForm(){ document.getElementById('cust-overlay').classList.remove('on'); custSetMode(null); }
+const BTN_CUST_TXT = () => custEditOld ? '💾 Simpan Perubahan' : '💾 Simpan Customer';
+/* Pindahkan nama file foto SJ ke prefix kode baru (nama file memuat kode customer). */
+async function custMovePhotos(oldNorm, newNorm){
+  let fail = 0;
+  for(const key of Object.keys(docMap)){
+    if(!key.startsWith(oldNorm + '-')) continue;
+    const newKey = newNorm + key.slice(oldNorm.length);
+    for(const d of docMap[key]){
+      const { error } = await sbClient.storage.from(SB_BUCKET).move(d.name, newKey + d.name.slice(key.length));
+      if(error) fail++;
+    }
+  }
+  return fail;
+}
+async function deleteCust(){
+  const old = custEditOld, c = old && custByCode[normCode(old)];
+  if(!c) return;
+  const { data:ses } = await sbClient.auth.getSession();
+  if(!ses||!ses.session) return custMsg('Sesi login Staff habis. Muat ulang halaman lalu login lagi.','err');
+  const n = c.trx.length;
+  let withTrx = false;
+  if(n > 0){
+    if(!confirm(`Customer ${c.name} masih punya ${n} transaksi.\n\nMenghapus customer akan MENGHAPUS PERMANEN semua transaksinya juga.\n\nLanjutkan?`)) return;
+    if(prompt(`Ketik kode customer (${c.code}) untuk konfirmasi hapus:`) !== c.code) return custMsg('Kode konfirmasi tidak cocok. Dibatalkan.','err');
+    withTrx = true;
+  } else if(!confirm(`Hapus customer ${c.name} (${c.code})?`)) return;
+  const { error } = await sbClient.rpc('pallet_delete_customer', { p_code: old, p_with_trx: withTrx });
+  if(error) return custMsg('Gagal menghapus: '+(error.message||error),'err');
+  closeCustForm(); currentDetailCode = null;
+  try{ goList(); }catch(e){}
+  inpToast('✓ Customer '+c.name+' dihapus');
+}
 async function saveCust(){
   custMsg('');
   const code=document.getElementById('cust-code').value.trim().toUpperCase();
@@ -4196,22 +4259,38 @@ async function saveCust(){
   if(!code) return custMsg('Kode customer wajib diisi.','err');
   if(!name) return custMsg('Nama customer wajib diisi.','err');
   const ex=custByCode[normCode(code)];
-  if(ex) return custMsg(`Kode ${code} sudah dipakai oleh: ${ex.name}.`,'err');
+  const editing = custEditOld !== null;
+  if(ex && !(editing && normCode(custEditOld)===normCode(code))) return custMsg(`Kode ${code} sudah dipakai oleh: ${ex.name}.`,'err');
   if(!sbClient) return custMsg('Koneksi Supabase belum siap.','err');
   const { data:ses } = await sbClient.auth.getSession();
   if(!ses||!ses.session) return custMsg('Sesi login Staff habis. Muat ulang halaman lalu login lagi.','err');
   const btn=document.getElementById('cust-save'); btn.disabled=true; btn.textContent='Menyimpan…';
+  let photoFail=0;
   try{
-    const { data, error } = await sbClient.from('pallet_customers').insert({ code, name, saldo_awal:saldo }).select();
-    if(error) throw error;
-    if(!data||!data.length) throw new Error('Tidak tersimpan (kemungkinan ditolak oleh hak akses / RLS).');
+    if(editing){
+      const oldCode=custEditOld;
+      const { error } = await sbClient.rpc('pallet_edit_customer', { p_old_code:oldCode, p_new_code:code, p_new_name:name, p_saldo_awal:saldo });
+      if(error) throw error;
+      if(normCode(oldCode)!==normCode(code)){ try{ photoFail = await custMovePhotos(normCode(oldCode), normCode(code)); }catch(e){ photoFail=-1; } }
+      currentDetailCode = code.toUpperCase();
+      location.hash = 'c/' + encodeURIComponent(code);
+    } else {
+      const { data, error } = await sbClient.from('pallet_customers').insert({ code, name, saldo_awal:saldo }).select();
+      if(error) throw error;
+      if(!data||!data.length) throw new Error('Tidak tersimpan (kemungkinan ditolak oleh hak akses / RLS).');
+    }
   }catch(err){
-    btn.disabled=false; btn.textContent='💾 Simpan Customer';
+    btn.disabled=false; btn.textContent=BTN_CUST_TXT();
     return custMsg('Gagal menyimpan: '+(err.message||err),'err');
   }
-  btn.disabled=false; btn.textContent='💾 Simpan Customer';
-  try{ await silentRefresh(); }catch(e){ console.warn(e); }
+  btn.disabled=false; btn.textContent=BTN_CUST_TXT();
+  try{ await silentRefresh(); await loadDocMap(); if(currentDetailCode&&custByCode[normCode(currentDetailCode)]) renderDetail(); }catch(e){ console.warn(e); }
   closeCustForm();
+  if(editing){
+    if(photoFail) alert('Customer tersimpan, tetapi foto SJ lama belum ikut pindah ke kode baru. Jalankan 05_storage_update_policy.sql lalu coba lagi, atau upload ulang fotonya.');
+    else inpToast('✓ Customer diperbarui');
+    return;
+  }
   // kalau form input sedang terbuka, langsung pilih customer yang baru dibuat
   if(document.getElementById('inp-overlay').classList.contains('on')){
     inpFillCodeList(); document.getElementById('inp-code').value=code; inpOnCode();
