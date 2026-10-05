@@ -1389,6 +1389,21 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
    yang sama dengan layout sheet lama, jadi seluruh logika buildData()
    (saldo, status, MH, dsb.) tidak perlu diubah.
    ============================================================ */
+/* Ringkasan Pallet KIM (Pallet di Gudang KIM, Total Dibongkar, Total Pembelian) sementara memakai
+   CSV Google Sheet (sama seperti RINGKASAN_PALLET.html): kolom S-V (index 18-21) & Y-AF (index 24-31).
+   Saldo Akhir tetap dari Supabase. Kalau CSV gagal dimuat, otomatis jatuh ke tabel Supabase
+   (pallet_stok_kosong_kim & pallet_bongkar). Nanti kalau datanya sudah dirapikan di Supabase,
+   cukup set KIM_SUMMARY_FROM_CSV = false. */
+const CSV_URL = 'https://bpqiejowxcxyeewhoncr.supabase.co/functions/v1/get-pallet-csv';
+const KIM_SUMMARY_FROM_CSV = true;
+let kimSummarySource = '';   // 'csv' | 'supabase' (info debug)
+async function fetchKimCsvRows(){
+  const res = await fetch(`${CSV_URL}?t=${Date.now()}`, { cache:'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const rows = parseCSVText(await res.text());
+  if (!rows || rows.length < 4) throw new Error('isi CSV kosong / tidak lengkap');
+  return rows;
+}
 let palletOpnRaw = [];   // baris mentah pallet_opname (terbaru dulu) — punya id
 let palletTrxRaw = [];   // baris mentah pallet_transaksi (punya id) — index = _idx-1 pada buildData
 async function sbFetchAll(table, orderCol){
@@ -1410,18 +1425,22 @@ function isoToSheet(iso, sep){            // '2026-01-05' -> '5-Jan-26' / '5/Jan
   return `${parseInt(p[2], 10)}${sep}${MONTH_ID_SHORT[parseInt(p[1], 10) - 1]}${sep}${p[0].slice(2)}`;
 }
 async function fetchPalletRows(){
-  const [cust, trx, opn, kim, bkr] = await Promise.all([
+  const [cust, trx, opn, csvRows] = await Promise.all([
     sbFetchAll('pallet_customers', 'code'),
     sbFetchAll('pallet_transaksi', 'id'),
     sbFetchAll('pallet_opname', 'id'),
-    sbFetchAll('pallet_stok_kosong_kim', 'id'),
-    sbFetchAll('pallet_bongkar', 'id')
+    KIM_SUMMARY_FROM_CSV ? fetchKimCsvRows().catch(e => { console.warn('CSV ringkasan KIM gagal, pakai tabel Supabase:', e); return null; }) : Promise.resolve(null)
   ]);
+  let kim = [], bkr = [];
+  if (!csvRows){
+    [kim, bkr] = await Promise.all([ sbFetchAll('pallet_stok_kosong_kim', 'id'), sbFetchAll('pallet_bongkar', 'id') ]);
+    kimSummarySource = 'supabase';
+  } else kimSummarySource = 'csv';
   palletTrxRaw = trx;
   opn.sort((a,b)=> String(b.tgl_opname||'').localeCompare(String(a.tgl_opname||'')) || ((b.id||0)-(a.id||0)));
   palletOpnRaw = opn;
   const W = 32;
-  const n = Math.max(trx.length + 1, cust.length + 1, opn.length + 1, kim.length + 2, bkr.length + 3, 4);
+  const n = Math.max(trx.length + 1, cust.length + 1, opn.length + 1, kim.length + 2, bkr.length + 3, csvRows ? csvRows.length : 0, 4);
   const rows = Array.from({ length: n }, () => Array(W).fill(''));
   const s = v => (v === null || v === undefined) ? '' : String(v);
   trx.forEach((t, i) => { const r = rows[i + 1];
@@ -1437,6 +1456,10 @@ async function fetchPalletRows(){
   bkr.forEach((b, i) => { const r = rows[i + 3];
     r[24] = s(b.no); r[25] = s(b.customer); r[26] = s(b.code);
     r[27] = s(b.y2023); r[28] = s(b.y2024); r[29] = s(b.y2025); r[30] = s(b.y2026); r[31] = s(b.total); });
+  if (csvRows){   // ambil HANYA kolom S-V (18-21) & Y-AF (24-31) dari CSV; kolom lain tetap dari Supabase
+    csvRows.forEach((cr, i) => { if (!cr) return;
+      for (let k = 18; k <= 31; k++) if (k < 22 || k > 23) rows[i][k] = (cr[k] === undefined || cr[k] === null) ? '' : String(cr[k]); });
+  }
   return rows;
 }
 
