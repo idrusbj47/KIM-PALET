@@ -602,6 +602,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
      memakainya untuk otentikasi sungguhan (Supabase Auth), bukan sekadar pengecekan
      password di JS browser. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 
 <!-- ===== GERBANG LOGIN STAFF (Supabase Auth) ===== -->
 <div id="sa-gate" style="position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:#14101f;padding:20px">
@@ -860,6 +861,10 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 
     <!-- Grup 2: aksi data (tidak mengubah sesi) -->
     <div class="hdr-group">
+      <button class="icon-btn primary" id="btn-input-trx" onclick="openInputForm()" title="Input transaksi pallet baru">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="lbl">Input</span>
+      </button>
       <button class="icon-btn icon-only" id="btn-refresh" onclick="refreshData()" title="Perbarui data" aria-label="Perbarui data">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
       </button>
@@ -932,7 +937,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
   <div id="err-box" class="err-box" style="display:none"></div>
   <div id="loading" class="state-box">
     <div class="spinner"></div>
-    <p>Mengambil data pallet dari spreadsheet…</p>
+    <p>Mengambil data pallet dari database…</p>
   </div>
 
   <!-- ===== VIEW: LIST ===== -->
@@ -1288,11 +1293,59 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 /* ============================================================
    KONFIGURASI
    ============================================================ */
-/* CSV data diambil lewat "jembatan" Supabase Edge Function, bukan langsung dari
-   Google Sheets — supaya link Google Sheets aslinya tidak pernah terlihat di
-   browser (Network tab / View Source). Link asli disimpan sebagai secret di
-   server Supabase (PALLET_CSV_URL), dibaca oleh function get-pallet-csv. */
-const CSV_URL = 'https://bpqiejowxcxyeewhoncr.supabase.co/functions/v1/get-pallet-csv';
+/* ============================================================
+   SUMBER DATA: tabel Supabase (menggantikan Google Sheet / get-pallet-csv).
+   Tabel: pallet_customers, pallet_transaksi, pallet_opname, pallet_stok_kosong_kim, pallet_bongkar.
+   fetchPalletRows() membaca semua tabel lalu menyusunnya ke bentuk baris
+   yang sama dengan layout sheet lama, jadi seluruh logika buildData()
+   (saldo, status, MH, dsb.) tidak perlu diubah.
+   ============================================================ */
+async function sbFetchAll(table, orderCol){
+  if (!sbClient) throw new Error('Supabase client belum siap.');
+  const PAGE = 1000; let from = 0; const out = [];
+  while (true){
+    const { data, error } = await sbClient.from(table).select('*').order(orderCol, { ascending: true }).range(from, from + PAGE - 1);
+    if (error) throw error;
+    out.push(...(data || []));
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  return out;
+}
+function isoToSheet(iso, sep){            // '2026-01-05' -> '5-Jan-26' / '5/Jan/26'
+  if (!iso) return '';
+  const p = String(iso).slice(0, 10).split('-');
+  if (p.length !== 3) return '';
+  return `${parseInt(p[2], 10)}${sep}${MONTH_ID_SHORT[parseInt(p[1], 10) - 1]}${sep}${p[0].slice(2)}`;
+}
+async function fetchPalletRows(){
+  const [cust, trx, opn, kim, bkr] = await Promise.all([
+    sbFetchAll('pallet_customers', 'code'),
+    sbFetchAll('pallet_transaksi', 'id'),
+    sbFetchAll('pallet_opname', 'id'),
+    sbFetchAll('pallet_stok_kosong_kim', 'id'),
+    sbFetchAll('pallet_bongkar', 'id')
+  ]);
+  const W = 32;
+  const n = Math.max(trx.length + 1, cust.length + 1, opn.length + 1, kim.length + 2, bkr.length + 3, 4);
+  const rows = Array.from({ length: n }, () => Array(W).fill(''));
+  const s = v => (v === null || v === undefined) ? '' : String(v);
+  trx.forEach((t, i) => { const r = rows[i + 1];
+    r[0] = isoToSheet(t.tanggal, '-'); r[1] = s(t.c_code); r[2] = s(t.no_mobil);
+    r[3] = s(t.qty_in); r[4] = s(t.qty_out); r[6] = s(t.nama); });
+  cust.forEach((c, i) => { const r = rows[i + 1]; r[8] = s(c.code); r[9] = s(c.name); r[10] = s(c.saldo_awal); });
+  opn.forEach((o, i) => { const r = rows[i + 1];
+    r[12] = s(o.code); r[13] = s(o.nama); r[14] = isoToSheet(o.tgl_opname, '/');
+    r[15] = (o.qty === null || o.qty === undefined) ? '' : (s(o.qty) + (o.catatan ? ' (' + o.catatan + ')' : ''));
+    r[16] = s(o.link_dokumen); });
+  kim.forEach((k, i) => { const r = rows[i + 2];
+    r[18] = s(k.code); r[19] = s(k.nama); r[20] = s(k.qty); r[21] = s(k.total_beli); });
+  bkr.forEach((b, i) => { const r = rows[i + 3];
+    r[24] = s(b.no); r[25] = s(b.customer); r[26] = s(b.code);
+    r[27] = s(b.y2023); r[28] = s(b.y2024); r[29] = s(b.y2025); r[30] = s(b.y2026); r[31] = s(b.total); });
+  return rows;
+}
+
   
 const MONTH_ID_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const MONTH_ID_LONG  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -1476,8 +1529,8 @@ function drawWatermark(ctx, width, height, text){
 }
 
 async function compressImage(file, targetBytes = 500 * 1024, maxDim = 1600){
-  // Kalau bukan file gambar (mis. HEIC yang browser tidak bisa render, atau PDF),
-  // lewati kompresi dan kirim apa adanya — daripada gagal total.
+  // Kalau bukan file gambar (mis. PDF), lewati kompresi dan kirim apa adanya —
+  // daripada gagal total. HEIC sudah dikonversi ke JPEG sebelum sampai sini.
   if (!file.type.startsWith('image/')) return file;
 
   let img;
@@ -1515,10 +1568,44 @@ async function compressImage(file, targetBytes = 500 * 1024, maxDim = 1600){
   return blob || file;
 }
 
+/* Deteksi file HEIC/HEIF (foto default iPhone, dan sebagian Android/Samsung
+   dengan mode "High Efficiency"). Sebagian browser mengirim MIME type kosong
+   untuk HEIC, jadi cek juga dari ekstensi nama filenya. */
+function isHeicFile(file){
+  const type = (file.type || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  return type === 'image/heic' || type === 'image/heif' ||
+         name.endsWith('.heic') || name.endsWith('.heif');
+}
+
+/* Convert HEIC/HEIF ke JPEG dulu di browser (pakai heic2any), karena <img> dan
+   <canvas> browser tidak bisa membaca HEIC sama sekali. Tanpa ini, foto dari
+   HP yang settingan kameranya "High Efficiency" akan gagal tampil setelah
+   diupload walau nama filenya dipaksa .jpg. */
+async function convertHeicToJpeg(file){
+  try{
+    const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 });
+    const blob = Array.isArray(result) ? result[0] : result;
+    // Bungkus jadi File supaya nama & type-nya rapi untuk proses selanjutnya.
+    return new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+  } catch(e){
+    console.error('Gagal konversi HEIC:', e);
+    alert('Foto format HEIC ini gagal dikonversi otomatis. Coba ganti setting kamera HP ke "Most Compatible" (bukan "High Efficiency"), lalu upload ulang.');
+    return null;
+  }
+}
+
 async function handleDocUploadChange(e){
-  const file = e.target.files[0];
+  let file = e.target.files[0];
   e.target.value = '';
   if (!file || !pendingDocKey || !sbClient) return;
+
+  // Kalau HEIC/HEIF, convert ke JPEG dulu sebelum masuk ke editor & compressor.
+  if (isHeicFile(file)){
+    const converted = await convertHeicToJpeg(file);
+    if (!converted) return; // gagal convert, sudah dikasih tahu ke user
+    file = converted;
+  }
 
   // Tampilkan preview dulu supaya foto bisa diputar/di-crop sebelum benar-benar
   // diupload — berguna kalau posisi kamera miring atau ada bagian yang mau dibuang.
@@ -1939,7 +2026,7 @@ function fmtSignedNum(n){
    PARSING DATA UTAMA
    ============================================================ */
 function buildData(text){
-  const rows = parseCSVText(text);
+  const rows = Array.isArray(text) ? text : parseCSVText(text);
   custByCode = {};
   let firstDate = null, lastDate = null;
 
@@ -2206,9 +2293,7 @@ async function refreshLoginCustomerList(){
   statusEl.style.display = 'none';
   try {
     const t = new Date().getTime();
-    const res = await fetch(`${CSV_URL}?t=${t}`);
-    if (!res.ok) throw new Error('Gagal terhubung ke server data.');
-    const text = await res.text();
+    const text = await fetchPalletRows();
     buildData(text);
     if (customers.length === 0) throw new Error('Daftar customer masih kosong, coba lagi sebentar.');
     populateListMonthFilter();
@@ -3067,9 +3152,7 @@ async function init(){
   document.getElementById('period-badge').style.display = 'none';
   try {
     const t = new Date().getTime();
-    const res = await fetch(`${CSV_URL}?t=${t}`);
-    if (!res.ok) throw new Error('Gagal menarik data dari Google Sheets.');
-    const text = await res.text();
+    const text = await fetchPalletRows();
     buildData(text);
     if (customers.length === 0) throw new Error('Data tidak dapat diproses. Periksa struktur kolom pada spreadsheet.');
 
@@ -3118,9 +3201,7 @@ async function silentRefresh(){
   btn.classList.add('spinning');
   try {
     const t = new Date().getTime();
-    const res = await fetch(`${CSV_URL}?t=${t}`);
-    if (!res.ok) return;
-    const text = await res.text();
+    const text = await fetchPalletRows();
     buildData(text);
     if (customers.length === 0) return;
     updateReportDateBadge();
@@ -3792,5 +3873,169 @@ function endTour(){
     });
   }
 </script>
+<!-- ===== FORM INPUT TRANSAKSI (Staff / Super Admin) ===== -->
+<style>
+#inp-overlay{position:fixed;inset:0;z-index:8000;background:rgba(10,8,20,.55);display:none;align-items:flex-end;justify-content:center;padding:0}
+#inp-overlay.on{display:flex}
+.inp-card{background:var(--surface);color:var(--ink);width:100%;max-width:520px;max-height:94vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 18px 22px;box-shadow:0 -10px 40px rgba(0,0,0,.3)}
+@media(min-width:600px){#inp-overlay{align-items:center;padding:20px}.inp-card{border-radius:18px}}
+.inp-card h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 2px}
+.inp-sub{font-size:12px;color:var(--ink3);margin-bottom:14px}
+.inp-row{display:flex;gap:10px}.inp-row>*{flex:1;min-width:0}
+.inp-lbl{display:block;font-size:11.5px;font-weight:700;letter-spacing:.03em;color:var(--ink2);margin:12px 0 5px;text-transform:uppercase}
+.inp-field{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border2);background:var(--bg);color:var(--ink);font-size:15px;font-family:inherit}
+.inp-field:focus{outline:none;border-color:var(--brass);box-shadow:0 0 0 3px var(--brass-bg)}
+.inp-name{font-size:12.5px;margin-top:6px;min-height:18px;font-weight:600}
+.inp-name.ok{color:var(--green)}.inp-name.bad{color:var(--red)}
+.inp-saldo{font-size:12px;color:var(--ink2);background:var(--brass-bg);border-radius:10px;padding:8px 11px;margin-top:12px;display:none}
+.inp-photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.inp-ph{position:relative;width:70px;height:70px;border-radius:10px;overflow:hidden;border:1px solid var(--border2)}
+.inp-ph img{width:100%;height:100%;object-fit:cover}
+.inp-ph button{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;font-size:12px;cursor:pointer;line-height:1}
+.inp-btns{display:flex;gap:8px;margin-top:6px}
+.inp-btns button,.inp-actions button{padding:11px 12px;border-radius:10px;border:1px solid var(--border2);background:var(--bg);color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer;flex:1}
+.inp-actions{display:flex;gap:8px;margin-top:18px}
+.inp-actions .inp-save{background:linear-gradient(135deg,var(--brass-mid),var(--brass));color:#fff;border-color:var(--brass);flex:2}
+.inp-actions button:disabled{opacity:.55;pointer-events:none}
+.inp-msg{margin-top:12px;font-size:13px;border-radius:10px;padding:9px 12px;display:none}
+.inp-msg.ok{display:block;background:var(--green-bg);color:var(--green)}
+.inp-msg.err{display:block;background:var(--red-bg);color:var(--red)}
+</style>
+<div id="inp-overlay" onclick="if(event.target===this)closeInputForm()">
+  <div class="inp-card" role="dialog" aria-label="Input transaksi pallet">
+    <h3>➕ Input Transaksi Pallet</h3>
+    <div class="inp-sub">Tersimpan langsung ke database Supabase.</div>
+
+    <label class="inp-lbl" for="inp-tgl">Tanggal</label>
+    <input class="inp-field" type="date" id="inp-tgl">
+
+    <label class="inp-lbl" for="inp-code">Kode Customer (C.Code)</label>
+    <input class="inp-field" id="inp-code" list="inp-code-list" autocomplete="off" autocapitalize="characters" placeholder="mis. 617 atau ketik untuk mencari" oninput="inpOnCode()">
+    <datalist id="inp-code-list"></datalist>
+    <div class="inp-name" id="inp-name"></div>
+    <div class="inp-saldo" id="inp-saldo"></div>
+
+    <label class="inp-lbl" for="inp-pol">No Pol / No Mobil</label>
+    <input class="inp-field" id="inp-pol" autocapitalize="characters" autocomplete="off" placeholder="mis. B9320KXT (atau RESET / OPNAME)" oninput="this.value=this.value.toUpperCase();inpUpdateSaldo()">
+
+    <div class="inp-row">
+      <div><label class="inp-lbl" for="inp-in">Qty IN (kembali)</label>
+        <input class="inp-field" type="number" inputmode="numeric" min="0" id="inp-in" value="0" oninput="inpUpdateSaldo()"></div>
+      <div><label class="inp-lbl" for="inp-out">Qty OUT (kirim)</label>
+        <input class="inp-field" type="number" inputmode="numeric" min="0" id="inp-out" value="0" oninput="inpUpdateSaldo()"></div>
+    </div>
+
+    <label class="inp-lbl">Dokumen / Foto Surat Jalan <span style="text-transform:none;font-weight:500;color:var(--ink3)">(opsional, bisa lebih dari satu)</span></label>
+    <div class="inp-btns">
+      <button type="button" onclick="inpPickPhoto(true)">📷 Kamera</button>
+      <button type="button" onclick="inpPickPhoto(false)">🖼️ Galeri</button>
+    </div>
+    <div class="inp-photos" id="inp-photos"></div>
+    <input type="file" id="inp-file" accept="image/*" style="display:none" onchange="inpAddPhoto(event)">
+    <input type="file" id="inp-file-cam" accept="image/*" capture="environment" style="display:none" onchange="inpAddPhoto(event)">
+
+    <div class="inp-msg" id="inp-msg"></div>
+    <div class="inp-actions">
+      <button type="button" onclick="closeInputForm()">Tutup</button>
+      <button type="button" class="inp-save" id="inp-save" onclick="inpSave()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+<script>
+/* Form input transaksi: insert ke tabel `pallet_transaksi` + upload foto SJ ke bucket
+   dokumentasi-sj dengan format nama yang sama seperti tombol ⬆ di tabel detail. */
+let inpPhotos = []; // [{blob, url}]
+function inpToday(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+function inpCust(){ const v=document.getElementById('inp-code').value.trim(); return v ? custByCode[normCode(v)] : null; }
+function inpMsg(t,cls){ const m=document.getElementById('inp-msg'); m.textContent=t||''; m.className='inp-msg'+(t?' '+cls:''); }
+function openInputForm(){
+  const dl=document.getElementById('inp-code-list');
+  dl.innerHTML=customers.slice().sort((a,b)=>a.name.localeCompare(b.name))
+    .map(c=>`<option value="${String(c.code).replace(/"/g,'&quot;')}" label="${c.name.replace(/"/g,'&quot;')}"></option>`).join('');
+  if(!document.getElementById('inp-tgl').value) document.getElementById('inp-tgl').value=inpToday();
+  inpMsg(''); inpOnCode();
+  document.getElementById('inp-overlay').classList.add('on');
+}
+function closeInputForm(){ document.getElementById('inp-overlay').classList.remove('on'); }
+function inpOnCode(){
+  const el=document.getElementById('inp-name'), c=inpCust(), raw=document.getElementById('inp-code').value.trim();
+  if(c){ el.textContent='✓ '+c.name; el.className='inp-name ok'; }
+  else if(raw){ el.textContent='⚠ Kode tidak ditemukan di master customer'; el.className='inp-name bad'; }
+  else { el.textContent=''; el.className='inp-name'; }
+  inpUpdateSaldo();
+}
+function inpUpdateSaldo(){
+  const el=document.getElementById('inp-saldo'), c=inpCust();
+  if(!c){ el.style.display='none'; return; }
+  const i=parseInt(document.getElementById('inp-in').value,10)||0, o=parseInt(document.getElementById('inp-out').value,10)||0;
+  el.style.display='block';
+  el.innerHTML=`Saldo saat ini <b>${fmtSaldo(c.saldoAkhir)}</b> → setelah input <b>${fmtSaldo(c.saldoAkhir+o-i)}</b>`;
+}
+function inpPickPhoto(cam){ document.getElementById(cam?'inp-file-cam':'inp-file').click(); }
+async function inpAddPhoto(e){
+  let file=e.target.files[0]; e.target.value='';
+  if(!file) return;
+  if(isHeicFile(file)){ const cv=await convertHeicToJpeg(file); if(!cv) return; file=cv; }
+  let src=file;
+  if(file.type.startsWith('image/')){
+    const ed=await openImageEditor(file);
+    if(ed==='CANCEL') return;
+    if(ed) src=ed;
+  }
+  inpPhotos.push({blob:src,url:URL.createObjectURL(src)});
+  inpRenderPhotos();
+}
+function inpRenderPhotos(){
+  document.getElementById('inp-photos').innerHTML=inpPhotos.map((p,i)=>
+    `<div class="inp-ph"><img src="${p.url}" alt="foto ${i+1}"><button type="button" onclick="inpRemovePhoto(${i})" aria-label="Hapus foto">×</button></div>`).join('');
+}
+function inpRemovePhoto(i){ URL.revokeObjectURL(inpPhotos[i].url); inpPhotos.splice(i,1); inpRenderPhotos(); }
+async function inpSave(){
+  inpMsg('');
+  const c=inpCust(), tglStr=document.getElementById('inp-tgl').value;
+  const pol=document.getElementById('inp-pol').value.trim().toUpperCase();
+  const qin=parseInt(document.getElementById('inp-in').value,10)||0, qout=parseInt(document.getElementById('inp-out').value,10)||0;
+  if(!tglStr) return inpMsg('Tanggal wajib diisi.','err');
+  if(!c) return inpMsg('Pilih kode customer yang ada di master.','err');
+  if(!pol) return inpMsg('No Pol wajib diisi.','err');
+  if(qin<0||qout<0) return inpMsg('Qty tidak boleh negatif.','err');
+  const marker=(pol==='RESET'||pol==='OPNAME');
+  if(qin===0&&qout===0&&!marker) return inpMsg('Isi Qty IN atau Qty OUT.','err');
+  const [y,m,d]=tglStr.split('-').map(Number), dateObj=new Date(y,m-1,d);
+  const dup=c.trx.some(t=>t.date.getTime()===dateObj.getTime()&&String(t.noPol).trim().toUpperCase()===pol&&t.inVal===qin&&t.outVal===qout);
+  if(dup && !confirm('Transaksi yang sama persis (tanggal, no pol, IN, OUT) sudah ada. Tetap simpan?')) return;
+  if(!sbClient) return inpMsg('Koneksi Supabase belum siap.','err');
+  const { data:ses } = await sbClient.auth.getSession();
+  if(!ses || !ses.session) return inpMsg('Sesi login Staff habis. Muat ulang halaman lalu login lagi.','err');
+
+  const btn=document.getElementById('inp-save'); btn.disabled=true; btn.textContent='Menyimpan…';
+  try{
+    const { error } = await sbClient.from('pallet_transaksi').insert({ tanggal:tglStr, c_code:c.code, no_mobil:pol, qty_in:qin, qty_out:qout, nama:c.name });
+    if(error) throw error;
+  }catch(err){
+    btn.disabled=false; btn.textContent='💾 Simpan';
+    return inpMsg('Gagal menyimpan transaksi: '+(err.message||err),'err');
+  }
+  let fail=0;
+  const key=docKeyFor(dateObj, pol, normCode(c.code));
+  if(inpPhotos.length && key){
+    for(let i=0;i<inpPhotos.length;i++){
+      try{
+        const comp=await compressImage(inpPhotos[i].blob);
+        const { error } = await sbClient.storage.from(SB_BUCKET).upload(`${key}_${Date.now()}${i}.jpg`, comp, { contentType:'image/jpeg' });
+        if(error) throw error;
+      }catch(e){ console.error(e); fail++; }
+    }
+  }
+  const nPh=inpPhotos.length;
+  inpPhotos.forEach(p=>URL.revokeObjectURL(p.url)); inpPhotos=[]; inpRenderPhotos();
+  document.getElementById('inp-pol').value=''; document.getElementById('inp-in').value='0'; document.getElementById('inp-out').value='0';
+  btn.disabled=false; btn.textContent='💾 Simpan';
+  inpMsg(fail?`Transaksi tersimpan, tapi ${fail} dari ${nPh} foto gagal diupload — upload ulang lewat tombol ⬆ di detail customer.`
+             :`✓ Tersimpan: ${c.name} · ${pol}${nPh?` · ${nPh} foto`:''}. Silakan input berikutnya.`, fail?'err':'ok');
+  try{ await silentRefresh(); await loadDocMap(); if(currentDetailCode&&custByCode[currentDetailCode]) renderDetail(); inpUpdateSaldo(); }catch(e){ console.warn(e); }
+}
+</script>
+
 </body>
 </html>
