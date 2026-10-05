@@ -1915,6 +1915,7 @@ async function deleteDocPhoto(key, name){
     logActivity('HAPUS_DOK', key, (key.startsWith('OPNAME-') ? 'Hapus foto dokumen OPNAME: ' : 'Hapus foto: ') + name);
     await loadDocMap();
     renderDetail();
+    showSuccess('Foto Dihapus');
     const grid = document.getElementById('doc-modal-grid');
     if (grid && grid.dataset.key === key){
       const docs = docMap[key] || [];
@@ -4117,6 +4118,11 @@ async function pwSubmit(){
 
     <div class="inp-sub" id="inp-pol-hint" style="display:none;margin:6px 0 0"></div>
 
+    <div id="inp-ket-wrap" style="display:none">
+      <label class="inp-lbl" for="inp-ket">Keterangan Opname <span style="text-transform:none;font-weight:500;color:var(--ink3)">(tampil di card Opname Terakhir &amp; Riwayat Opname)</span></label>
+      <input class="inp-field" id="inp-ket" autocomplete="off" maxlength="200" placeholder="mis. Proses persetujuan data di Management">
+    </div>
+
     <div class="inp-row">
       <div><label class="inp-lbl" for="inp-out">Qty OUT (kirim)</label>
         <input class="inp-field" type="number" inputmode="numeric" min="0" id="inp-out" value="0" oninput="inpUpdateSaldo()"></div>
@@ -4170,6 +4176,7 @@ function inpResetFields(){
   document.getElementById('inp-pol').value='';
   document.getElementById('inp-in').value='0';
   document.getElementById('inp-out').value='0';
+  document.getElementById('inp-ket').value='';
 }
 function openInputForm(){
   _inpTok++; document.getElementById('inp-overlay').classList.remove('closing');
@@ -4187,6 +4194,8 @@ function openEditTrx(idx){
   document.getElementById('inp-pol').value = rec.no_mobil || '';
   document.getElementById('inp-in').value = rec.qty_in;
   document.getElementById('inp-out').value = rec.qty_out;
+  const _oe = inpOpnRowFor(rec);
+  document.getElementById('inp-ket').value = _oe ? (_oe.catatan||'') : '';
   inpOnCode(); inpRenderExisting();
   document.getElementById('inp-overlay').classList.add('on');
 }
@@ -4202,6 +4211,41 @@ function inpKeyFor(dateObj, pol, code){
   return docKeyFor(dateObj, pol, normCode(code));
 }
 function inpKeySuffix(key, name){ return key && key.startsWith('OPNAME-') ? opnSuffix(name) : name.slice(key.length); }
+/* ---- Sinkron ke tabel pallet_opname (khusus No Pol OPNAME) ---- */
+function inpIsOpn(pol){ return String(pol||'').trim().toUpperCase()==='OPNAME'; }
+function inpOpnRowFor(rec){      // baris pallet_opname milik transaksi OPNAME ini (kode + tanggal sama)
+  if(!rec || !inpIsOpn(rec.no_mobil)) return null;
+  const d=String(rec.tanggal).slice(0,10);
+  return opnHistRows(rec.c_code).find(o=>String(o.tgl_opname).slice(0,10)===d) || null;
+}
+async function inpSyncOpname(rec, c, newCode, tglStr, pol, ket){
+  // return pesan error ('' = sukses). rec = transaksi lama (null kalau input baru)
+  const oldRow = rec ? inpOpnRowFor(rec) : null;
+  if(!inpIsOpn(pol)){
+    if(oldRow){ const { error } = await sbClient.from('pallet_opname').delete().eq('id', oldRow.id); if(error) return error.message||String(error); }
+    return '';
+  }
+  // QTY = saldo setelah baris OPNAME, dibaca dari data yang sudah dimuat ulang
+  const cu=custByCode[normCode(newCode)];
+  const t=cu && (cu.trx||[]).find(x=>x.marker==='opname' && x.date && x.date.getTime()===inpISO(tglStr).getTime());
+  const qty = t ? t.saldo : null;
+  const payload={ code:newCode, nama:c.name, tgl_opname:tglStr, qty:qty, catatan:ket||null };
+  if(oldRow){
+    const { data, error } = await sbClient.from('pallet_opname').update(payload).eq('id', oldRow.id).select();
+    if(error) return error.message||String(error);
+    if(!data||!data.length) return 'Tidak ada baris pallet_opname yang berubah (kemungkinan ditolak oleh RLS).';
+  } else {
+    const ex=opnHistRows(newCode).find(o=>String(o.tgl_opname).slice(0,10)===tglStr);   // tanggal sama sudah ada -> timpa
+    if(ex){
+      const { error } = await sbClient.from('pallet_opname').update(payload).eq('id', ex.id);
+      if(error) return error.message||String(error);
+    } else {
+      const { error } = await sbClient.from('pallet_opname').insert(payload);
+      if(error) return error.message||String(error);
+    }
+  }
+  return '';
+}
 function inpRecKey(rec){ return inpKeyFor(inpISO(rec.tanggal), rec.no_mobil, rec.c_code); }
 function inpRenderExisting(){
   const el=document.getElementById('inp-exist'); if(!inpEditRec){ el.innerHTML=''; return; }
@@ -4217,6 +4261,7 @@ async function inpDeleteExisting(name){
   logActivity("HAPUS_DOK", inpEditRec?`${inpEditRec.nama||inpEditRec.c_code} (${inpEditRec.c_code})`:name, "Hapus foto: "+name);
   await loadDocMap(); inpRenderExisting();
   try{ renderDetail(); }catch(e){}
+  showSuccess('Foto Dihapus');
 }
 function inpOnCode(){
   const el=document.getElementById('inp-name'), c=inpCust(), raw=document.getElementById('inp-code').value.trim();
@@ -4228,7 +4273,8 @@ function inpOnCode(){
 function inpUpdateSaldo(){
   const _h=document.getElementById('inp-pol-hint'), _p=(document.getElementById('inp-pol').value||'').trim().toUpperCase();
   if(_h){
-    if(_p==='OPNAME'){ _h.style.display='block'; _h.textContent='Mode OPNAME: isi Qty IN/OUT sebagai angka penyesuaian supaya saldo sama dengan hasil opname. Foto berita acara disimpan dengan nama berawalan OPNAME.'; }
+    const _kw=document.getElementById('inp-ket-wrap'); if(_kw) _kw.style.display = (_p==='OPNAME') ? '' : 'none';
+    if(_p==='OPNAME'){ _h.style.display='block'; _h.textContent='Mode OPNAME: isi Qty IN/OUT sebagai angka penyesuaian supaya saldo sama dengan hasil opname. Foto berita acara disimpan dengan nama berawalan OPNAME. Data juga dicatat ke tabel pallet_opname.'; }
     else if(_p==='RESET'){ _h.style.display='block'; _h.textContent='Mode RESET: isi Qty penyesuaian untuk mengembalikan saldo negatif ke 0.'; }
     else _h.style.display='none';
   }
@@ -4275,6 +4321,7 @@ async function inpSave(){
   if(!c) return inpMsg('Pilih kode customer yang ada di master.','err');
   if(!pol) return inpMsg('No Pol wajib diisi.','err');
   if(qin<0||qout<0) return inpMsg('Qty tidak boleh negatif.','err');
+  const ket=(document.getElementById('inp-ket').value||'').trim();
   const marker=(pol==='RESET'||pol==='OPNAME');
   if(qin===0&&qout===0&&!marker) return inpMsg('Isi Qty IN atau Qty OUT.','err');
   const dateObj=inpISO(tglStr), rec=inpEditRec;
@@ -4337,6 +4384,15 @@ async function inpSave(){
   } else {
     logActivity('INPUT_TRX', `${c.name} (${c.code})`, `${tglStr} · ${pol} · IN ${qin} · OUT ${qout}${nPh?` · ${nPh} foto`:''}`);
   }
+  // OPNAME: tulis juga ke pallet_opname (QTY = saldo setelah baris OPNAME, jadi data dimuat ulang dulu)
+  if(inpIsOpn(pol) || (rec && inpIsOpn(rec.no_mobil))){
+    await inpReload();
+    let oe='';
+    try{ oe=await inpSyncOpname(rec, c, newCode, tglStr, pol, ket); }catch(e){ oe=e.message||String(e); }
+    if(oe) warn.push('Transaksi tersimpan, tetapi catatan ke tabel pallet_opname gagal: '+oe+' (cek RLS/policy tabel pallet_opname).');
+    else logActivity(rec?'EDIT_OPNAME':'INPUT_OPNAME', `${c.name} (${newCode})`, `${tglStr}${ket?' · '+ket:''}`);
+    await inpReload();
+  }
   // urutan bertahap: form menutup halus -> jeda singkat -> animasi sukses (data dimuat ulang di belakang layar)
   const reloadP = inpReload();
   await closeInputForm(); await sleep(140);
@@ -4363,6 +4419,11 @@ async function deleteTrx(idx, fromForm){
   const { data, error } = await sbClient.from('pallet_transaksi').delete().eq('id', rec.id).select();
   if(error) return alert('Gagal menghapus: '+(error.message||error));
   if(!data || !data.length) return alert('Tidak ada baris yang terhapus (kemungkinan ditolak oleh hak akses / RLS).');
+  let opnErr='';
+  if(inpIsOpn(rec.no_mobil)){
+    const orow=inpOpnRowFor(rec);
+    if(orow){ const { error:oe } = await sbClient.from('pallet_opname').delete().eq('id', orow.id); if(oe) opnErr=oe.message||String(oe); }
+  }
   let photoErr='';
   if(delPhotos){
     const { error:pe } = await sbClient.storage.from(SB_BUCKET).remove(docs.map(d=>d.name));
@@ -4373,7 +4434,8 @@ async function deleteTrx(idx, fromForm){
   if(fromForm){ await closeInputForm(); }
   await sleep(140);
   if(photoErr) await reloadP;
-  if(photoErr) alert('Transaksi terhapus, tetapi foto gagal dihapus: '+photoErr); else { showSuccess('Transaksi Dihapus', rec.nama||rec.c_code); await reloadP; }
+  if(opnErr) alert('Transaksi terhapus, tetapi baris di tabel pallet_opname gagal dihapus: '+opnErr);
+  if(photoErr) alert('Transaksi terhapus, tetapi foto gagal dihapus: '+photoErr); else if(!opnErr) { showSuccess('Transaksi Dihapus', rec.nama||rec.c_code); await reloadP; }
 }
 function inpDeleteFromForm(){ deleteTrx(null, true); }
 </script>
@@ -4567,7 +4629,7 @@ async function backupExcel(silent){
     XLSX.utils.book_append_sheet(wb,ws,'Transaksi'); XLSX.utils.book_append_sheet(wb,ws2,'Customer');
     XLSX.writeFile(wb,`backup-pallet-${inpToday()}.xlsx`);
     logActivity('BACKUP_EXCEL','Semua data',`${trx.length} transaksi, ${cust.length} customer${silent?' (otomatis sebelum hapus customer)':''}`);
-    if(!silent) inpToast(`✓ Backup diunduh (${trx.length} transaksi, ${cust.length} customer)`);
+    if(!silent) showSuccess('Backup Diunduh', `${trx.length} transaksi, ${cust.length} customer`);
     return true;
   }catch(e){ alert('Backup gagal: '+(e.message||e)); return false; }
   finally{ if(btn) btn.disabled=false; }
