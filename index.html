@@ -754,7 +754,7 @@ html,body,button,input,select,textarea,label,a,summary,tr,.chip,.icon-btn{touch-
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/><path d="M9 21v-6h6v6"/><path d="M9 13h.01M15 13h.01M9 9h.01M15 9h.01"/></svg>
         <span class="lbl">Gudang KIM</span>
       </a>
-      <a class="icon-btn" id="btn-super-admin" href="superadmin.html" style="display:none" title="Masuk ke Super Admin (kelola dokumentasi SJ)">
+      <a class="icon-btn" id="btn-super-admin" href="super-admin.html" style="display:none" title="Masuk ke Super Admin (kelola dokumentasi SJ)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         <span class="lbl">Super Admin</span>
       </a>
@@ -1163,14 +1163,6 @@ html,body,button,input,select,textarea,label,a,summary,tr,.chip,.icon-btn{touch-
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-/* ============================================================
-   SUMBER DATA: tabel Supabase (menggantikan Google Sheet / get-pallet-csv).
-   Tabel: pallet_customers, pallet_transaksi, pallet_opname, pallet_stok_kosong_kim, pallet_bongkar.
-   (Halaman ini hanya MELIHAT data; input dilakukan di superadmin.html.)
-   fetchPalletRows() membaca semua tabel lalu menyusunnya ke bentuk baris
-   yang sama dengan layout sheet lama, jadi seluruh logika buildData()
-   (saldo, status, MH, dsb.) tidak perlu diubah.
-   ============================================================ */
 /* Ringkasan Pallet KIM (Pallet di Gudang KIM, Total Dibongkar, Total Pembelian) sementara memakai
    CSV Google Sheet (sama seperti RINGKASAN_PALLET.html): kolom S-V (index 18-21) & Y-AF (index 24-31).
    Saldo Akhir tetap dari Supabase. Kalau CSV gagal dimuat, otomatis jatuh ke tabel Supabase
@@ -1288,7 +1280,7 @@ async function sha256Hex(text){
 
 /* ============================================================
    DOKUMENTASI SJ — foto surat jalan per baris, disimpan di
-   Supabase Storage (bucket public), tanpa perlu tabel database
+    Storage tanpa perlu tabel database
    terpisah. Key pencocokan tiap baris = tanggal + no pol,
    dibaca dari nama file yang di-generate otomatis saat upload.
    ============================================================ */
