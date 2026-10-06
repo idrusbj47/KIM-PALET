@@ -2548,7 +2548,7 @@ function renderDetail(){
     const days = Math.round((reportDate - opLatest.date) / 86400000);
     opDateEl.textContent = fmtDateShort(opLatest.date);
     opSubEl.textContent = opLatest.pending
-      ? `${days} hari lalu · QTY opname ${opLatest.qty == null ? '–' : opLatest.qty} · ⏳ menunggu persetujuan · ${opLatest.catatan}`
+      ? `${days} hari lalu · QTY opname ${opLatest.qty == null ? '–' : opLatest.qty} · ⏳ menunggu persetujuan ${opLatest.catatan}`
       : `${days} hari lalu · QTY ${opLatest.qty == null ? '–' : opLatest.qty}${opLatest.catatan ? ' (' + opLatest.catatan + ')' : ''}`;
   } else {
     opDateEl.textContent = 'Belum ada data';
