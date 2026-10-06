@@ -4440,7 +4440,7 @@ function inpUpdateSaldo(){
     const _chk=document.getElementById('inp-opn-pend'); if(!_showOpq) _chk.checked=false;
     inpApplyPend(_showOpq && _chk.checked);
     if(_p==='OPNAME' && _showOpq && _chk.checked){ _h.style.display='block'; _h.textContent='Menunggu persetujuan: QTY Opname hanya dicatat sebagai info di card Opname (bukan saldo hari itu). Transaksi hanya mencatat tanggal & No Pol OPNAME dengan IN/OUT 0, jadi saldo tidak berubah. Setelah disetujui, edit transaksi ini, hilangkan centang, lalu isi angka penyesuaian IN/OUT.'; }
-    else if(_p==='OPNAME'){ _h.style.display='block'; _h.textContent='Mode OPNAME: isi Qty IN/OUT sebagai angka penyesuaian supaya saldo sama dengan hasil opname. Isi Keterangan Opname bila data masih menunggu persetujuan. Foto berita acara disimpan dengan nama berawalan OPNAME. Data juga dicatat ke tabel pallet_opname.'; }
+    else if(_p==='OPNAME'){ _h.style.display='block'; _h.textContent='Mode OPNAME: isi Qty IN/OUT sebagai angka penyesuaian supaya saldo sama dengan hasil opname. Isi Keterangan Opname bila data masih menunggu persetujuan.'; }
     else if(_p==='RESET'){ _h.style.display='block'; _h.textContent='Mode RESET: isi Qty penyesuaian untuk mengembalikan saldo negatif ke 0.'; }
     else _h.style.display='none';
   }
