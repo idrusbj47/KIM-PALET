@@ -3228,7 +3228,9 @@ function renderDetail(){
   if (opLatest){
     const days = Math.round((reportDate - opLatest.date) / 86400000);
     opDateEl.textContent = fmtDateShort(opLatest.date);
-    opSubEl.textContent = `${days} hari lalu · QTY ${opLatest.qty == null ? '–' : opLatest.qty}${opLatest.catatan ? ' (' + opLatest.catatan + ')' : ''}`;
+    opSubEl.textContent = opLatest.pending
+      ? `${days} hari lalu · QTY opname ${opLatest.qty == null ? '–' : opLatest.qty} (bukan saldo hari itu) · ⏳ menunggu persetujuan · ${opLatest.catatan}`
+      : `${days} hari lalu · QTY ${opLatest.qty == null ? '–' : opLatest.qty}${opLatest.catatan ? ' (' + opLatest.catatan + ')' : ''}`;
   } else {
     opDateEl.textContent = 'Belum ada data';
     opSubEl.textContent = '';
@@ -4171,6 +4173,10 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .inp-card{max-height:92dvh;padding-bottom:calc(22px + env(safe-area-inset-bottom))}
   .log-head{padding-right:46px}
 }
+.inp-chk{display:flex;align-items:flex-start;gap:9px;margin-top:10px;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer;line-height:1.35}
+.inp-chk input{width:20px;height:20px;margin-top:1px;flex:none;accent-color:var(--brass)}
+.inp-chk small{display:block;font-weight:500;font-size:11.5px;color:var(--ink3)}
+.inp-field:disabled{opacity:.55;cursor:not-allowed}
 #inp-overlay{position:fixed;inset:0;z-index:8000;background:rgba(10,8,20,.55);display:none;align-items:flex-end;justify-content:center;padding:0}
 #inp-overlay.on{display:flex}
 .inp-card{background:var(--surface);color:var(--ink);width:100%;max-width:520px;max-height:94vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 18px 22px;box-shadow:0 -10px 40px rgba(0,0,0,.3)}
@@ -4231,7 +4237,13 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 
     <div id="inp-ket-wrap" style="display:none">
       <label class="inp-lbl" for="inp-ket">Keterangan Opname <span style="text-transform:none;font-weight:500;color:var(--ink3)">(tampil di card Opname Terakhir &amp; Riwayat Opname)</span></label>
-      <input class="inp-field" id="inp-ket" autocomplete="off" maxlength="200" placeholder="mis. Proses persetujuan data di Management">
+      <input class="inp-field" id="inp-ket" autocomplete="off" maxlength="200" placeholder="mis. Proses persetujuan data di Management" oninput="inpKetInput()">
+    </div>
+
+    <div id="inp-opq-wrap" style="display:none">
+      <label class="inp-lbl" for="inp-opq">QTY Opname (hasil hitung) <span style="text-transform:none;font-weight:500;color:var(--ink3)">(tampil di card Opname)</span></label>
+      <input class="inp-field" type="number" inputmode="numeric" min="0" id="inp-opq" placeholder="mis. 148" oninput="inpUpdateSaldo()">
+      <label class="inp-chk"><input type="checkbox" id="inp-opn-pend" onchange="inpPendToggle()"> <span>Menunggu persetujuan <small>(Qty IN/OUT dikunci 0, saldo tidak berubah)</small></span></label>
     </div>
 
     <div class="inp-row">
@@ -4281,7 +4293,24 @@ function inpSetMode(rec){
   document.getElementById('inp-del').style.display = rec ? '' : 'none';
   document.getElementById('inp-exist-wrap').style.display = rec ? '' : 'none';
 }
+let _opnPrev={in:'0',out:'0'};
+function inpPendOn(){ const w=document.getElementById('inp-opq-wrap'); return !!(w && w.style.display!=='none' && document.getElementById('inp-opn-pend').checked); }
+function inpApplyPend(on){
+  const i=document.getElementById('inp-in'), o=document.getElementById('inp-out');
+  if(on){ if(!i.disabled) _opnPrev={in:i.value,out:o.value}; i.value='0'; o.value='0'; i.disabled=o.disabled=true; }
+  else if(i.disabled){ i.value=_opnPrev.in; o.value=_opnPrev.out; i.disabled=o.disabled=false; }
+}
+function inpPendToggle(){ inpUpdateSaldo(); }
+function inpKetInput(){
+  const k=document.getElementById('inp-ket'), has=!!k.value.trim(), had=k.dataset.had==='1';
+  const hasAdj=inpEditRec && (inpEditRec.qty_in||inpEditRec.qty_out);   // jangan menimpa penyesuaian yang sudah ada
+  if(has && !had && !hasAdj) document.getElementById('inp-opn-pend').checked=true;
+  k.dataset.had=has?'1':'';
+  inpUpdateSaldo();
+}
 function inpResetFields(){
+  document.getElementById('inp-opn-pend').checked=false; inpApplyPend(false);
+  document.getElementById('inp-opq').value=''; document.getElementById('inp-ket').dataset.had='';
   document.getElementById('inp-tgl').value=inpToday();
   document.getElementById('inp-code').value='';
   document.getElementById('inp-pol').value='';
@@ -4303,10 +4332,14 @@ function openEditTrx(idx){
   document.getElementById('inp-tgl').value = String(rec.tanggal).slice(0,10);
   document.getElementById('inp-code').value = rec.c_code;
   document.getElementById('inp-pol').value = rec.no_mobil || '';
+  inpApplyPend(false);
   document.getElementById('inp-in').value = rec.qty_in;
   document.getElementById('inp-out').value = rec.qty_out;
   const _oe = inpOpnRowFor(rec);
   document.getElementById('inp-ket').value = _oe ? (_oe.catatan||'') : '';
+  document.getElementById('inp-ket').dataset.had = (_oe && (_oe.catatan||'').trim()) ? '1' : '';
+  document.getElementById('inp-opq').value = (_oe && _oe.qty!=null) ? _oe.qty : '';
+  document.getElementById('inp-opn-pend').checked = !!(_oe && (_oe.catatan||'').trim() && !rec.qty_in && !rec.qty_out);
   inpOnCode(); inpRenderExisting();
   document.getElementById('inp-overlay').classList.add('on');
 }
@@ -4329,7 +4362,7 @@ function inpOpnRowFor(rec){      // baris pallet_opname milik transaksi OPNAME i
   const d=String(rec.tanggal).slice(0,10);
   return opnHistRows(rec.c_code).find(o=>String(o.tgl_opname).slice(0,10)===d) || null;
 }
-async function inpSyncOpname(rec, c, newCode, tglStr, pol, ket){
+async function inpSyncOpname(rec, c, newCode, tglStr, pol, ket, opq){
   // return pesan error ('' = sukses). rec = transaksi lama (null kalau input baru)
   const oldRow = rec ? inpOpnRowFor(rec) : null;
   if(!inpIsOpn(pol)){
@@ -4339,7 +4372,7 @@ async function inpSyncOpname(rec, c, newCode, tglStr, pol, ket){
   // QTY = saldo setelah baris OPNAME, dibaca dari data yang sudah dimuat ulang
   const cu=custByCode[normCode(newCode)];
   const t=cu && (cu.trx||[]).find(x=>x.marker==='opname' && x.date && x.date.getTime()===inpISO(tglStr).getTime());
-  const qty = t ? t.saldo : null;
+  const qty = (opq!=null && !isNaN(opq)) ? opq : (t ? t.saldo : null);   // QTY opname diinput manual; kalau kosong pakai saldo setelah baris OPNAME
   const payload={ code:newCode, nama:c.name, tgl_opname:tglStr, qty:qty, catatan:ket||null };
   if(oldRow){
     const { data, error } = await sbClient.from('pallet_opname').update(payload).eq('id', oldRow.id).select();
@@ -4402,7 +4435,12 @@ function inpUpdateSaldo(){
   const _h=document.getElementById('inp-pol-hint'), _p=(document.getElementById('inp-pol').value||'').trim().toUpperCase();
   if(_h){
     const _kw=document.getElementById('inp-ket-wrap'); if(_kw) _kw.style.display = (_p==='OPNAME') ? '' : 'none';
-    if(_p==='OPNAME'){ _h.style.display='block'; _h.textContent='Mode OPNAME: isi Qty IN/OUT sebagai angka penyesuaian supaya saldo sama dengan hasil opname. Foto berita acara disimpan dengan nama berawalan OPNAME. Data juga dicatat ke tabel pallet_opname.'; }
+    const _ketV=(document.getElementById('inp-ket').value||'').trim(), _showOpq=(_p==='OPNAME' && !!_ketV);
+    const _ow=document.getElementById('inp-opq-wrap'); if(_ow) _ow.style.display=_showOpq?'':'none';
+    const _chk=document.getElementById('inp-opn-pend'); if(!_showOpq) _chk.checked=false;
+    inpApplyPend(_showOpq && _chk.checked);
+    if(_p==='OPNAME' && _showOpq && _chk.checked){ _h.style.display='block'; _h.textContent='Menunggu persetujuan: QTY Opname hanya dicatat sebagai info di card Opname (bukan saldo hari itu). Transaksi hanya mencatat tanggal & No Pol OPNAME dengan IN/OUT 0, jadi saldo tidak berubah. Setelah disetujui, edit transaksi ini, hilangkan centang, lalu isi angka penyesuaian IN/OUT.'; }
+    else if(_p==='OPNAME'){ _h.style.display='block'; _h.textContent='Mode OPNAME: isi Qty IN/OUT sebagai angka penyesuaian supaya saldo sama dengan hasil opname. Isi Keterangan Opname bila data masih menunggu persetujuan. Foto berita acara disimpan dengan nama berawalan OPNAME. Data juga dicatat ke tabel pallet_opname.'; }
     else if(_p==='RESET'){ _h.style.display='block'; _h.textContent='Mode RESET: isi Qty penyesuaian untuk mengembalikan saldo negatif ke 0.'; }
     else _h.style.display='none';
   }
@@ -4450,6 +4488,10 @@ async function inpSave(){
   if(!pol) return inpMsg('No Pol wajib diisi.','err');
   if(qin<0||qout<0) return inpMsg('Qty tidak boleh negatif.','err');
   const ket=(document.getElementById('inp-ket').value||'').trim();
+  const pendOn=inpPendOn(), opqRaw=(document.getElementById('inp-opq').value||'').trim();
+  const opq=(inpIsOpn(pol) && ket && opqRaw!=='') ? parseInt(opqRaw,10) : null;
+  if(inpIsOpn(pol) && ket && pendOn && (opq==null || isNaN(opq) || opq<0)) return inpMsg('Isi QTY Opname (hasil hitung) terlebih dahulu.','err');
+  if(pendOn && (qin||qout)) return inpMsg('Saat menunggu persetujuan, Qty IN/OUT harus 0.','err');
   const marker=(pol==='RESET'||pol==='OPNAME');
   if(qin===0&&qout===0&&!marker) return inpMsg('Isi Qty IN atau Qty OUT.','err');
   const dateObj=inpISO(tglStr), rec=inpEditRec;
@@ -4516,9 +4558,9 @@ async function inpSave(){
   if(inpIsOpn(pol) || (rec && inpIsOpn(rec.no_mobil))){
     await inpReload();
     let oe='';
-    try{ oe=await inpSyncOpname(rec, c, newCode, tglStr, pol, ket); }catch(e){ oe=e.message||String(e); }
+    try{ oe=await inpSyncOpname(rec, c, newCode, tglStr, pol, ket, opq); }catch(e){ oe=e.message||String(e); }
     if(oe) warn.push('Transaksi tersimpan, tetapi catatan ke tabel pallet_opname gagal: '+oe+' (cek RLS/policy tabel pallet_opname).');
-    else logActivity(rec?'EDIT_OPNAME':'INPUT_OPNAME', `${c.name} (${newCode})`, `${tglStr}${ket?' · '+ket:''}`);
+    else logActivity(rec?'EDIT_OPNAME':'INPUT_OPNAME', `${c.name} (${newCode})`, `${tglStr}${opq!=null?' · QTY '+opq:''}${ket?' · '+ket:''}`);
     await inpReload();
   }
   // urutan bertahap: form menutup halus -> jeda singkat -> animasi sukses (data dimuat ulang di belakang layar)
@@ -4964,16 +5006,20 @@ function opnEntries(c){
   const pad=n=>String(n).padStart(2,'0'), iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   const map=new Map();
   opnHistRows(c.code).forEach(r=>{ const k=String(r.tgl_opname).slice(0,10);
-    map.set(k,{date:inpISO(k),qty:r.qty,catatan:r.catatan||'',link:(r.link_dokumen||'').trim(),legacy:true,adj:''}); });
+    map.set(k,{date:inpISO(k),qty:r.qty,catatan:r.catatan||'',link:(r.link_dokumen||'').trim(),legacy:true,adj:'',hasTrx:false,adjN:0,pending:false}); });
   (c.trx||[]).forEach(t=>{
     if(t.marker!=='opname'||!t.date) return;
-    const k=iso(t.date), e=map.get(k)||{date:t.date,qty:null,catatan:'',link:'',legacy:false,adj:''};
+    const k=iso(t.date), e=map.get(k)||{date:t.date,qty:null,catatan:'',link:'',legacy:false,adj:'',hasTrx:false,adjN:0,pending:false};
+    e.hasTrx=true; e.adjN=(e.adjN||0)+(t.outVal||0)+(t.inVal||0);
     if(!e.legacy) e.qty=t.saldo;
     const adj=[t.outVal?`OUT ${t.outVal}`:'',t.inVal?`IN ${t.inVal}`:''].filter(Boolean).join(' · ');
     if(adj) e.adj=e.adj?e.adj+' ; '+adj:adj;
     map.set(k,e);
   });
-  return Array.from(map.values()).sort((a,b)=>b.date-a.date);
+  const out=Array.from(map.values());
+  /* PENDING = ada transaksi OPNAME + keterangan, tapi penyesuaian IN/OUT masih 0 -> QTY opname hanya info, belum mengubah saldo */
+  out.forEach(e=>{ e.pending=!!(e.legacy && e.hasTrx && e.catatan && !e.adjN); });
+  return out.sort((a,b)=>b.date-a.date);
 }
 function openOpnHist(){
   _opnhTok++; const o=document.getElementById('opnh-overlay'); o.classList.remove('closing'); o.classList.add('on'); opnhRender();
@@ -4997,8 +5043,8 @@ function opnhRender(){
     if(docs.length) doc=`<div class="oh-thumbs">${docs.map(x=>`<button type="button" onclick="openDocViewer('${key}')" title="Buka dokumen"><img src="${x.url}" loading="lazy" alt="dokumen opname"></button>`).join('')}</div>`;
     else doc='<div class="oh-nodoc">Belum ada foto dokumen</div>';
     if(/^https?:\/\//i.test(r.link)) doc+=`<a class="oh-link" href="${logEsc(r.link)}" target="_blank" rel="noopener">🔗 Dokumen lama (Google Drive)</a>`;
-    return `<div class="oh-item${i===0?' latest':''}"><div class="oh-top"><span class="oh-date">${logEsc(fmtDateShort(r.date))}${i===0?'<span class="oh-tag">Terakhir</span>':''}</span><span class="oh-qty">QTY ${r.qty==null?'–':logEsc(r.qty)}</span></div>`+
-      `<div class="oh-ago">${days>=0?days+' hari lalu':''}${r.adj?' · penyesuaian saldo '+logEsc(r.adj):''}</div>${r.catatan?`<div class="oh-cat">${logEsc(r.catatan)}</div>`:''}${doc}</div>`;
+    return `<div class="oh-item${i===0?' latest':''}"><div class="oh-top"><span class="oh-date">${logEsc(fmtDateShort(r.date))}${i===0?'<span class="oh-tag">Terakhir</span>':''}</span><span class="oh-qty">${r.pending?'QTY OPNAME ':'QTY '}${r.qty==null?'–':logEsc(r.qty)}</span></div>`+
+      `<div class="oh-ago">${days>=0?days+' hari lalu':''}${r.pending?' · ⏳ menunggu persetujuan — bukan saldo hari itu, belum mengubah saldo':''}${r.adj?' · penyesuaian saldo '+logEsc(r.adj):''}</div>${r.catatan?`<div class="oh-cat">${logEsc(r.catatan)}</div>`:''}${doc}</div>`;
   }).join('');
 }
 </script>
