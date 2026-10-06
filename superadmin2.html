@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="color-scheme" id="color-scheme-meta" content="light">
 <script>try{if(localStorage.getItem('pallet-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.style.colorScheme='dark';document.getElementById('color-scheme-meta').setAttribute('content','dark')}}catch(e){}</script>
-<meta name="viewport" id="viewport-meta" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" id="viewport-meta" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"/>
 <title>Super Admin — Dokumentasi SJ — PT. Karya Indah Multiguna</title>
 <link rel="icon" type="image/png" href="logop1.png"/>
   <link rel="apple-touch-icon" href="logoios4.png"/>
@@ -4159,6 +4159,18 @@ async function pwSubmit(){
 
 <!-- ===== FORM INPUT TRANSAKSI (Staff / Super Admin) ===== -->
 <style>
+/* iOS: cegah zoom otomatis saat fokus input (font <16px) & zoom dobel-tap */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body,button,input,select,textarea,label,a,summary,tr,.chip,.icon-btn{touch-action:manipulation}
+input[type=date]{-webkit-appearance:none;appearance:none;min-height:44px;line-height:1.2}
+input[type=date]::-webkit-date-and-time-value{text-align:left}
+@media(max-width:820px){
+  input,select,textarea,.inp-field,.login-input,.login-select,.login-pass-input,.search-wrap input,.sort-select{font-size:16px!important}
+  .log-tools .inp-field{font-size:16px!important}
+  .log-card{height:min(88dvh,820px)}
+  .inp-card{max-height:92dvh;padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+  .log-head{padding-right:46px}
+}
 #inp-overlay{position:fixed;inset:0;z-index:8000;background:rgba(10,8,20,.55);display:none;align-items:flex-end;justify-content:center;padding:0}
 #inp-overlay.on{display:flex}
 .inp-card{background:var(--surface);color:var(--ink);width:100%;max-width:520px;max-height:94vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 18px 22px;box-shadow:0 -10px 40px rgba(0,0,0,.3)}
@@ -4172,8 +4184,10 @@ async function pwSubmit(){
 .inp-lbl{display:block;font-size:11.5px;font-weight:700;letter-spacing:.03em;color:var(--ink2);margin:12px 0 5px;text-transform:uppercase}
 .inp-field{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border2);background:var(--bg);color:var(--ink);font-size:15px;font-family:inherit}
 .inp-field:focus{outline:none;border-color:var(--brass);box-shadow:0 0 0 3px var(--brass-bg)}
-.inp-name{font-size:12.5px;margin-top:6px;min-height:18px;font-weight:600}
-.inp-name.ok{color:var(--green)}.inp-name.bad{color:var(--red)}
+.inp-name{font-size:15px;margin-top:8px;font-weight:700;line-height:1.35;padding:11px 13px;border-radius:10px;border:1.5px solid transparent;word-break:break-word}
+.inp-name:empty{display:none}
+.inp-name.ok{color:var(--green);background:var(--green-bg);border-color:var(--green)}
+.inp-name.bad{color:var(--red);background:var(--red-bg);border-color:var(--red);font-size:13.5px}
 .inp-saldo{font-size:12px;color:var(--ink2);background:var(--brass-bg);border-radius:10px;padding:8px 11px;margin-top:12px;display:none}
 .inp-photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .inp-ph{position:relative;width:70px;height:70px;border-radius:10px;overflow:hidden;border:1px solid var(--border2)}
@@ -4202,17 +4216,16 @@ async function pwSubmit(){
     <div class="inp-sub" id="inp-subtitle">Tersimpan langsung ke database Supabase.</div>
 
     <label class="inp-lbl" for="inp-tgl">Tanggal</label>
-    <input class="inp-field" type="date" id="inp-tgl">
+    <input class="inp-field" type="date" id="inp-tgl" onclick="inpShowPicker(this)" onfocus="inpShowPicker(this)">
 
     <label class="inp-lbl" for="inp-code">Kode Customer (C.Code)</label>
-    <input class="inp-field" id="inp-code" list="inp-code-list" autocomplete="off" autocapitalize="characters" placeholder="mis. 617 atau ketik untuk mencari" oninput="inpOnCode()">
+    <input class="inp-field" id="inp-code" list="inp-code-list" autocomplete="off" autocapitalize="characters" placeholder="mis. 617 atau ketik untuk mencari" oninput="inpOnCode()" onkeydown="inpCodeKey(event)" enterkeyhint="next">
     <datalist id="inp-code-list"></datalist>
     <div class="inp-name" id="inp-name"></div>
-    <a href="#" onclick="openCustForm();return false" style="font-size:12px;color:var(--brass);font-weight:600;display:inline-block;margin-top:4px">+ Customer baru</a>
     <div class="inp-saldo" id="inp-saldo"></div>
 
     <label class="inp-lbl" for="inp-pol">No Pol / No Mobil</label>
-    <input class="inp-field" id="inp-pol" autocapitalize="characters" autocomplete="off" placeholder="mis. B9320KXT (atau RESET / OPNAME)" oninput="this.value=this.value.toUpperCase();inpUpdateSaldo()">
+    <input class="inp-field" id="inp-pol" autocapitalize="characters" autocomplete="off" placeholder="mis. B9320KXT (atau RESET / OPNAME)" oninput="this.value=this.value.toUpperCase();inpUpdateSaldo()" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('inp-out').focus();document.getElementById('inp-out').select()}" enterkeyhint="next">
 
     <div class="inp-sub" id="inp-pol-hint" style="display:none;margin:6px 0 0"></div>
 
@@ -4360,6 +4373,23 @@ async function inpDeleteExisting(name){
   await loadDocMap(); inpRenderExisting();
   try{ renderDetail(); }catch(e){}
   showSuccess('Foto Dihapus');
+}
+function inpShowPicker(el){ try{ if(el.showPicker) el.showPicker(); }catch(e){} }
+function inpCodeKey(e){
+  if(e.key!=='Enter') return;
+  e.preventDefault();
+  const el=e.target;
+  let c=inpCust();
+  if(!c){
+    const q=el.value.trim().toLowerCase();
+    if(q){
+      let m=customers.filter(x=>String(x.code).toLowerCase()===q);
+      if(!m.length) m=customers.filter(x=>String(x.code).toLowerCase().startsWith(q));
+      if(!m.length) m=customers.filter(x=>x.name.toLowerCase().includes(q));
+      if(m.length===1){ el.value=m[0].code; inpOnCode(); c=inpCust(); }
+    }
+  }
+  if(c){ const pol=document.getElementById('inp-pol'); pol.focus(); }
 }
 function inpOnCode(){
   const el=document.getElementById('inp-name'), c=inpCust(), raw=document.getElementById('inp-code').value.trim();
@@ -4749,6 +4779,10 @@ html.modal-open{overscroll-behavior:none}
 .log-head h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 2px}
 .log-tools{display:flex;gap:8px;padding:10px 18px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
 .log-tools .inp-field{padding:8px 10px;font-size:13.5px;width:auto;flex:1;min-width:130px}
+.log-dates{display:flex;gap:8px;width:100%;align-items:flex-end}
+.log-dates label{flex:1;min-width:0;font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.03em}
+.log-dates .inp-field{margin-top:3px;width:100%;min-width:0}
+.log-clear{height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--border2);background:var(--bg);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer}
 .log-body{flex:1;overflow:auto;padding:10px 18px 14px}
 .log-item{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-top:8px;background:var(--bg)}
 .log-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
@@ -4777,6 +4811,11 @@ html.modal-open{overscroll-behavior:none}
       </select>
       <select class="inp-field" id="log-admin" onchange="logLoad(true)"><option value="">Semua admin</option></select>
       <input class="inp-field" id="log-search" placeholder="Cari admin / customer / no pol…" oninput="logRender()">
+      <div class="log-dates">
+        <label>Dari <input class="inp-field" type="date" id="log-from" onclick="inpShowPicker(this)" onchange="logLoad(true)"></label>
+        <label>Sampai <input class="inp-field" type="date" id="log-to" onclick="inpShowPicker(this)" onchange="logLoad(true)"></label>
+        <button type="button" class="log-clear" onclick="logClearDates()">Reset</button>
+      </div>
     </div>
     <div class="log-body" id="log-body"></div>
     <div class="log-foot">
@@ -4812,8 +4851,10 @@ async function openLog(){
   document.getElementById('log-admin').innerHTML='<option value="">Semua admin</option>';
   _logTok++; const o=document.getElementById('log-overlay'); o.classList.remove('closing'); o.classList.add('on');
   document.getElementById('log-search').value='';
+  document.getElementById('log-from').value=''; document.getElementById('log-to').value='';
   logLoad(true);
 }
+function logClearDates(){ document.getElementById('log-from').value=''; document.getElementById('log-to').value=''; logLoad(true); }
 function closeLog(){
   const o=document.getElementById('log-overlay');
   if(!o.classList.contains('on')||o.classList.contains('closing')) return;
@@ -4827,6 +4868,9 @@ async function logLoad(reset){
   try{
     let q=sbClient.from('pallet_activity_log').select('*').order('created_at',{ascending:false}).range(off,off+LOG_PAGE-1);
     if(f) q=q.eq('action',f);
+    const d1=document.getElementById('log-from').value, d2=document.getElementById('log-to').value;
+    if(d1) q=q.gte('created_at', new Date(d1+'T00:00:00').toISOString());
+    if(d2){ const e=new Date(d2+'T00:00:00'); e.setDate(e.getDate()+1); q=q.lt('created_at', e.toISOString()); }
     const fa=document.getElementById('log-admin').value; if(fa) q=q.eq('user_email',fa);
     const { data, error } = await q;
     if(error) throw error;
