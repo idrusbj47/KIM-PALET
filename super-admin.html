@@ -3229,7 +3229,7 @@ function renderDetail(){
     const days = Math.round((reportDate - opLatest.date) / 86400000);
     opDateEl.textContent = fmtDateShort(opLatest.date);
     opSubEl.textContent = opLatest.pending
-      ? `${days} hari lalu · QTY opname ${opLatest.qty == null ? '–' : opLatest.qty} (bukan saldo hari itu) · ⏳ menunggu persetujuan · ${opLatest.catatan}`
+      ? `${days} hari lalu · QTY opname ${opLatest.qty == null ? '–' : opLatest.qty} · ⏳ menunggu persetujuan · ${opLatest.catatan}`
       : `${days} hari lalu · QTY ${opLatest.qty == null ? '–' : opLatest.qty}${opLatest.catatan ? ' (' + opLatest.catatan + ')' : ''}`;
   } else {
     opDateEl.textContent = 'Belum ada data';
@@ -5044,7 +5044,7 @@ function opnhRender(){
     else doc='<div class="oh-nodoc">Belum ada foto dokumen</div>';
     if(/^https?:\/\//i.test(r.link)) doc+=`<a class="oh-link" href="${logEsc(r.link)}" target="_blank" rel="noopener">🔗 Dokumen lama (Google Drive)</a>`;
     return `<div class="oh-item${i===0?' latest':''}"><div class="oh-top"><span class="oh-date">${logEsc(fmtDateShort(r.date))}${i===0?'<span class="oh-tag">Terakhir</span>':''}</span><span class="oh-qty">${r.pending?'QTY OPNAME ':'QTY '}${r.qty==null?'–':logEsc(r.qty)}</span></div>`+
-      `<div class="oh-ago">${days>=0?days+' hari lalu':''}${r.pending?' · ⏳ menunggu persetujuan — bukan saldo hari itu, belum mengubah saldo':''}${r.adj?' · penyesuaian saldo '+logEsc(r.adj):''}</div>${r.catatan?`<div class="oh-cat">${logEsc(r.catatan)}</div>`:''}${doc}</div>`;
+      `<div class="oh-ago">${days>=0?days+' hari lalu':''}${r.pending?' · ⏳ menunggu persetujuan —  belum mengubah saldo':''}${r.adj?' · penyesuaian saldo '+logEsc(r.adj):''}</div>${r.catatan?`<div class="oh-cat">${logEsc(r.catatan)}</div>`:''}${doc}</div>`;
   }).join('');
 }
 </script>
