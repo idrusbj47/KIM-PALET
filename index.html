@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="color-scheme" id="color-scheme-meta" content="light">
 <script>try{if(localStorage.getItem('pallet-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.style.colorScheme='dark';document.getElementById('color-scheme-meta').setAttribute('content','dark')}}catch(e){}</script>
-<meta name="viewport" id="viewport-meta" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" id="viewport-meta" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"/>
 <title>Laporan Saldo Pallet — PT. Karya Indah Multiguna</title>
 <link rel="icon" type="image/png" href="logop1.png"/>
   <link rel="apple-touch-icon" href="logoios4.png"/>
@@ -419,6 +419,9 @@ tr.row-opname td span{color:var(--opname-r)!important}
 .sum-card.opname .v{color:var(--reset-y)}
 .opname-doc-btn{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:5px 11px;border-radius:999px;border:1px solid var(--brass-line);background:var(--brass-bg);color:var(--brass);font-size:10.5px;font-weight:700;text-decoration:none;transition:all .18s;width:fit-content}
 .opname-doc-btn:hover{filter:brightness(0.95)}
+.opn-actions{display:flex;gap:8px;margin-top:10px}
+.opn-ic{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--brass-line);background:var(--brass-bg);color:var(--brass);cursor:pointer;padding:0;text-decoration:none;transition:filter .15s,transform .15s}
+.opn-ic:hover{filter:brightness(.94);transform:translateY(-1px)}
 .adj-breakdown{display:none;flex-direction:column;gap:2px;margin-top:7px;padding-top:7px;border-top:1px dashed var(--border2)}
 .adj-breakdown .adj-line{display:flex;justify-content:space-between;gap:10px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--ink3)}
 .adj-breakdown .adj-line b{font-weight:600;color:var(--ink2)}
@@ -572,6 +575,11 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 .doc-modal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
 .doc-modal-grid a{display:block;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
 .doc-modal-grid img{width:100%;height:110px;object-fit:cover;display:block}
+
+/* iOS: cegah zoom otomatis saat fokus input & zoom dobel-tap */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body,button,input,select,textarea,label,a,summary,tr,.chip,.icon-btn{touch-action:manipulation}
+@media(max-width:820px){input,select,textarea{font-size:16px!important}}
 </style>
 </head>
 <body>
@@ -746,7 +754,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/><path d="M9 21v-6h6v6"/><path d="M9 13h.01M15 13h.01M9 9h.01M15 9h.01"/></svg>
         <span class="lbl">Gudang KIM</span>
       </a>
-      <a class="icon-btn" id="btn-super-admin" href="super-admin.html" style="display:none" title="Masuk ke Super Admin (kelola dokumentasi SJ)">
+      <a class="icon-btn" id="btn-super-admin" href="superadmin.html" style="display:none" title="Masuk ke Super Admin (kelola dokumentasi SJ)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         <span class="lbl">Super Admin</span>
       </a>
@@ -799,7 +807,7 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
   <div id="err-box" class="err-box" style="display:none"></div>
   <div id="loading" class="state-box">
     <div class="spinner"></div>
-    <p>Mengambil data pallet dari spreadsheet…</p>
+    <p>Mengambil data pallet dari database…</p>
   </div>
 
   <!-- ===== VIEW: LIST ===== -->
@@ -1011,10 +1019,14 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
         <div class="l">Opname Terakhir</div>
         <div class="v" id="d-opname-date">—</div>
         <div class="sub" id="d-opname-sub"></div>
-        <a class="opname-doc-btn" id="d-opname-doc-btn" href="#" target="_blank" rel="noopener" style="display:none">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Lihat Dokumen
-        </a>
+        <div class="opn-actions">
+          <a class="opn-ic" id="d-opname-doc-btn" href="#" target="_blank" rel="noopener" style="display:none" title="Lihat dokumen opname" aria-label="Lihat dokumen opname">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/></svg>
+          </a>
+          <button type="button" class="opn-ic" id="d-opname-hist-btn" onclick="openOpnHist()" style="display:none" title="Riwayat opname" aria-label="Riwayat opname">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 10 9 10"/><polyline points="12 7 12 12 16 14"/></svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1152,9 +1164,87 @@ footer.credit{text-align:center;padding:2rem 1rem 0;font-size:11px;color:var(--i
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 /* ============================================================
-   Spbase
+   SUMBER DATA: tabel Supabase (menggantikan Google Sheet / get-pallet-csv).
+   Tabel: pallet_customers, pallet_transaksi, pallet_opname, pallet_stok_kosong_kim, pallet_bongkar.
+   (Halaman ini hanya MELIHAT data; input dilakukan di superadmin.html.)
+   fetchPalletRows() membaca semua tabel lalu menyusunnya ke bentuk baris
+   yang sama dengan layout sheet lama, jadi seluruh logika buildData()
+   (saldo, status, MH, dsb.) tidak perlu diubah.
    ============================================================ */
+/* Ringkasan Pallet KIM (Pallet di Gudang KIM, Total Dibongkar, Total Pembelian) sementara memakai
+   CSV Google Sheet (sama seperti RINGKASAN_PALLET.html): kolom S-V (index 18-21) & Y-AF (index 24-31).
+   Saldo Akhir tetap dari Supabase. Kalau CSV gagal dimuat, otomatis jatuh ke tabel Supabase
+   (pallet_stok_kosong_kim & pallet_bongkar). Nanti kalau datanya sudah dirapikan di Supabase,
+   cukup set KIM_SUMMARY_FROM_CSV = false. */
 const CSV_URL = 'https://bpqiejowxcxyeewhoncr.supabase.co/functions/v1/get-pallet-csv';
+const KIM_SUMMARY_FROM_CSV = true;
+let kimSummarySource = '';   // 'csv' | 'supabase' (info debug)
+async function fetchKimCsvRows(){
+  const res = await fetch(`${CSV_URL}?t=${Date.now()}`, { cache:'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const rows = parseCSVText(await res.text());
+  if (!rows || rows.length < 4) throw new Error('isi CSV kosong / tidak lengkap');
+  return rows;
+}
+let palletOpnRaw = [];   // baris mentah pallet_opname (terbaru dulu) — punya id
+let palletTrxRaw = [];   // baris mentah pallet_transaksi (punya id) — index = _idx-1 pada buildData
+async function sbFetchAll(table, orderCol){
+  if (!sbClient) throw new Error('Supabase client belum siap.');
+  const PAGE = 1000; let from = 0; const out = [];
+  while (true){
+    const { data, error } = await sbClient.from(table).select('*').order(orderCol, { ascending: true }).range(from, from + PAGE - 1);
+    if (error) throw error;
+    out.push(...(data || []));
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  return out;
+}
+function isoToSheet(iso, sep){            // '2026-01-05' -> '5-Jan-26' / '5/Jan/26'
+  if (!iso) return '';
+  const p = String(iso).slice(0, 10).split('-');
+  if (p.length !== 3) return '';
+  return `${parseInt(p[2], 10)}${sep}${MONTH_ID_SHORT[parseInt(p[1], 10) - 1]}${sep}${p[0].slice(2)}`;
+}
+async function fetchPalletRows(){
+  const [cust, trx, opn, csvRows] = await Promise.all([
+    sbFetchAll('pallet_customers', 'code'),
+    sbFetchAll('pallet_transaksi', 'id'),
+    sbFetchAll('pallet_opname', 'id'),
+    KIM_SUMMARY_FROM_CSV ? fetchKimCsvRows().catch(e => { console.warn('CSV ringkasan KIM gagal, pakai tabel Supabase:', e); return null; }) : Promise.resolve(null)
+  ]);
+  let kim = [], bkr = [];
+  if (!csvRows){
+    [kim, bkr] = await Promise.all([ sbFetchAll('pallet_stok_kosong_kim', 'id'), sbFetchAll('pallet_bongkar', 'id') ]);
+    kimSummarySource = 'supabase';
+  } else kimSummarySource = 'csv';
+  palletTrxRaw = trx;
+  opn.sort((a,b)=> String(b.tgl_opname||'').localeCompare(String(a.tgl_opname||'')) || ((b.id||0)-(a.id||0)));
+  palletOpnRaw = opn;
+  const W = 32;
+  const n = Math.max(trx.length + 1, cust.length + 1, opn.length + 1, kim.length + 2, bkr.length + 3, csvRows ? csvRows.length : 0, 4);
+  const rows = Array.from({ length: n }, () => Array(W).fill(''));
+  const s = v => (v === null || v === undefined) ? '' : String(v);
+  trx.forEach((t, i) => { const r = rows[i + 1];
+    r[0] = isoToSheet(t.tanggal, '-'); r[1] = s(t.c_code); r[2] = s(t.no_mobil);
+    r[3] = s(t.qty_in); r[4] = s(t.qty_out); r[6] = s(t.nama); });
+  cust.forEach((c, i) => { const r = rows[i + 1]; r[8] = s(c.code); r[9] = s(c.name); r[10] = s(c.saldo_awal); });
+  opn.forEach((o, i) => { const r = rows[i + 1];
+    r[12] = s(o.code); r[13] = s(o.nama); r[14] = isoToSheet(o.tgl_opname, '/');
+    r[15] = (o.qty === null || o.qty === undefined) ? '' : (s(o.qty) + (o.catatan ? ' (' + o.catatan + ')' : ''));
+    r[16] = s(o.link_dokumen); });
+  kim.forEach((k, i) => { const r = rows[i + 2];
+    r[18] = s(k.code); r[19] = s(k.nama); r[20] = s(k.qty); r[21] = s(k.total_beli); });
+  bkr.forEach((b, i) => { const r = rows[i + 3];
+    r[24] = s(b.no); r[25] = s(b.customer); r[26] = s(b.code);
+    r[27] = s(b.y2023); r[28] = s(b.y2024); r[29] = s(b.y2025); r[30] = s(b.y2026); r[31] = s(b.total); });
+  if (csvRows){   // ambil HANYA kolom S-V (18-21) & Y-AF (24-31) dari CSV; kolom lain tetap dari Supabase
+    csvRows.forEach((cr, i) => { if (!cr) return;
+      for (let k = 18; k <= 31; k++) if (k < 22 || k > 23) rows[i][k] = (cr[k] === undefined || cr[k] === null) ? '' : String(cr[k]); });
+  }
+  return rows;
+}
+
   
 const MONTH_ID_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const MONTH_ID_LONG  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -1209,7 +1299,7 @@ const sbClient = (window.supabase && window.supabase.createClient)
   ? window.supabase.createClient(SB_URL, SB_KEY)
   : null;
 
-let docMap = {};       // { "2026-09-02_B9699KYX": [url1, url2, ...] }
+let docMap = {};       // { "2026-09-02_B9699KYX": [{url, name}, ...] }
 
 function docKeyFor(date, noPol, custCode){
   if (!date) return null;
@@ -1230,11 +1320,14 @@ async function loadDocMap(){
     (data || []).forEach(f => {
       const parts = f.name.split('_');
       if (parts.length < 2) return;
-      const key = parts[0] + '_' + parts[1];
+      let key;
+      if (f.name.startsWith('OPNAME-')) key = parts[0];                           // nama baru: OPNAME-KODE-TANGGAL_timestamp.jpg
+      else if (parts.length >= 3 && parts[1] === 'OPNAME') key = 'OPNAME-' + parts[0]; // nama lama: KODE-TANGGAL_OPNAME_timestamp.jpg
+      else key = parts[0] + '_' + parts[1];
       const { data: pub } = sbClient.storage.from(SB_BUCKET).getPublicUrl(f.name);
       if (!pub || !pub.publicUrl) return;
       if (!map[key]) map[key] = [];
-      map[key].push(pub.publicUrl);
+      map[key].push({ url: pub.publicUrl, name: f.name });
     });
     docMap = map;
   } catch(e){
@@ -1242,8 +1335,8 @@ async function loadDocMap(){
   }
 }
 
-function docCellHTML(date, noPol, custCode){
-  const key = docKeyFor(date, noPol, custCode);
+function docCellHTML(date, noPol, custCode, keyOverride){
+  const key = keyOverride || docKeyFor(date, noPol, custCode);
   if (!key) return '<span class="doc-empty">–</span>';
   const docs = docMap[key] || [];
   let html = '<div class="doc-cell">';
@@ -1264,11 +1357,11 @@ function openDocViewer(key){
   overlay.innerHTML = `
     <div class="doc-modal">
       <div class="doc-modal-head">
-        <h3>Dokumentasi SJ</h3>
+        <h3>${key.startsWith('OPNAME-') ? 'Dokumen Opname' : 'Dokumentasi SJ'}</h3>
         <button class="doc-modal-close" onclick="this.closest('.doc-modal-overlay').remove()">✕</button>
       </div>
       <div class="doc-modal-grid">
-        ${docs.map(u => `<a href="${u}" target="_blank" rel="noopener"><img src="${u}" loading="lazy"/></a>`).join('')}
+        ${docs.map(d => `<a href="${d.url}" target="_blank" rel="noopener"><img src="${d.url}" loading="lazy"/></a>`).join('')}
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -1403,7 +1496,7 @@ function fmtSignedNum(n){
    PARSING DATA UTAMA
    ============================================================ */
 function buildData(text){
-  const rows = parseCSVText(text);
+  const rows = Array.isArray(text) ? text : parseCSVText(text);
   custByCode = {};
   let firstDate = null, lastDate = null;
 
@@ -1669,10 +1762,7 @@ async function refreshLoginCustomerList(){
   btn.disabled = true;
   statusEl.style.display = 'none';
   try {
-    const t = new Date().getTime();
-    const res = await fetch(`${CSV_URL}?t=${t}`);
-    if (!res.ok) throw new Error('Gagal terhubung ke server data.');
-    const text = await res.text();
+    const text = await fetchPalletRows();
     buildData(text);
     if (customers.length === 0) throw new Error('Daftar customer masih kosong, coba lagi sebentar.');
     populateListMonthFilter();
@@ -2457,33 +2547,39 @@ function renderDetail(){
   renderAdjBreakdown('d-in-adj', trxList, 'inVal');
   renderAdjBreakdown('d-out-adj', trxList, 'outVal');
 
-  // Card Opname Terakhir — diambil dari tabel "Tanggal Terahir Opname" (kolom M-P) pada CSV
-  const opn = c.opname;
+  // Card Opname Terakhir — terdeteksi otomatis dari transaksi ber-No Pol OPNAME
+  // (digabung dengan data lama di tabel pallet_opname). QTY = saldo setelah baris OPNAME.
+  const opEntries = opnEntries(c), opLatest = opEntries[0] || null;
   const opDateEl = document.getElementById('d-opname-date');
   const opSubEl = document.getElementById('d-opname-sub');
-  if (opn && opn.tglDate){
-    const days = Math.round((reportDate - opn.tglDate) / 86400000);
-    opDateEl.textContent = fmtDateShort(opn.tglDate);
-    opSubEl.textContent = `${days} hari lalu · QTY ${opn.qty || '–'}`;
-  } else if (opn && opn.tglRaw){
-    opDateEl.textContent = opn.tglRaw;
-    opSubEl.textContent = opn.qty ? `QTY ${opn.qty}` : '';
+  if (opLatest){
+    const days = Math.round((reportDate - opLatest.date) / 86400000);
+    opDateEl.textContent = fmtDateShort(opLatest.date);
+    opSubEl.textContent = `${days} hari lalu · QTY ${opLatest.qty == null ? '–' : opLatest.qty}${opLatest.catatan ? ' (' + opLatest.catatan + ')' : ''}`;
   } else {
     opDateEl.textContent = 'Belum ada data';
     opSubEl.textContent = '';
   }
-
-  // Tombol "Lihat Dokumen" — hanya ditampilkan kalau kolom Q (link dokumen opname) di CSV
-  // memang terisi link yang valid. Kalau kosong, tombolnya juga tidak ditampilkan.
+  // Ikon dokumen: foto di storage (OPNAME-KODE-TANGGAL_...) milik opname terakhir; link Drive lama jadi cadangan.
   const opDocBtn = document.getElementById('d-opname-doc-btn');
-  const opLink = (opn && opn.link || '').trim();
-  if (opLink && /^https?:\/\//i.test(opLink)){
-    opDocBtn.href = opLink;
+  const opKey = opLatest ? opnDocKey(opLatest.date, c.code) : null;
+  const opDocs = (opKey && docMap[opKey]) || [];
+  const opLink = (opLatest && opLatest.link || '').trim();
+  opDocBtn.onclick = null;
+  if (opDocs.length){
+    opDocBtn.href = '#'; opDocBtn.removeAttribute('target'); opDocBtn.title = 'Lihat dokumen opname (' + opDocs.length + ' foto)';
+    opDocBtn.onclick = (ev) => { ev.preventDefault(); openDocViewer(opKey); };
+    opDocBtn.style.display = 'inline-flex';
+  } else if (opLink && /^https?:\/\//i.test(opLink)){
+    opDocBtn.href = opLink; opDocBtn.target = '_blank'; opDocBtn.title = 'Lihat dokumen opname (Google Drive)';
     opDocBtn.style.display = 'inline-flex';
   } else {
     opDocBtn.removeAttribute('href');
     opDocBtn.style.display = 'none';
   }
+  const opHistBtn = document.getElementById('d-opname-hist-btn');
+  if (opHistBtn){ opHistBtn.style.display = opEntries.length ? 'inline-flex' : 'none'; opHistBtn.title = 'Riwayat opname (' + opEntries.length + ')'; }
+  try{ if (document.getElementById('opnh-overlay').classList.contains('on')) opnhRender(); }catch(e){}
 
   const q = document.getElementById('d-search').value.trim().toLowerCase();
   if (q) trxList = trxList.filter(t => t.noPol.toLowerCase().includes(q) || fmtDateShort(t.date).toLowerCase().includes(q));
@@ -2495,7 +2591,7 @@ function renderDetail(){
     if (t.marker === 'reset') noPolCell = `<span class="tag-reset">RESET</span>`;
     else if (t.marker === 'opname') noPolCell = `<span class="tag-opname">OPNAME</span>`;
     else noPolCell = `<span class="code-tag" style="display:inline-block">${t.noPol || '—'}</span>`;
-    const docCell = (t.marker === 'reset' || t.marker === 'opname') ? '<span class="doc-empty">–</span>' : docCellHTML(t.date, t.noPol, currentDetailCode);
+    const docCell = (t.marker === 'reset') ? '<span class="doc-empty">–</span>' : docCellHTML(t.date, t.noPol, currentDetailCode, t.marker === 'opname' ? opnDocKey(t.date, c.code) : undefined);
     return `<tr class="${rowClass}">
       <td class="no-cell">${idx+1}</td>
       <td>${fmtDateShort(t.date)}</td>
@@ -2523,12 +2619,9 @@ async function init(){
   document.getElementById('err-box').style.display = 'none';
   document.getElementById('period-badge').style.display = 'none';
   try {
-    const t = new Date().getTime();
-    const res = await fetch(`${CSV_URL}?t=${t}`);
-    if (!res.ok) throw new Error('Gagal menarik data dari Google Sheets.');
-    const text = await res.text();
+    const text = await fetchPalletRows();
     buildData(text);
-    if (customers.length === 0) throw new Error('Data tidak dapat diproses. Periksa struktur kolom pada spreadsheet.');
+    if (customers.length === 0) throw new Error('Data tidak dapat diproses. Periksa data pada database.');
 
     document.getElementById('period-badge').style.display = 'inline-flex';
     document.getElementById('loading').style.display = 'none';
@@ -2574,10 +2667,7 @@ async function silentRefresh(){
   const btn = document.getElementById('btn-refresh');
   btn.classList.add('spinning');
   try {
-    const t = new Date().getTime();
-    const res = await fetch(`${CSV_URL}?t=${t}`);
-    if (!res.ok) return;
-    const text = await res.text();
+    const text = await fetchPalletRows();
     buildData(text);
     if (customers.length === 0) return;
     updateReportDateBadge();
@@ -3249,5 +3339,113 @@ function endTour(){
     });
   }
 </script>
+
+<!-- ===== RIWAYAT OPNAME (daftar semua opname + foto/dokumennya) ===== -->
+<style>
+
+/* --- gaya dasar jendela riwayat (disalin dari superadmin) --- */
+@keyframes ovIn{from{opacity:0}to{opacity:1}}
+@keyframes ovOut{from{opacity:1}to{opacity:0}}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes cardOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(14px) scale(.97)}}
+.log-card{position:relative;background:var(--surface);color:var(--ink);width:100%;max-width:560px;height:min(88vh,720px);border-radius:18px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden}
+.log-head{padding:18px 54px 10px 18px;border-bottom:1px solid var(--border)}
+.log-head h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 2px}
+.log-body{flex:1;overflow:auto;padding:10px 18px 14px;overscroll-behavior:contain}
+.log-empty{text-align:center;color:var(--ink3);font-size:13px;padding:36px 10px}
+.log-foot{padding:10px 18px 14px;border-top:1px solid var(--border);display:flex;gap:8px}
+.log-foot button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border2);background:var(--bg);color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer}
+.inp-sub{font-size:12px;color:var(--ink3)}
+.inp-x{position:absolute;top:10px;right:12px;width:32px;height:32px;border:none;background:none;font-size:26px;line-height:1;color:var(--ink3);cursor:pointer;border-radius:8px}
+.inp-x:hover{color:var(--ink);background:var(--bg)}
+@media(max-width:820px){.log-card{height:min(88dvh,720px)}}
+#opnh-overlay{position:fixed;inset:0;z-index:3500;background:rgba(10,8,20,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:16px}
+#opnh-overlay.on{display:flex;animation:ovIn .22s ease both}
+#opnh-overlay.on .log-card{animation:cardIn .26s cubic-bezier(.2,.9,.3,1) both}
+#opnh-overlay.closing{animation:ovOut .24s ease both!important}
+#opnh-overlay.closing .log-card{animation:cardOut .24s ease both!important}
+.oh-item{border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-top:9px;background:var(--bg)}
+.oh-item.latest{border-color:var(--brass-line);background:var(--brass-bg)}
+.oh-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.oh-date{font-weight:700;font-size:14.5px}
+.oh-qty{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--brass)}
+.oh-tag{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--brass);color:#fff;margin-left:6px}
+.oh-cat{font-size:12.5px;color:var(--ink2);margin-top:3px}
+.oh-ago{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.oh-thumbs{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.oh-thumbs button{width:64px;height:64px;padding:0;border-radius:9px;overflow:hidden;border:1px solid var(--border2);background:var(--surface);cursor:pointer}
+.oh-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.oh-nodoc{font-size:12px;color:var(--ink3);margin-top:8px}
+.oh-link{display:inline-block;margin-top:8px;font-size:12px;color:var(--brass);font-weight:600}
+</style>
+<div id="opnh-overlay">
+  <div class="log-card" role="dialog" aria-label="Riwayat opname">
+    <button type="button" class="inp-x" onclick="closeOpnHist()" aria-label="Tutup">&times;</button>
+    <div class="log-head"><h3>📜 Riwayat Opname</h3><div class="inp-sub" id="opnh-sub" style="margin:0"></div></div>
+    <div class="log-body" id="opnh-body"></div>
+    <div class="log-foot"><button type="button" onclick="closeOpnHist()">Tutup</button></div>
+  </div>
+</div>
+<script>
+function opnISO(s){ const [y,m,d]=String(s).slice(0,10).split('-').map(Number); return new Date(y,m-1,d); }
+function logEsc(t){ return String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+/* Nama file opname di Supabase Storage: OPNAME-KODE-TANGGAL_timestamp.jpg
+   (diawali OPNAME supaya gampang dicari di direktori). File lama KODE-TANGGAL_OPNAME_timestamp.jpg tetap terbaca. */
+function opnDocKey(date, code){
+  const k = docKeyFor(date, 'X', code);
+  return k ? 'OPNAME-' + k.split('_')[0] : null;
+}
+function opnSuffix(name){      // bagian "_timestamp.jpg" dari nama file baru maupun lama
+  const i = name.indexOf('_');
+  return name.startsWith('OPNAME-') ? name.slice(i) : name.slice(i + '_OPNAME'.length);
+}
+function opnHistRows(code){ const n=normCode(code); return palletOpnRaw.filter(o=>normCode(o.code)===n && o.tgl_opname); }
+/* Daftar opname customer = transaksi ber-No Pol OPNAME (QTY = saldo setelah baris itu)
+   + data lama tabel pallet_opname. Kalau tanggalnya sama, digabung jadi satu entri. */
+function opnEntries(c){
+  const pad=n=>String(n).padStart(2,'0'), iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const map=new Map();
+  opnHistRows(c.code).forEach(r=>{ const k=String(r.tgl_opname).slice(0,10);
+    map.set(k,{date:opnISO(k),qty:r.qty,catatan:r.catatan||'',link:(r.link_dokumen||'').trim(),legacy:true,adj:''}); });
+  (c.trx||[]).forEach(t=>{
+    if(t.marker!=='opname'||!t.date) return;
+    const k=iso(t.date), e=map.get(k)||{date:t.date,qty:null,catatan:'',link:'',legacy:false,adj:''};
+    if(!e.legacy) e.qty=t.saldo;
+    const adj=[t.outVal?`OUT ${t.outVal}`:'',t.inVal?`IN ${t.inVal}`:''].filter(Boolean).join(' · ');
+    if(adj) e.adj=e.adj?e.adj+' ; '+adj:adj;
+    map.set(k,e);
+  });
+  return Array.from(map.values()).sort((a,b)=>b.date-a.date);
+}
+function openOpnHist(){
+  document.documentElement.style.overflow='hidden';
+  _opnhTok++; const o=document.getElementById('opnh-overlay'); o.classList.remove('closing'); o.classList.add('on'); opnhRender();
+}
+let _opnhTok=0;
+function closeOpnHist(){
+  const o=document.getElementById('opnh-overlay');
+  if(!o.classList.contains('on')||o.classList.contains('closing')) return;
+  const tok=++_opnhTok; o.classList.add('closing');
+  setTimeout(()=>{ if(tok===_opnhTok){ o.classList.remove('on','closing'); document.documentElement.style.overflow=''; } },240);
+}
+function opnhRender(){
+  const c=custByCode[currentDetailCode], body=document.getElementById('opnh-body'); if(!c) return;
+  document.getElementById('opnh-sub').textContent=`${c.name} · C.Code ${c.code}`;
+  const rows=opnEntries(c);
+  if(!rows.length){ body.innerHTML='<div class="log-empty">Belum ada riwayat opname.</div>'; return; }
+  body.innerHTML=rows.map((r,i)=>{
+    const key=opnDocKey(r.date,c.code), docs=(key&&docMap[key])||[];
+    const days=Math.round((reportDate-r.date)/86400000);
+    let doc;
+    if(docs.length) doc=`<div class="oh-thumbs">${docs.map(x=>`<button type="button" onclick="openDocViewer('${key}')" title="Buka dokumen"><img src="${x.url}" loading="lazy" alt="dokumen opname"></button>`).join('')}</div>`;
+    else doc='<div class="oh-nodoc">Belum ada foto dokumen</div>';
+    if(/^https?:\/\//i.test(r.link)) doc+=`<a class="oh-link" href="${logEsc(r.link)}" target="_blank" rel="noopener">🔗 Dokumen lama (Google Drive)</a>`;
+    return `<div class="oh-item${i===0?' latest':''}"><div class="oh-top"><span class="oh-date">${logEsc(fmtDateShort(r.date))}${i===0?'<span class="oh-tag">Terakhir</span>':''}</span><span class="oh-qty">QTY ${r.qty==null?'–':logEsc(r.qty)}</span></div>`+
+      `<div class="oh-ago">${days>=0?days+' hari lalu':''}${r.adj?' · penyesuaian saldo '+logEsc(r.adj):''}</div>${r.catatan?`<div class="oh-cat">${logEsc(r.catatan)}</div>`:''}${doc}</div>`;
+  }).join('');
+}
+</script>
+
+
 </body>
 </html>
