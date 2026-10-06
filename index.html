@@ -350,6 +350,11 @@ tr.row-reset td{background:var(--reset-y-bg)!important}
 tr.row-opname td{background:var(--opname-r-bg)!important;color:var(--opname-r)!important}
 tr.row-opname td .num-cell,tr.row-opname .num-cell{color:var(--opname-r)!important}
 tr.row-opname td span{color:var(--opname-r)!important}
+/* OPNAME menunggu persetujuan: warna amber (bukan merah) + angka QTY opname, saldo berjalan tidak berubah */
+tr.row-opname-pend td{background:var(--amber-bg)!important;color:var(--amber)!important}
+tr.row-opname-pend td .tag-opname{background:var(--amber)!important;color:var(--amber-bg)!important;border:1px solid var(--amber)!important}
+tr.row-opname-pend td .pend-qty{font-weight:800;color:var(--amber)!important}
+.pend-sub{font-size:10.5px;font-weight:600;line-height:1.25;margin-top:3px;opacity:.9;white-space:normal}
 [data-theme="dark"] tr.row-reset td{background:var(--reset-y-bg)!important}
 
 /* ===== LEGEND / KODE & WARNA ===== */
@@ -2579,11 +2584,14 @@ function renderDetail(){
   if (q) trxList = trxList.filter(t => t.noPol.toLowerCase().includes(q) || fmtDateShort(t.date).toLowerCase().includes(q));
 
   let rows = `<tr class="awal-row"><td class="no-cell">—</td><td colspan="2" class="awal-label-cell">${awalLabel}</td><td class="num-cell">–</td><td class="num-cell">–</td><td class="num-cell">${fmtSaldoHTML(periodAwal)}</td><td class="doc-td"><span class="doc-empty">–</span></td></tr>`;
+  const _pk = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const pendByDate = {}; opEntries.forEach(e => { if (e.pending) pendByDate[_pk(e.date)] = e; });
   rows += trxList.map((t, idx) => {
-    const rowClass = t.marker === 'reset' ? 'row-reset' : (t.marker === 'opname' ? 'row-opname' : '');
+    const pend = (t.marker === 'opname') ? pendByDate[_pk(t.date)] : null;
+    const rowClass = t.marker === 'reset' ? 'row-reset' : (t.marker === 'opname' ? (pend ? 'row-opname-pend' : 'row-opname') : '');
     let noPolCell;
     if (t.marker === 'reset') noPolCell = `<span class="tag-reset">RESET</span>`;
-    else if (t.marker === 'opname') noPolCell = `<span class="tag-opname">OPNAME</span>`;
+    else if (t.marker === 'opname') noPolCell = `<span class="tag-opname">OPNAME</span>` + (pend ? `<div class="pend-sub">⏳ menunggu persetujuan</div>` : '');
     else noPolCell = `<span class="code-tag" style="display:inline-block">${t.noPol || '—'}</span>`;
     const docCell = (t.marker === 'reset') ? '<span class="doc-empty">–</span>' : docCellHTML(t.date, t.noPol, currentDetailCode, t.marker === 'opname' ? opnDocKey(t.date, c.code) : undefined);
     return `<tr class="${rowClass}">
@@ -2592,7 +2600,7 @@ function renderDetail(){
       <td>${noPolCell}</td>
       <td class="num-cell">${t.inVal ? fmtNum(t.inVal) : '–'}</td>
       <td class="num-cell">${t.outVal ? fmtNum(t.outVal) : '–'}</td>
-      <td class="num-cell">${fmtSaldoHTML(t.saldo)}</td>
+      <td class="num-cell">${pend ? `<span class="pend-qty">⏳ ${pend.qty == null ? '–' : fmtNum(pend.qty)}</span><div class="pend-sub">QTY opname · saldo tetap ${fmtNum(t.saldo)}</div>` : fmtSaldoHTML(t.saldo)}</td>
       <td class="doc-td">${docCell}</td>
     </tr>`;
   }).join('');
