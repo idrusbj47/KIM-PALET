@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Laporan Pergerakan Pallet — Dept. SBJ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--ink:#1b1a17;--ink2:#5f5b52;--ink3:#9a9488;--bg:#f6f3ec;--sf:#fff;--bd:#e7e1d3;--pu:#5b3fa0;--pu2:#b8a0e0;--gr:#1f6e50;--rd:#a13a29;--am:#a06a08;--amb:#faf0d7}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding:18px;touch-action:manipulation}
+.wrap{max-width:1180px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end;margin-bottom:16px}
+h1{font:700 24px Georgia,serif}
+.sub{color:var(--ink2);font-size:13px;margin-top:2px}
+.ctl{display:flex;gap:8px;align-items:center}
+select,button{font:600 14px inherit;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--sf);color:var(--ink)}
+button{background:var(--pu);color:#fff;border-color:var(--pu);cursor:pointer}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;break-inside:avoid}
+.k .l{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3)}
+.k .v{font:700 26px Georgia,serif;margin-top:4px}
+.k .n{font-size:12px;color:var(--ink2);margin-top:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:12px;margin-bottom:14px}
+h2{font:700 15px system-ui;margin-bottom:10px}
+.cv{position:relative;height:290px}
+ul.ins{padding-left:18px}ul.ins li{margin:5px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink3);padding:6px 8px;border-bottom:2px solid var(--bd)}
+td{padding:7px 8px;border-bottom:1px solid var(--bd)}
+.r{text-align:right;font-variant-numeric:tabular-nums}
+.sc{overflow-x:auto}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;background:var(--amb);color:var(--am)}
+.tag.ok{background:#e5f1e9;color:var(--gr)}
+#msg{padding:40px;text-align:center;color:var(--ink2)}
+footer{color:var(--ink3);font-size:12px;margin-top:6px}
+@media(max-width:820px){select,input{font-size:16px}body{padding:12px}}
+@media print{body{background:#fff;padding:0}.ctl{display:none}.card{border-color:#ccc}@page{size:A4 landscape;margin:10mm}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Laporan Pergerakan Pallet</h1>
+    <div class="sub">Departemen Stock Barang Jadi (SBJ) · <span id="per">memuat…</span></div>
+  </div>
+  <div class="ctl"><select id="sel" onchange="draw()"></select><button onclick="print()">🖨 Cetak / PDF</button></div>
+</header>
+<div id="msg">Memuat data dari database…</div>
+<main id="out" style="display:none">
+  <section class="kpis" id="kpis"></section>
+  <section class="grid">
+    <div class="card"><h2>Pergerakan bulanan &amp; total saldo di customer</h2><div class="cv"><canvas id="c1"></canvas></div></div>
+    <div class="card"><h2>Rasio pengembalian per bulan (IN ÷ OUT)</h2><div class="cv"><canvas id="c2"></canvas></div></div>
+    <div class="card"><h2>10 customer dengan pengiriman (OUT) terbanyak</h2><div class="cv"><canvas id="c3"></canvas></div></div>
+    <div class="card"><h2>10 customer dengan saldo pallet terbesar (akhir periode)</h2><div class="cv"><canvas id="c4"></canvas></div></div>
+  </section>
+  <section class="card" style="margin-bottom:14px"><h2>Poin penting</h2><ul class="ins" id="ins"></ul></section>
+  <section class="card" style="margin-bottom:14px"><h2>10 customer teratas (berdasarkan OUT)</h2><div class="sc"><table id="tb"></table></div></section>
+  <section class="card" style="margin-bottom:14px"><h2>Opname pada periode ini</h2><div class="sc"><table id="op"></table></div></section>
+</main>
+<footer id="ft"></footer>
+</div>
+<script>
+const SB_URL='https://bpqiejowxcxyeewhoncr.supabase.co', SB_KEY='sb_publishable_3tCR_a01HgzEpH-5uypqGg_s8WvXsa9';
+const BLN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const nf=n=>Math.round(n).toLocaleString('id-ID'), nc=c=>{let s=String(c||'').trim().toUpperCase().replace(/\s+/g,'');if(/^[\d.,]+$/.test(s))s=s.replace(/[.,]/g,'');return s};
+const pd=s=>{const[y,m,d]=String(s).slice(0,10).split('-').map(Number);return new Date(y,m-1,d)}, mk=d=>d.getFullYear()*12+d.getMonth();
+const ml=k=>BLN[k%12]+' '+String(Math.floor(k/12)).slice(2), esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let TRX=[],CUS={},OPN=[],LAST=null,CH={};
+
+async function getAll(t,o){
+  const out=[];
+  for(let f=0;;f+=1000){
+    const r=await fetch(`${SB_URL}/rest/v1/${t}?select=*&order=${o}.asc`,{headers:{apikey:SB_KEY,Range:`${f}-${f+999}`,'Range-Unit':'items'}});
+    if(!r.ok) throw new Error(`${t}: HTTP ${r.status}`);
+    const d=await r.json(); out.push(...d); if(d.length<1000) break;
+  }
+  return out;
+}
+async function init(){
+  try{
+    const [cu,tr,op]=await Promise.all([getAll('pallet_customers','code'),getAll('pallet_transaksi','id'),getAll('pallet_opname','id')]);
+    cu.forEach(c=>{CUS[nc(c.code)]={name:c.name||c.code,awal:+c.saldo_awal||0}});
+    tr.forEach(t=>{
+      const c=nc(t.c_code); if(!c||c==='0'||!t.tanggal) return;
+      const pol=String(t.no_mobil||'').trim().toUpperCase();
+      const o={d:pd(t.tanggal),c,pol,i:+t.qty_in||0,o:+t.qty_out||0,mark:(pol==='RESET'||pol==='OPNAME'||pol==='OPNAM')};
+      if(!o.i&&!o.o&&!pol) return;
+      o.k=mk(o.d); TRX.push(o);
+      if(!CUS[c]) CUS[c]={name:t.nama||c,awal:0}; else if(t.nama&&!CUS[c].name) CUS[c].name=t.nama;
+    });
+    OPN=op; if(!TRX.length) throw new Error('Belum ada data transaksi.');
+    LAST=TRX.reduce((a,t)=>t.d>a?t.d:a,TRX[0].d);
+    const e=mk(LAST), sel=document.getElementById('sel');
+    sel.innerHTML=`<option value="r">12 bulan terakhir</option>`+[...new Set(TRX.map(t=>t.d.getFullYear()))].sort().reverse().map(y=>`<option value="${y}">Tahun ${y}</option>`).join('');
+    document.getElementById('msg').style.display='none'; document.getElementById('out').style.display='';
+    draw();
+  }catch(e){
+    document.getElementById('msg').innerHTML='Gagal memuat data: '+esc(e.message)+'<br><small>Cek koneksi dan policy SELECT untuk role anon di tabel pallet_*.</small>';
+  }
+}
+function range(){
+  const v=document.getElementById('sel').value, e=mk(LAST);
+  if(v==='r') return [e-11,e];
+  const y=+v; return [y*12,Math.min(y*12+11,e)];
+}
+function draw(){
+  const [s,e]=range(), months=[]; for(let k=s;k<=e;k++) months.push(k);
+  const M={}; months.forEach(k=>M[k]={o:0,i:0,adj:0});
+  const C={}; Object.keys(CUS).forEach(c=>C[c]={o:0,i:0,sa:CUS[c].awal,se:CUS[c].awal,last:null});
+  let trkOut=0,trkIn=0;
+  TRX.forEach(t=>{
+    const c=C[t.c], net=t.o-t.i;
+    if(t.k<s) c.sa+=net; if(t.k<=e) c.se+=net;
+    if(t.k>=s&&t.k<=e){
+      if(t.mark) M[t.k].adj+=net;
+      else{ M[t.k].o+=t.o; M[t.k].i+=t.i; c.o+=t.o; c.i+=t.i; if(t.o>0)trkOut++; if(t.i>0)trkIn++; }
+    }
+    if(t.k<=e&&!t.mark&&(!c.last||t.d>c.last)) c.last=t.d;
+  });
+  const base=Object.values(CUS).reduce((a,c)=>a+c.awal,0);
+  let run=base; const pre=TRX.filter(t=>t.k<s).reduce((a,t)=>a+t.o-t.i,0); run+=pre;
+  const saldoM=months.map(k=>{ run+=TRX.filter(t=>t.k===k).reduce((a,t)=>a+t.o-t.i,0); return run; });
+  const sumO=months.reduce((a,k)=>a+M[k].o,0), sumI=months.reduce((a,k)=>a+M[k].i,0), adj=months.reduce((a,k)=>a+M[k].adj,0);
+  const sAwal=Object.values(C).reduce((a,c)=>a+c.sa,0), sAkhir=Object.values(C).reduce((a,c)=>a+c.se,0);
+  const arr=Object.keys(C).map(k=>({k,n:CUS[k].name,...C[k]}));
+  const aktif=arr.filter(c=>c.o||c.i).length;
+  const byO=arr.filter(c=>c.o>0).sort((a,b)=>b.o-a.o), byS=arr.filter(c=>c.se>0).sort((a,b)=>b.se-a.se);
+  document.getElementById('per').textContent=`${ml(s)} – ${ml(e)}`;
+  document.getElementById('kpis').innerHTML=[
+    ['Saldo awal periode',nf(sAwal),'pallet di customer'],
+    ['Total OUT (kirim)',nf(sumO),`${nf(trkOut)} pengiriman`],
+    ['Total IN (kembali)',nf(sumI),`${nf(trkIn)} pengembalian`],
+    ['Selisih (OUT − IN)',(sumO-sumI>=0?'+':'')+nf(sumO-sumI),`penyesuaian opname/reset: ${adj>=0?'+':''}${nf(adj)}`],
+    ['Saldo akhir periode',nf(sAkhir),'pallet di customer'],
+    ['Customer aktif',nf(aktif),`dari ${nf(arr.length)} customer`],
+    ['Rasio kembali',sumO?Math.round(sumI/sumO*100)+'%':'–','IN ÷ OUT']
+  ].map(([l,v,n])=>`<div class="card k"><div class="l">${l}</div><div class="v">${v}</div><div class="n">${n}</div></div>`).join('');
+
+  // grafik
+  const mk2=(id,cfg)=>{ if(CH[id]) CH[id].destroy(); CH[id]=new Chart(document.getElementById(id),cfg); };
+  const lab=months.map(ml), opt={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}};
+  mk2('c1',{data:{labels:lab,datasets:[
+    {type:'bar',label:'OUT (kirim)',data:months.map(k=>M[k].o),backgroundColor:'#5b3fa0'},
+    {type:'bar',label:'IN (kembali)',data:months.map(k=>M[k].i),backgroundColor:'#1f6e50'},
+    {type:'line',label:'Saldo di customer',data:saldoM,borderColor:'#a06a08',backgroundColor:'#a06a08',yAxisID:'y2',tension:.25,pointRadius:3}]},
+    options:{...opt,scales:{y:{beginAtZero:true,title:{display:true,text:'Pergerakan'}},y2:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'Saldo'}}}}});
+  mk2('c2',{type:'line',data:{labels:lab,datasets:[{label:'Rasio kembali (%)',data:months.map(k=>M[k].o?Math.round(M[k].i/M[k].o*100):null),borderColor:'#1f6e50',backgroundColor:'rgba(31,110,80,.12)',fill:true,tension:.25,spanGaps:true}]},
+    options:{...opt,scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'%'}}}}});
+  const hb=(id,list,key,col,lbl)=>mk2(id,{type:'bar',data:{labels:list.slice(0,10).map(c=>c.n.length>26?c.n.slice(0,25)+'…':c.n),datasets:[{label:lbl,data:list.slice(0,10).map(c=>c[key]),backgroundColor:col}]},
+    options:{...opt,indexAxis:'y',plugins:{legend:{display:false}},scales:{y:{ticks:{autoSkip:false}}}}});
+  hb('c3',byO,'o','#5b3fa0','OUT'); hb('c4',byS,'se','#a06a08','Saldo');
+
+  // poin penting
+  const best=months.reduce((a,k)=>M[k].o>M[a].o?k:a,months[0]), low=months.reduce((a,k)=>M[k].o<M[a].o?k:a,months[0]);
+  const top5=byO.slice(0,5).reduce((a,c)=>a+c.o,0), cut=LAST.getTime()-90*864e5;
+  const dorm=arr.filter(c=>c.se>0&&(!c.last||c.last.getTime()<cut)), dormSum=dorm.reduce((a,c)=>a+c.se,0);
+  const ins=[];
+  ins.push(`Rata-rata pengiriman <b>${nf(sumO/months.length)}</b> pallet/bulan. Tertinggi <b>${ml(best)}</b> (${nf(M[best].o)}), terendah <b>${ml(low)}</b> (${nf(M[low].o)}).`);
+  ins.push(`Saldo pallet di customer ${sAkhir>=sAwal?'naik':'turun'} <b>${nf(Math.abs(sAkhir-sAwal))}</b> (${nf(sAwal)} → ${nf(sAkhir)}). Rasio kembali periode ini <b>${sumO?Math.round(sumI/sumO*100):0}%</b>.`);
+  if(byO.length) ins.push(`Customer terbesar: <b>${esc(byO[0].n)}</b> (${nf(byO[0].o)} OUT, ${sumO?Math.round(byO[0].o/sumO*100):0}% dari total). 5 customer teratas menyumbang <b>${sumO?Math.round(top5/sumO*100):0}%</b> pengiriman.`);
+  if(byS.length) ins.push(`Saldo terbesar di <b>${esc(byS[0].n)}</b> (${nf(byS[0].se)} pallet, ${sAkhir?Math.round(byS[0].se/sAkhir*100):0}% dari total saldo).`);
+  if(dorm.length) ins.push(`<b>${dorm.length}</b> customer masih memegang saldo total <b>${nf(dormSum)}</b> pallet tetapi tidak ada transaksi lebih dari 90 hari — perlu ditindaklanjuti (penarikan / konfirmasi).`);
+  document.getElementById('ins').innerHTML=ins.map(t=>`<li>${t}</li>`).join('');
+
+  // tabel top 10
+  const tgl=d=>d?`${d.getDate()}-${BLN[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`:'–';
+  document.getElementById('tb').innerHTML='<tr><th>#</th><th>Customer</th><th class="r">OUT</th><th class="r">IN</th><th class="r">% OUT</th><th class="r">Saldo akhir</th><th>Transaksi terakhir</th></tr>'+
+    byO.slice(0,10).map((c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}</td><td class="r">${nf(c.o)}</td><td class="r">${nf(c.i)}</td><td class="r">${sumO?(c.o/sumO*100).toFixed(1):0}%</td><td class="r">${nf(c.se)}</td><td>${tgl(c.last)}</td></tr>`).join('');
+
+  // opname
+  const inP=d=>{const k=mk(pd(d));return k>=s&&k<=e};
+  const ops=OPN.filter(o=>o.tgl_opname&&inP(o.tgl_opname)).sort((a,b)=>String(b.tgl_opname).localeCompare(String(a.tgl_opname)));
+  document.getElementById('op').innerHTML=ops.length?'<tr><th>Tanggal</th><th>Customer</th><th class="r">QTY opname</th><th>Keterangan</th><th>Status</th></tr>'+ops.map(o=>{
+    const d=String(o.tgl_opname).slice(0,10), c=nc(o.code);
+    const rows=TRX.filter(t=>t.mark&&t.pol!=='RESET'&&t.c===c&&t.d.getTime()===pd(d).getTime());
+    const pend=!!(o.catatan&&rows.length&&rows.every(t=>!t.i&&!t.o));
+    return `<tr><td>${tgl(pd(d))}</td><td>${esc((CUS[c]&&CUS[c].name)||o.nama||o.code)}</td><td class="r">${o.qty==null?'–':nf(o.qty)}</td><td>${esc(o.catatan||'')}</td><td>${pend?'<span class="tag">⏳ menunggu persetujuan</span>':'<span class="tag ok">tercatat</span>'}</td></tr>`;
+  }).join(''):'<tr><td style="color:var(--ink3)">Tidak ada opname pada periode ini.</td></tr>';
+  document.getElementById('ft').textContent=`Data transaksi terakhir: ${tgl(LAST)} · Dicetak: ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})} · Pergerakan (IN/OUT) tidak menghitung baris RESET/OPNAME; baris tersebut ditampilkan sebagai penyesuaian.`;
+}
+init();
+</script>
+</body>
+</html>
