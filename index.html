@@ -1280,7 +1280,7 @@ async function sha256Hex(text){
 
 /* ============================================================
    DOKUMENTASI SJ — foto surat jalan per baris, disimpan di
-    Storage tanpa perlu tabel database
+   Supabase Storage (bucket public), tanpa perlu tabel database
    terpisah. Key pencocokan tiap baris = tanggal + no pol,
    dibaca dari nama file yang di-generate otomatis saat upload.
    ============================================================ */
@@ -2547,7 +2547,9 @@ function renderDetail(){
   if (opLatest){
     const days = Math.round((reportDate - opLatest.date) / 86400000);
     opDateEl.textContent = fmtDateShort(opLatest.date);
-    opSubEl.textContent = `${days} hari lalu · QTY ${opLatest.qty == null ? '–' : opLatest.qty}${opLatest.catatan ? ' (' + opLatest.catatan + ')' : ''}`;
+    opSubEl.textContent = opLatest.pending
+      ? `${days} hari lalu · QTY opname ${opLatest.qty == null ? '–' : opLatest.qty} (bukan saldo hari itu) · ⏳ menunggu persetujuan · ${opLatest.catatan}`
+      : `${days} hari lalu · QTY ${opLatest.qty == null ? '–' : opLatest.qty}${opLatest.catatan ? ' (' + opLatest.catatan + ')' : ''}`;
   } else {
     opDateEl.textContent = 'Belum ada data';
     opSubEl.textContent = '';
@@ -3398,16 +3400,20 @@ function opnEntries(c){
   const pad=n=>String(n).padStart(2,'0'), iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   const map=new Map();
   opnHistRows(c.code).forEach(r=>{ const k=String(r.tgl_opname).slice(0,10);
-    map.set(k,{date:opnISO(k),qty:r.qty,catatan:r.catatan||'',link:(r.link_dokumen||'').trim(),legacy:true,adj:''}); });
+    map.set(k,{date:opnISO(k),qty:r.qty,catatan:r.catatan||'',link:(r.link_dokumen||'').trim(),legacy:true,adj:'',hasTrx:false,adjN:0,pending:false}); });
   (c.trx||[]).forEach(t=>{
     if(t.marker!=='opname'||!t.date) return;
-    const k=iso(t.date), e=map.get(k)||{date:t.date,qty:null,catatan:'',link:'',legacy:false,adj:''};
+    const k=iso(t.date), e=map.get(k)||{date:t.date,qty:null,catatan:'',link:'',legacy:false,adj:'',hasTrx:false,adjN:0,pending:false};
+    e.hasTrx=true; e.adjN=(e.adjN||0)+(t.outVal||0)+(t.inVal||0);
     if(!e.legacy) e.qty=t.saldo;
     const adj=[t.outVal?`OUT ${t.outVal}`:'',t.inVal?`IN ${t.inVal}`:''].filter(Boolean).join(' · ');
     if(adj) e.adj=e.adj?e.adj+' ; '+adj:adj;
     map.set(k,e);
   });
-  return Array.from(map.values()).sort((a,b)=>b.date-a.date);
+  const out=Array.from(map.values());
+  /* PENDING = ada transaksi OPNAME + keterangan, tapi penyesuaian IN/OUT masih 0 -> QTY opname hanya info, belum mengubah saldo */
+  out.forEach(e=>{ e.pending=!!(e.legacy && e.hasTrx && e.catatan && !e.adjN); });
+  return out.sort((a,b)=>b.date-a.date);
 }
 function openOpnHist(){
   document.documentElement.style.overflow='hidden';
@@ -3432,8 +3438,8 @@ function opnhRender(){
     if(docs.length) doc=`<div class="oh-thumbs">${docs.map(x=>`<button type="button" onclick="openDocViewer('${key}')" title="Buka dokumen"><img src="${x.url}" loading="lazy" alt="dokumen opname"></button>`).join('')}</div>`;
     else doc='<div class="oh-nodoc">Belum ada foto dokumen</div>';
     if(/^https?:\/\//i.test(r.link)) doc+=`<a class="oh-link" href="${logEsc(r.link)}" target="_blank" rel="noopener">🔗 Dokumen lama (Google Drive)</a>`;
-    return `<div class="oh-item${i===0?' latest':''}"><div class="oh-top"><span class="oh-date">${logEsc(fmtDateShort(r.date))}${i===0?'<span class="oh-tag">Terakhir</span>':''}</span><span class="oh-qty">QTY ${r.qty==null?'–':logEsc(r.qty)}</span></div>`+
-      `<div class="oh-ago">${days>=0?days+' hari lalu':''}${r.adj?' · penyesuaian saldo '+logEsc(r.adj):''}</div>${r.catatan?`<div class="oh-cat">${logEsc(r.catatan)}</div>`:''}${doc}</div>`;
+    return `<div class="oh-item${i===0?' latest':''}"><div class="oh-top"><span class="oh-date">${logEsc(fmtDateShort(r.date))}${i===0?'<span class="oh-tag">Terakhir</span>':''}</span><span class="oh-qty">${r.pending?'QTY OPNAME ':'QTY '}${r.qty==null?'–':logEsc(r.qty)}</span></div>`+
+      `<div class="oh-ago">${days>=0?days+' hari lalu':''}${r.pending?' · ⏳ menunggu persetujuan — bukan saldo hari itu, belum mengubah saldo':''}${r.adj?' · penyesuaian saldo '+logEsc(r.adj):''}</div>${r.catatan?`<div class="oh-cat">${logEsc(r.catatan)}</div>`:''}${doc}</div>`;
   }).join('');
 }
 </script>
