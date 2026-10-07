@@ -234,8 +234,8 @@ body.pres .ks,body.pres footer{display:none}
   <!-- 6 BONGKAR -->
   <section class="pg" data-t="Bongkar">
     <div class="cnt" id="bk"><div class="card">Memuat data palet bongkar…</div></div>
-    <div class="g2" style="flex:40"><div class="card"><h2>Palet Bongkar per Tahun</h2><div class="cv"><canvas id="c5"></canvas></div></div><div class="card"><h2>Top 10 Customer Bongkar (Total)</h2><div class="cv"><canvas id="c6"></canvas></div></div></div>
-    <div class="card" style="flex:50"><h2>Ringkasan Palet Bongkar per Customer</h2><div class="tw"><table id="bt"></table></div></div>
+    <div class="g2" style="flex:40"><div class="card"><h2 id="bh1">Palet Bongkar per Tahun</h2><div class="cv"><canvas id="c5"></canvas></div></div><div class="card"><h2 id="bh2">Top 10 Customer Bongkar (Total)</h2><div class="cv"><canvas id="c6"></canvas></div></div></div>
+    <div class="card" style="flex:50"><h2 id="bh3">Ringkasan Palet Bongkar per Customer</h2><div class="tw"><table id="bt"></table></div></div>
   </section>
 </main>
 <footer id="ft"></footer>
@@ -261,7 +261,7 @@ users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7
 sigma:'<path d="M18 7V4H6l6 8-6 8h12v-3"/>',clip:'<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
 clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',chev:'<path d="m9 6 6 6-6 6"/>'};
 const svg=p=>`<svg class="i" viewBox="0 0 24 24">${IC[p]}</svg>`;
-let ST=null,TRX=[],CUS={},OPN=[],LAST=null,CH={},FIRSTK=0,BK=null,DET=[];
+let ST=null,TRX=[],CUS={},OPN=[],LAST=null,CH={},FIRSTK=0,BK=null,BM=null,DET=[];
 
 /* ===== DATA: SUPABASE ===== */
 async function getAll(t,o){
@@ -411,7 +411,7 @@ function draw(){
   $('opk').innerHTML=[['clip','','Total Opname',ops.length],['users','in','Customer Diopname',cset.size],['clock','sal','Pending Approval',pending]].map(([i,c,l,v])=>`<div class="card k"><div class="kic ${c}">${svg(i)}</div><div><div class="l">${l}</div><div class="v" style="font-size:30px">${nf(v)}</div></div></div>`).join('');
   $('op').innerHTML=ops.length?'<thead><tr><th>Tanggal</th><th>Customer</th><th class="r">Qty Opname</th><th>Keterangan</th><th>Status</th></tr></thead><tbody>'+body+'</tbody>':'<tbody><tr><td style="color:var(--ink3)">Tidak ada opname pada periode ini.</td></tr></tbody>';
 
-  ST={s,e,months,C:D.C,P:D.P,mhOf:D.mhOf}; renderMatrix();
+  ST={s,e,months,C:D.C,P:D.P,mhOf:D.mhOf}; renderMatrix(); if(BM) renderBongkarM();
   $('ft').textContent=`Data transaksi terakhir: ${tgl(LAST)} · Dicetak: ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})} · Pergerakan (IN/OUT) tidak menghitung baris RESET/OPNAME; baris tersebut ditampilkan sebagai penyesuaian.`;
 }
 function renderMatrix(){
@@ -441,6 +441,8 @@ function closeMd(){$('md').classList.remove('on');}
 
 /* ===== BONGKAR (tabel ringkasan per tahun: no, customer, code, yYYYY…, total) ===== */
 async function loadBongkar(){
+  try{ BM=await getAll('pallet_bongkar_bulanan','id'); if(!BM.length) BM=null; }catch(e){ BM=null; }
+  if(BM){ renderBongkarM(); return; }
   try{ BK=await getAll(TBL_BONGKAR,'no'); renderBongkar(); }
   catch(e){ BK=null; $('bk').innerHTML=`<div class="card" style="grid-column:1/-1">Data palet bongkar belum bisa dimuat (${esc(e.message)}). Pastikan nama tabel <b>${esc(TBL_BONGKAR)}</b> benar (konstanta TBL_BONGKAR di bagian atas script) dan policy SELECT untuk anon aktif.</div>`; }
 }
@@ -459,6 +461,28 @@ function renderBongkar(){
   $('bt').innerHTML=`<thead><tr><th>#</th><th>Customer</th><th>Code</th>${yrs.map(y=>`<th class="r">${y.slice(1)}</th>`).join('')}<th class="r">Total</th></tr></thead><tbody>`+
     rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.n)}</td><td>${esc(r.c)}</td>${r.v.map(x=>`<td class="r">${f(x)}</td>`).join('')}<td class="r"><b>${f(r.t)}</b></td></tr>`).join('')+
     `<tr><td></td><td><b>Jumlah</b></td><td></td>${yt.map(x=>`<td class="r"><b>${f(x)}</b></td>`).join('')}<td class="r"><b>${f(gt)}</b></td></tr></tbody>`;
+}
+
+/* ===== BONGKAR BULANAN (tabel pallet_bongkar_bulanan format lebar: tahun, customer, code, jan..des) — mengikuti filter periode ===== */
+function renderBongkarM(){
+  if(!ST||!BM) return; const {months}=ST, ms=new Set(months), by={};
+  const MC=['jan','feb','mar','apr','mei','jun','jul','agu','sep','okt','nov','des'];
+  BM.forEach(r=>{const c=nc(r.customer||r.code), cc=nc(r.code);
+    const o=by[c]||(by[c]={n:r.customer||(CUS[cc]&&CUS[cc].name)||r.code,c:r.code||'',v:months.map(()=>0)});
+    months.forEach((k,i)=>{ if(Math.floor(k/12)===+r.tahun) o.v[i]+=+r[MC[k%12]]||0; });});
+  const rows=Object.values(by).map(r=>({...r,t:r.v.reduce((a,b)=>a+b,0)})).sort((a,b)=>b.t-a.t);
+  const mt=months.map((m,i)=>rows.reduce((a,r)=>a+r.v[i],0)), gt=mt.reduce((a,b)=>a+b,0), f=x=>x?nf(x):'–', act=rows.filter(r=>r.t>0).length;
+  const bc=(c,i,l,v)=>`<div class="card k"><div class="kic ${c}">${svg(i)}</div><div><div class="l">${l}</div><div class="v" style="font-size:30px">${v}</div></div></div>`;
+  $('bk').style.gridTemplateColumns='repeat(3,1fr)';
+  $('bk').innerHTML=bc('out','box','Total Bongkar Periode',nf(gt))+bc('','sigma','Rata-rata / Bulan',nf(gt/months.length))+bc('sal','users','Customer Bongkar',nf(act));
+  $('bh1').textContent='Palet Bongkar per Bulan'; $('bh2').textContent='Top 10 Customer Bongkar (Periode)'; $('bh3').textContent='Palet Bongkar per Customer per Bulan';
+  const tt=baseOpt().plugins.tooltip, gx={grid:{color:'#eef0f6'},border:{display:false},ticks:{callback:v=>nf(v)}};
+  mkChart('c5',{type:'bar',data:{labels:months.map(ml),datasets:[{label:'Bongkar',data:mt,backgroundColor:'#5b4bc4',borderRadius:4}]},options:baseOpt({plugins:{legend:{display:false},tooltip:tt},scales:{x:{grid:{display:false}},y:{beginAtZero:true,...gx}}})});
+  const top=rows.filter(r=>r.t>0).slice(0,10);
+  mkChart('c6',{type:'bar',data:{labels:top.map(c=>c.n.length>28?c.n.slice(0,27)+'…':c.n),datasets:[{label:'Total',data:top.map(c=>c.t),backgroundColor:'#13805a',borderRadius:4}]},options:baseOpt({indexAxis:'y',plugins:{legend:{display:false},tooltip:tt},scales:{y:{ticks:{autoSkip:false},grid:{display:false}},x:gx}})});
+  $('bt').innerHTML=`<thead><tr><th>#</th><th>Customer</th><th>Code</th>${months.map(m=>`<th class="r">${ml(m)}</th>`).join('')}<th class="r">Total</th></tr></thead><tbody>`+
+    rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.n)}</td><td>${esc(r.c)}</td>${r.v.map(x=>`<td class="r">${f(x)}</td>`).join('')}<td class="r"><b>${f(r.t)}</b></td></tr>`).join('')+
+    `<tr><td></td><td><b>Jumlah</b></td><td></td>${mt.map(x=>`<td class="r"><b>${f(x)}</b></td>`).join('')}<td class="r"><b>${f(gt)}</b></td></tr></tbody>`;
 }
 
 /* ===== NAVIGATION ===== */
