@@ -156,23 +156,28 @@ th.sk{cursor:pointer;user-select:none}th.sk:hover{color:var(--navy)}
 
 /* PRINT — layout dipasang lewat body.printing (JS beforeprint) agar grafik diukur ulang sesuai lebar kertas */
 @media print{@page{size:A4 landscape;margin:10mm}body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-body.printing{display:block;height:auto;overflow:visible;width:1040px;background:#fff;font-size:12px}
+body.printing{display:block;height:auto;overflow:visible;width:1000px;margin:0 auto;background:#fff;font-size:12px}
 .printing .tabs,.printing .ctl,.printing #pn,.printing .bar .grp,.printing #bfs,.printing .seg,.printing .go,.printing .pop{display:none!important}
 .printing .top{position:static;border:0;padding:0 0 8px}
-.printing main{padding:0;overflow:visible;height:auto}
-.printing .pg{display:flex!important;height:auto;break-after:page;animation:none}
+.printing main{display:block;padding:0;overflow:visible;height:auto}
+/* block (bukan flex) agar halaman cetak tidak terpotong oleh pemecahan halaman Chrome/Edge */
+.printing .pg{display:block!important;height:auto;break-after:page;animation:none}
 .printing .pg:last-child{break-after:auto}
-.printing .pg>*{flex:none!important}
-.printing .card{box-shadow:none}
-.printing .hero,.printing .g2,.printing .mv,.printing .bt2{height:auto}.printing .mv{grid-template-rows:auto auto}
-.printing .cv{flex:none;height:300px}.printing .hero .cv{height:360px}.printing .mv .big .cv{height:440px}.printing .mv .card:not(.big) .cv{height:190px}
+.printing .pg>*{flex:none!important;margin-bottom:10px}
+.printing .card{display:block;box-shadow:none;break-inside:avoid}
+.printing .card.k{display:flex}
+.printing .hero,.printing .g2,.printing .mv,.printing .kp,.printing .ks,.printing .cnt{break-inside:avoid;height:auto}
+.printing .mv{grid-template-rows:auto auto}
+.printing .bt2{display:block;height:auto}.printing .bt2 .card,.printing #pvc{break-inside:auto;margin-bottom:10px}
+.printing .cv{display:block;flex:none;height:300px}.printing .mv .big .cv{height:400px}.printing .mv .card:not(.big) .cv{height:180px}.printing .g2 .cv{height:230px}
 .printing canvas{max-width:100%!important}
-.printing .tw{overflow:visible;max-height:none;flex:none;border:0}
+.printing .ins,.printing .sm{overflow:visible}
+.printing .tw{display:block;overflow:visible;max-height:none;border:0}
 .printing th,.printing .mx tr.tot td{position:static}
-.printing tr{break-inside:avoid}.printing thead{display:table-header-group}.printing #pvc{break-inside:auto}
+.printing tr{break-inside:avoid}.printing thead{display:table-header-group}
+.printing td{padding:5px 8px}
 .printing .mx{font-size:9px}.printing .mx th,.printing .mx td{padding:3px 4px}
 .printing .mx td:nth-child(3),.printing .mx th:nth-child(3){min-width:150px;position:static}
-.printing .ks{display:grid}
 </style>
 </head>
 <body>
