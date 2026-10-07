@@ -155,6 +155,9 @@ th.sk{cursor:pointer;user-select:none}th.sk:hover{color:var(--navy)}
 @media(max-width:900px){.bt2{grid-template-columns:1fr}}
 
 /* PRINT — layout dipasang lewat body.printing (JS beforeprint) agar grafik diukur ulang sesuai lebar kertas */
+/* grafik dicetak sebagai gambar */
+.pimg{display:none;width:100%;height:100%;object-fit:contain}
+body.printimg canvas{display:none!important}body.printimg .pimg{display:block}
 @media print{@page{size:A4 landscape;margin:10mm}body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 body.printing{display:block;height:auto;overflow:visible;width:1000px;margin:0 auto;background:#fff;font-size:12px}
 .printing .tabs,.printing .ctl,.printing #pn,.printing .bar .grp,.printing #bfs,.printing .seg,.printing .go,.printing .pop{display:none!important}
@@ -192,7 +195,7 @@ body.printing{display:block;height:auto;overflow:visible;width:1000px;margin:0 a
     <span id="selw" style="display:flex;gap:6px"><select id="sel" onchange="draw()"></select><button class="btn" onclick="$('pop').classList.toggle('on')" title="Atur periode dari / sampai"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="tx">Periode</span></button>
     <div class="pop" id="pop"><label>Dari bulan<select id="fm" onchange="cust()"></select></label><label>Sampai bulan<select id="to" onchange="cust()"></select></label><label class="ck"><input type="checkbox" id="incl" onchange="mOpts();draw()"> Sertakan bulan berjalan</label></div></span>
     <button class="btn" onclick="togglePres()" title="Presentasi (fullscreen)"><svg class="i" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg><span class="tx">Presentasi</span></button>
-    <button class="btn pri" id="bprint" onclick="print()"><svg class="i" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg><span class="tx">Cetak / PDF</span></button>
+    <button class="btn pri" id="bprint" onclick="doPrint()"><svg class="i" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg><span class="tx">Cetak / PDF</span></button>
   </div>
 </header>
 <div id="msg">Memuat data dari database…</div>
@@ -218,7 +221,7 @@ body.printing{display:block;height:auto;overflow:visible;width:1000px;margin:0 a
   <!-- 3 CUSTOMER -->
   <section class="pg" data-t="Customer">
     <div class="g2" style="flex:42">
-      <div class="card"><h2>Top 10 Customer Berdasarkan OUT</h2><div class="cv"><canvas id="c3"></canvas></div></div>
+      <div class="card"><div class="bar" style="margin-bottom:6px"><h2 style="margin:0" id="c3h">Top 10 Customer Berdasarkan OUT</h2><div class="seg cseg"><button data-m="o" class="on">OUT</button><button data-m="i">IN</button></div></div><div class="cv"><canvas id="c3"></canvas></div></div>
       <div class="card"><h2>Top 10 Saldo Pallet di Customer</h2><div class="cv"><canvas id="c4"></canvas></div></div>
     </div>
     <div class="card" style="flex:48;min-height:0"><h2>Ranking 10 Customer Teratas (berdasarkan OUT)</h2><div class="tw"><table id="tb"></table></div></div>
@@ -230,7 +233,7 @@ body.printing{display:block;height:auto;overflow:visible;width:1000px;margin:0 a
         <h2 style="margin:0" id="mxh">Analisa Customer per Bulan</h2>
         <div class="grp">
           <input type="hidden" id="vm" value="s">
-          <div class="seg"><button class="on" data-v="s">Saldo Akhir</button><button data-v="m">Pergerakan IN + OUT</button></div>
+          <div class="seg"><button class="on" data-v="s">Saldo Akhir</button><button data-v="m">Pergerakan IN + OUT</button><button data-v="i">IN saja</button><button data-v="o">OUT saja</button></div>
         </div>
       </div>
       <div class="bar">
@@ -276,7 +279,7 @@ users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7
 sigma:'<path d="M18 7V4H6l6 8-6 8h12v-3"/>',clip:'<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
 clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',chev:'<path d="m9 6 6 6-6 6"/>'};
 const svg=p=>`<svg class="i" viewBox="0 0 24 24">${IC[p]}</svg>`;
-let ST=null,TRX=[],CUS={},OPN=[],LAST=null,CH={},FIRSTK=0,BK=null,BM=null,LF=true,BV='m',BKM=null,BKY=null,DET=[];
+let CM='o',ST=null,TRX=[],CUS={},OPN=[],LAST=null,CH={},FIRSTK=0,BK=null,BM=null,LF=true,BV='m',BKM=null,BKY=null,DET=[];
 
 /* ===== DATA: SUPABASE ===== */
 async function getAll(t,o){
@@ -341,8 +344,8 @@ function calc(){
     }
     if(t.k<=e&&!t.mark&&(!c.last||t.d>c.last)) c.last=t.d;
   });
-  const P={}; Object.keys(CUS).forEach(c=>P[c]={n:CUS[c].name,net:{},mv:{},m3:0});
-  TRX.forEach(t=>{const p=P[t.c]; if(t.k>=s&&t.k<=e){p.net[t.k]=(p.net[t.k]||0)+t.o-t.i; p.mv[t.k]=(p.mv[t.k]||0)+t.o+t.i;} if(t.k>=e-3&&t.k<=e-1) p.m3+=t.o+t.i;});
+  const P={}; Object.keys(CUS).forEach(c=>P[c]={n:CUS[c].name,net:{},mv:{},iv:{},ov:{},m3:0});
+  TRX.forEach(t=>{const p=P[t.c]; if(t.k>=s&&t.k<=e){p.net[t.k]=(p.net[t.k]||0)+t.o-t.i; p.mv[t.k]=(p.mv[t.k]||0)+t.o+t.i; p.iv[t.k]=(p.iv[t.k]||0)+t.i; p.ov[t.k]=(p.ov[t.k]||0)+t.o;} if(t.k>=e-3&&t.k<=e-1) p.m3+=t.o+t.i;});
   const mhOf=k=>{const se=C[k].se,avg=P[k].m3/3,mh=se>0?avg/se:(avg>0?Infinity:0);return{se,avg,mh,cat:(!isFinite(mh)||mh>4)?'g':mh>=2?'a':mh>=1?'n':'r'}};
   const base=Object.values(CUS).reduce((a,c)=>a+c.awal,0);
   let run=base; const pre=TRX.filter(t=>t.k<s).reduce((a,t)=>a+t.o-t.i,0); run+=pre;
@@ -382,7 +385,9 @@ function drawCharts(D){
     options:baseOpt({plugins:{legend:{display:false},tooltip:baseOpt().plugins.tooltip},scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#eef0f6'},border:{display:false},ticks:{callback:v=>v+'%'}}}})});
   const hb=(id,list,key,col,lbl)=>mkChart(id,{type:'bar',data:{labels:list.slice(0,10).map(c=>c.n.length>28?c.n.slice(0,27)+'…':c.n),datasets:[{label:lbl,data:list.slice(0,10).map(c=>c[key]),backgroundColor:col,borderRadius:4}]},
     options:baseOpt({indexAxis:'y',plugins:{legend:{display:false},tooltip:baseOpt().plugins.tooltip},scales:{y:{ticks:{autoSkip:false},grid:{display:false}},x:{grid:{color:'#eef0f6'},border:{display:false},ticks:{callback:v=>nf(v)}}}})});
-  hb('c3',byO,'o','#5b4bc4','OUT'); hb('c4',byS,'se','#b7791f','Saldo');
+  const byI=D.arr.filter(c=>c.i>0).sort((a,b)=>b.i-a.i);
+  window.drawC3=()=>{const i=CM==='i'; hb('c3',i?byI:byO,i?'i':'o',i?'#13805a':'#5b4bc4',i?'IN':'OUT'); $('c3h').textContent='Top 10 Customer Berdasarkan '+(i?'IN':'OUT'); document.querySelectorAll('.cseg button').forEach(x=>x.classList.toggle('on',x.dataset.m===CM));};
+  window.drawC3(); hb('c4',byS,'se','#b7791f','Saldo');
 }
 function draw(){
   const D=calc(), {s,e,months,M,sumO,sumI,adj,sAwal,sAkhir,arr,aktif,byO,byS,best,low,top5,dorm,dormSum,lowMh,trkOut,trkIn}=D;
@@ -433,14 +438,14 @@ function draw(){
 function renderMatrix(){
   if(!ST) return; const {e,months,C,P,mhOf}=ST, mode=$('vm').value, sal=mode==='s', qv=$('q').value.trim().toLowerCase();
   const rows=Object.keys(P).map(k=>{
-    let run=C[k].sa; const v=months.map(m=>{ if(sal){run+=P[k].net[m]||0;return run;} return P[k].mv[m]||0; });
+    let run=C[k].sa; const v=months.map(m=>{ if(sal){run+=P[k].net[m]||0;return run;} return (mode==='i'?P[k].iv[m]:mode==='o'?P[k].ov[m]:P[k].mv[m])||0; });
     return {k,n:P[k].n,v,tot:v.reduce((a,b)=>a+b,0),h:mhOf(k),keep:v.some(x=>x)||C[k].sa||C[k].se};
   }).filter(r=>r.keep).sort((a,b)=>a.n.localeCompare(b.n)).filter(r=>!qv||r.n.toLowerCase().includes(qv)||r.k.toLowerCase().includes(qv));
   const pos=rows.flatMap(r=>r.v).filter(x=>x>0).sort((a,b)=>a-b), thr=pos.length?pos[Math.floor(pos.length*.9)]:Infinity;
   const f=x=>x?nf(x):'-', cl=x=>!x?'z':x>=thr?'hi':'';
   const mhc=h=>(h.se<=0&&h.avg===0)?'<span class="mh n">-</span>':`<span class="mh ${h.cat}">${isFinite(h.mh)?h.mh.toFixed(1):'∞'}</span>`;
   const sum=months.map((m,i)=>rows.reduce((a,r)=>a+r.v[i],0));
-  $('mxh').textContent=sal?'Analisa Customer per Bulan — Saldo Akhir':'Analisa Customer per Bulan — Pergerakan (IN + OUT)';
+  $('mxh').textContent='Analisa Customer per Bulan — '+({s:'Saldo Akhir',m:'Pergerakan (IN + OUT)',i:'IN (kembali)',o:'OUT (kirim)'}[mode]);
   $('mx').innerHTML=`<thead><tr><th>No</th><th>C.Code</th><th>Customer</th>${months.map(m=>`<th class="r">${ml(m)}</th>`).join('')}<th class="r">Total</th><th class="r">MH ${ml(e)}</th></tr></thead><tbody>`+
     rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.k)}</td><td>${esc(r.n)}</td>${r.v.map(x=>`<td class="r ${cl(x)}">${f(x)}</td>`).join('')}<td class="r"><b>${f(r.tot)}</b></td><td class="r">${mhc(r.h)}</td></tr>`).join('')+
     `<tr class="tot"><td></td><td></td><td>Jumlah</td>${sum.map(x=>`<td class="r">${f(x)}</td>`).join('')}<td class="r">${f(sum.reduce((a,b)=>a+b,0))}</td><td></td></tr></tbody>`;
@@ -547,6 +552,8 @@ pvSeg.addEventListener('click',ev=>{
   const b=ev.target.closest('button'); if(!b) return;
   $('vm').value=b.dataset.v; pvSeg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); renderMatrix();
 });
+/* toggle Top 10 customer: OUT (ungu) / IN (hijau) */
+document.querySelectorAll('.cseg').forEach(g=>g.addEventListener('click',ev=>{const b=ev.target.closest('button'); if(!b) return; CM=b.dataset.m; if(window.drawC3) window.drawC3();}));
 /* garis saldo di depan / belakang batang */
 function syncLF(){document.querySelectorAll('.lseg button').forEach(x=>x.classList.toggle('on',(x.dataset.f==='1')===LF));}
 document.querySelectorAll('.lseg').forEach(g=>g.addEventListener('click',ev=>{
@@ -575,11 +582,24 @@ document.addEventListener('keydown',ev=>{
   if(ev.key==='ArrowRight') go(PG+1); else if(ev.key==='ArrowLeft') go(PG-1);
 });
 /* cetak: pasang layout kertas, ukur ulang grafik, ganti canvas dengan gambar agar tidak terpotong */
+let PRN=false;
 function prePrint(){
+  if(PRN) return; PRN=true;
   document.body.classList.add('printing'); void document.body.offsetHeight;
-  Object.values(CH).forEach(c=>{c.stop();c.resize();c.update('none');});
+  Object.values(CH).forEach(c=>{
+    c.stop(); c.options.animation=false; c.options.devicePixelRatio=2; c.resize(); c.draw();
+    const cv=c.canvas, img=new Image(); img.className='pimg'; img.src=cv.toDataURL('image/png');
+    cv.parentNode.appendChild(img);
+  });
+  document.body.classList.add('printimg');
 }
-function postPrint(){ document.body.classList.remove('printing'); Object.values(CH).forEach(c=>c.resize()); }
+function postPrint(){
+  if(!PRN) return; PRN=false;
+  document.querySelectorAll('img.pimg').forEach(i=>i.remove());
+  document.body.classList.remove('printimg','printing');
+  Object.values(CH).forEach(c=>{delete c.options.devicePixelRatio; c.options.animation={duration:450}; c.resize();});
+}
+function doPrint(){ prePrint(); setTimeout(()=>window.print(),200); }
 window.addEventListener('beforeprint',prePrint); window.addEventListener('afterprint',postPrint);
 syncLF(); init();
 </script>
